@@ -2,7 +2,10 @@ import CDP from 'chrome-remote-interface';
 
 let client = null;
 let targetInfo = null;
-const CDP_HOST = 'localhost';
+// Use the IPv4 loopback explicitly. Electron's CDP listens only on 127.0.0.1,
+// but Node's fetch/undici resolves 'localhost' to IPv6 ::1 first on Windows,
+// which nothing is listening on -> "fetch failed". 127.0.0.1 avoids that.
+const CDP_HOST = '127.0.0.1';
 const CDP_PORT = 9222;
 const MAX_RETRIES = 5;
 const BASE_DELAY = 500;

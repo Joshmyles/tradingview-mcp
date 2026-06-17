@@ -4,7 +4,7 @@
  */
 import { getClient, evaluate } from '../connection.js';
 
-const CDP_HOST = 'localhost';
+const CDP_HOST = '127.0.0.1'; // IPv4 loopback; 'localhost' resolves to IPv6 ::1 on Windows where CDP isn't listening
 const CDP_PORT = 9222;
 
 /**

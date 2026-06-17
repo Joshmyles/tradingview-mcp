@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const c=require\\(require\\('os'\\).homedir\\(\\)+'/.claude.json'\\); console.log\\('top-level mcpServers:', JSON.stringify\\(c.mcpServers||{}, null, 2\\)\\); console.log\\('---'\\); const projs=c.projects||{}; for \\(const [k,v] of Object.entries\\(projs\\)\\) { if \\(v && v.mcpServers && Object.keys\\(v.mcpServers\\).length\\) console.log\\('project', k, '->', JSON.stringify\\(v.mcpServers\\)\\); }\")",
+      "Bash(command -v claude)",
+      "Bash(claude --version)",
+      "Bash(claude mcp *)",
+      "Bash(cp .claude.json .claude.json.bak)",
+      "Bash(node -e ' *)",
+      "Bash(node -e 'let d=\"\";process.stdin.on\\(\"data\",c=>d+=c\\).on\\(\"end\",\\(\\)=>{try{const j=JSON.parse\\(d\\);console.log\\(\"keys:\",Object.keys\\(j\\)\\);console.log\\(\"enabledPlugins:\",JSON.stringify\\(j.enabledPlugins||j.plugins||\"\\(none\\)\"\\)\\)}catch\\(e\\){console.log\\(\"parse err / empty\"\\)}}\\)')",
+      "Bash(node -e 'const c=require\\(require\\(\"os\"\\).homedir\\(\\)+\"/.claude.json\"\\);console.log\\(\"enabledPlugins:\",JSON.stringify\\(c.enabledPlugins||\"\\(none\\)\"\\)\\);')",
+      "WebFetch(domain:json.schemastore.org)",
+      "WebFetch(domain:www.schemastore.org)",
+      "Bash(cp settings.json settings.json.bak)",
+      "mcp__tradingview__tab_list",
+      "mcp__tradingview__chart_get_state",
+      "mcp__tradingview__quote_get",
+      "mcp__tradingview__tv_health_check",
+      "Bash(curl -s -m 3 http://localhost:9222/json/version)",
+      "Bash(tasklist)",
+      "Bash(curl -s -m 3 http://127.0.0.1:9222/json/version -o /dev/null -w \"HTTP %{http_code}\\\\n\")",
+      "Bash(curl -s -m 3 \"http://[::1]:9222/json/version\" -o /dev/null -w \"HTTP %{http_code}\\\\n\")",
+      "Bash(curl -s -m 4 http://127.0.0.1:9222/json/list)",
+      "Bash(node -e 'let d=\"\";process.stdin.on\\(\"data\",c=>d+=c\\).on\\(\"end\",\\(\\)=>{const a=JSON.parse\\(d\\);const pages=a.filter\\(t=>t.type===\"page\"\\);console.log\\(\"page targets:\",pages.length\\);pages.forEach\\(\\(p,i\\)=>console.log\\(`\\\\n[${i}] title: ${p.title}\\\\n    url: ${p.url}`\\)\\);}\\)')",
+      "Bash(node /c/tmp/tv_peek.mjs)",
+      "Bash(node \"c:/Users/JM/Desktop/Development/trading/tradingview-mcp/tv_peek.mjs\")",
+      "mcp__tradingview__ui_open_panel",
+      "mcp__tradingview__pine_list_scripts",
+      "mcp__tradingview__pine_open"
+    ]
+  }
+}

@@ -2,11 +2,13 @@ import CDP from 'chrome-remote-interface';
 
 let client = null;
 let targetInfo = null;
-// Use the IPv4 loopback explicitly. Electron's CDP listens only on 127.0.0.1,
-// but Node's fetch/undici resolves 'localhost' to IPv6 ::1 first on Windows,
-// which nothing is listening on -> "fetch failed". 127.0.0.1 avoids that.
-const CDP_HOST = '127.0.0.1';
-const CDP_PORT = 9222;
+// Overridable via TV_CDP_HOST/TV_CDP_PORT (or CDP_HOST/CDP_PORT) env vars.
+// Default is 127.0.0.1, not localhost: on some Windows machines localhost
+// resolves to ::1 first, and Electron's --remote-debugging-port only listens on IPv4.
+export const CDP_HOST =
+  process.env.TV_CDP_HOST || process.env.CDP_HOST || '127.0.0.1';
+export const CDP_PORT =
+  Number(process.env.TV_CDP_PORT || process.env.CDP_PORT) || 9222;
 const MAX_RETRIES = 5;
 const BASE_DELAY = 500;
 
@@ -18,7 +20,8 @@ const KNOWN_PATHS = {
   replayApi: 'window.TradingViewApi._replayApi',
   alertService: 'window.TradingViewApi._alertService',
   chartApiInstance: 'window.ChartApiInstance',
-  mainSeriesBars: 'window.TradingViewApi._activeChartWidgetWV.value()._chartWidget.model().mainSeries().bars()',
+  mainSeriesBars:
+    'window.TradingViewApi._activeChartWidgetWV.value()._chartWidget.model().mainSeries().bars()',
   // Phase 1: Strategy data — model().dataSources() → find strategy → .performance().value(), .ordersData(), .reportData()
   strategyStudy: 'chart._chartWidget.model().model().dataSources()',
   // Phase 2: Layouts — getSavedCharts(cb), loadChartFromServer(id)
@@ -46,7 +49,8 @@ export function safeString(str) {
  */
 export function requireFinite(value, name) {
   const n = Number(value);
-  if (!Number.isFinite(n)) throw new Error(`${name} must be a finite number, got: ${value}`);
+  if (!Number.isFinite(n))
+    throw new Error(`${name} must be a finite number, got: ${value}`);
   return n;
 }
 
@@ -64,13 +68,19 @@ export async function getClient() {
   return connect();
 }
 
-export async function connect() {
+export async function connect(targetId = null) {
   let lastError;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
-      const target = await findChartTarget();
+      const target = targetId
+        ? await findTargetById(targetId)
+        : await findChartTarget();
       if (!target) {
-        throw new Error('No TradingView chart target found. Is TradingView open with a chart?');
+        throw new Error(
+          targetId
+            ? `CDP target ${targetId} not found — is the tab still open?`
+            : 'No TradingView chart target found. Is TradingView open with a chart?',
+        );
       }
       targetInfo = target;
       client = await CDP({ host: CDP_HOST, port: CDP_PORT, target: target.id });
@@ -84,19 +94,50 @@ export async function connect() {
     } catch (err) {
       lastError = err;
       const delay = Math.min(BASE_DELAY * Math.pow(2, attempt), 30000);
-      await new Promise(r => setTimeout(r, delay));
+      await new Promise((r) => setTimeout(r, delay));
     }
   }
-  throw new Error(`CDP connection failed after ${MAX_RETRIES} attempts: ${lastError?.message}`);
+  throw new Error(
+    `CDP connection failed after ${MAX_RETRIES} attempts: ${lastError?.message}`,
+  );
+}
+
+/**
+ * Re-attach the cached CDP client to a specific target id.
+ * Used by tab_switch so subsequent reads (chart_get_state, data_get_*,
+ * quote_get, screenshots) follow the activated tab instead of staying
+ * glued to the target picked at first connect.
+ */
+export async function reconnectTo(targetId) {
+  if (client) {
+    try {
+      await client.close();
+    } catch {
+      /* already gone */
+    }
+    client = null;
+    targetInfo = null;
+  }
+  return connect(targetId);
 }
 
 async function findChartTarget() {
   const resp = await fetch(`http://${CDP_HOST}:${CDP_PORT}/json/list`);
   const targets = await resp.json();
   // Prefer targets with tradingview.com/chart in the URL
-  return targets.find(t => t.type === 'page' && /tradingview\.com\/chart/i.test(t.url))
-    || targets.find(t => t.type === 'page' && /tradingview/i.test(t.url))
-    || null;
+  return (
+    targets.find(
+      (t) => t.type === 'page' && /tradingview\.com\/chart/i.test(t.url),
+    ) ||
+    targets.find((t) => t.type === 'page' && /tradingview/i.test(t.url)) ||
+    null
+  );
+}
+
+async function findTargetById(id) {
+  const resp = await fetch(`http://${CDP_HOST}:${CDP_PORT}/json/list`);
+  const targets = await resp.json();
+  return targets.find((t) => t.id === id) || null;
 }
 
 export async function getTargetInfo() {
@@ -115,9 +156,10 @@ export async function evaluate(expression, opts = {}) {
     ...opts,
   });
   if (result.exceptionDetails) {
-    const msg = result.exceptionDetails.exception?.description
-      || result.exceptionDetails.text
-      || 'Unknown evaluation error';
+    const msg =
+      result.exceptionDetails.exception?.description ||
+      result.exceptionDetails.text ||
+      'Unknown evaluation error';
     throw new Error(`JS evaluation error: ${msg}`);
   }
   return result.result?.value;
@@ -129,7 +171,9 @@ export async function evaluateAsync(expression) {
 
 export async function disconnect() {
   if (client) {
-    try { await client.close(); } catch {}
+    try {
+      await client.close();
+    } catch {}
     client = null;
     targetInfo = null;
   }
@@ -140,7 +184,9 @@ export async function disconnect() {
 // Callers use the returned string in their own evaluate() calls.
 
 async function verifyAndReturn(path, name) {
-  const exists = await evaluate(`typeof (${path}) !== 'undefined' && (${path}) !== null`);
+  const exists = await evaluate(
+    `typeof (${path}) !== 'undefined' && (${path}) !== null`,
+  );
   if (!exists) {
     throw new Error(`${name} not available at ${path}`);
   }
@@ -152,7 +198,10 @@ export async function getChartApi() {
 }
 
 export async function getChartCollection() {
-  return verifyAndReturn(KNOWN_PATHS.chartWidgetCollection, 'Chart Widget Collection');
+  return verifyAndReturn(
+    KNOWN_PATHS.chartWidgetCollection,
+    'Chart Widget Collection',
+  );
 }
 
 export async function getBottomBar() {

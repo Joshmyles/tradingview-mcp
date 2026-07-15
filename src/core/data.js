@@ -138,24 +138,32 @@ export async function getStrategyResults() {
       try {
         var chart = ${CHART_API}._chartWidget;
         var sources = chart.model().model().dataSources();
+        // A strategy is identified by the strategy-exclusive reportData/ordersData
+        // props, NOT by is_price_study — overlay strategies report is_price_study===true.
         var strat = null;
         for (var i = 0; i < sources.length; i++) {
           var s = sources[i];
-          if (s.metaInfo && s.metaInfo().is_price_study === false && (s.reportData || s.performance)) { strat = s; break; }
+          if (s.reportData || s.ordersData) { strat = s; break; }
         }
         if (!strat) return {metrics: {}, source: 'internal_api', error: 'No strategy found on chart. Add a strategy indicator first.'};
         var metrics = {};
+        function unwrap(x){ if (x && typeof x.value === 'function') x = x.value(); return x; }
+        // Headline metrics live in reportData().performance: scalar fields
+        // (sharpeRatio, sortinoRatio, maxStrategyDrawDownPercent, ...) plus the
+        // 'all' bucket (profitFactor, percentProfitable, totalTrades, netProfit, ...).
         if (strat.reportData) {
-          var rd = typeof strat.reportData === 'function' ? strat.reportData() : strat.reportData;
-          if (rd && typeof rd === 'object') {
-            if (typeof rd.value === 'function') rd = rd.value();
-            if (rd) { var keys = Object.keys(rd); for (var k = 0; k < keys.length; k++) { var val = rd[keys[k]]; if (val !== null && val !== undefined && typeof val !== 'function') metrics[keys[k]] = val; } }
+          var rd = unwrap(typeof strat.reportData === 'function' ? strat.reportData() : strat.reportData);
+          var perf = rd && rd.performance;
+          if (perf && typeof perf === 'object') {
+            var pkeys = Object.keys(perf);
+            for (var p = 0; p < pkeys.length; p++) { var pv = perf[pkeys[p]]; var t = typeof pv; if (t === 'number' || t === 'string' || t === 'boolean') metrics[pkeys[p]] = pv; }
+            if (perf.all && typeof perf.all === 'object') { var ak = Object.keys(perf.all); for (var a = 0; a < ak.length; a++) { var av = perf.all[ak[a]]; var at = typeof av; if (at === 'number' || at === 'string' || at === 'boolean') metrics[ak[a]] = av; } }
           }
         }
+        // Fallback: live study performance() handle if reportData was unavailable.
         if (Object.keys(metrics).length === 0 && strat.performance) {
-          var perf = strat.performance();
-          if (perf && typeof perf.value === 'function') perf = perf.value();
-          if (perf && typeof perf === 'object') { var pkeys = Object.keys(perf); for (var p = 0; p < pkeys.length; p++) { var pval = perf[pkeys[p]]; if (pval !== null && pval !== undefined && typeof pval !== 'function') metrics[pkeys[p]] = pval; } }
+          var perf2 = unwrap(strat.performance());
+          if (perf2 && typeof perf2 === 'object') { var p2keys = Object.keys(perf2); for (var q = 0; q < p2keys.length; q++) { var p2val = perf2[p2keys[q]]; if (p2val !== null && p2val !== undefined && typeof p2val !== 'function' && typeof p2val !== 'object') metrics[p2keys[q]] = p2val; } }
         }
         return {metrics: metrics, source: 'internal_api'};
       } catch(e) { return {metrics: {}, source: 'internal_api', error: e.message}; }
@@ -174,7 +182,7 @@ export async function getTrades({ max_trades } = {}) {
         var strat = null;
         for (var i = 0; i < sources.length; i++) {
           var s = sources[i];
-          if (s.metaInfo && s.metaInfo().is_price_study === false && (s.ordersData || s.reportData)) { strat = s; break; }
+          if (s.ordersData || s.reportData) { strat = s; break; }
         }
         if (!strat) return {trades: [], source: 'internal_api', error: 'No strategy found on chart.'};
         var orders = null;
@@ -210,7 +218,7 @@ export async function getEquity() {
         var strat = null;
         for (var i = 0; i < sources.length; i++) {
           var s = sources[i];
-          if (s.metaInfo && s.metaInfo().is_price_study === false && (s.reportData || s.performance)) { strat = s; break; }
+          if (s.reportData || s.ordersData) { strat = s; break; }
         }
         if (!strat) return {data: [], source: 'internal_api', error: 'No strategy found on chart.'};
         var data = [];

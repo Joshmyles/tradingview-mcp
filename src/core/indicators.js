@@ -22,13 +22,18 @@ export async function setInputs({ entity_id, inputs: inputsRaw }) {
       var currentInputs = study.getInputValues();
       var overrides = ${inputsJson};
       var updatedKeys = {};
+      // Pass ONLY the overridden entries. Round-tripping the full list re-submits the
+      // meta pseudo-inputs (text/pineId/pineVersion/pineFeatures), which forces a script
+      // re-resolution that can fail ("Can't parse pine") and leave the study gutted
+      // (getInputValues() returns []). setInputValues accepts partial lists.
+      var changed = [];
       for (var i = 0; i < currentInputs.length; i++) {
         if (overrides.hasOwnProperty(currentInputs[i].id)) {
-          currentInputs[i].value = overrides[currentInputs[i].id];
+          changed.push({ id: currentInputs[i].id, value: overrides[currentInputs[i].id] });
           updatedKeys[currentInputs[i].id] = overrides[currentInputs[i].id];
         }
       }
-      study.setInputValues(currentInputs);
+      if (changed.length > 0) study.setInputValues(changed);
       return { updated_inputs: updatedKeys };
     })()
   `);

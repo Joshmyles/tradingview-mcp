@@ -65,7 +65,7 @@ export async function getState({ _deps } = {}) {
 
 export async function setSymbol({ symbol, _deps }) {
   const { evaluateAsync, captureFence } = _resolve(_deps);
-  const fence = await captureFence();
+  const fence = await captureFence({ seriesAffecting: true });
   await evaluateAsync(`
     (function() {
       var chart = ${CHART_API};
@@ -80,7 +80,7 @@ export async function setSymbol({ symbol, _deps }) {
 
 export async function setTimeframe({ timeframe, _deps }) {
   const { evaluate, captureFence } = _resolve(_deps);
-  const fence = await captureFence();
+  const fence = await captureFence({ seriesAffecting: true });
   await evaluate(`
     (function() {
       var chart = ${CHART_API};

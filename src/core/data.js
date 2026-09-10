@@ -8,6 +8,8 @@ import {
   safeString,
 } from '../connection.js';
 import { waitForChartReady } from '../wait.js';
+import { readStrategyReport } from '../strategy-report.js';
+import { captureReportState, requireSettled } from '../settle.js';
 
 const MAX_OHLCV_BARS = 500;
 const MAX_TRADES = 20;
@@ -88,6 +90,43 @@ const FIND_STRATEGY_JS = `
   }
 `;
 
+/**
+ * Gate for reads of computed data.
+ *
+ * Reads settle; mutations do not. A mutation that returns early is harmless —
+ * nothing has been asserted about it. A read that returns early is a wrong
+ * answer wearing the costume of a right one, which is the failure this whole
+ * layer exists to prevent.
+ *
+ * `wait: false` is an explicit escape for the caller who genuinely wants
+ * whatever is on screen right now; it marks the result rather than hiding it.
+ *
+ * Cost note: this is not a fixed tax. It is however long the recompute actually
+ * takes — on a settled chart it returns in a single poll (measured ~10ms), and
+ * on a six-module strategy at 45S after a timeframe change it is ~20s because
+ * that is how long TradingView takes.
+ */
+const settleNote = (gate) =>
+  gate.unsettled_by_request
+    ? { settled: false, note: gate.note }
+    : { settled: true, settle_ms: gate.settle.elapsed_ms };
+
+async function gateRead({ wait = true, series = false, timeoutMs } = {}) {
+  if (wait === false) {
+    return {
+      ok: true,
+      unsettled_by_request: true,
+      note: 'wait=false: returned without waiting for the chart to settle. If the chart was mid-recompute, this describes the previous state.',
+    };
+  }
+  const gate = await requireSettled({
+    scope: 'all',
+    requireSeries: series,
+    ...(timeoutMs && { timeoutMs }),
+  });
+  return gate;
+}
+
 function buildGraphicsJS(collectionName, mapKey, filter) {
   return `
     (function() {
@@ -139,8 +178,12 @@ function buildGraphicsJS(collectionName, mapKey, filter) {
   `;
 }
 
-export async function getOhlcv({ count, summary } = {}) {
+export async function getOhlcv({ count, summary, wait } = {}) {
   const limit = Math.min(count || 100, MAX_OHLCV_BARS);
+  // Bars are the one read that must gate on the price series: the study scopes
+  // cannot see it (getStudyById throws on '_seriesId' — see internals/paths.js).
+  const gate = await gateRead({ wait, series: true });
+  if (!gate.ok) return gate;
   let data;
   try {
     data = await evaluate(`
@@ -167,6 +210,10 @@ export async function getOhlcv({ count, summary } = {}) {
     );
   }
 
+  const provenance = gate.unsettled_by_request
+    ? { settled: false, unsettled_by_request: true, note: gate.note }
+    : { settled: true, settle_ms: gate.settle.elapsed_ms };
+
   if (summary) {
     const bars = data.bars;
     const highs = bars.map((b) => b.high);
@@ -191,6 +238,7 @@ export async function getOhlcv({ count, summary } = {}) {
         volumes.reduce((a, b) => a + b, 0) / volumes.length,
       ),
       last_5_bars: bars.slice(-5),
+      provenance,
     };
   }
 
@@ -200,6 +248,7 @@ export async function getOhlcv({ count, summary } = {}) {
     total_available: data.total_bars,
     source: data.source,
     bars: data.bars,
+    provenance,
   };
 }
 
@@ -234,13 +283,24 @@ export async function getIndicator({ entity_id }) {
   return { success: true, entity_id, visible: data?.visible, inputs };
 }
 
-// #173: TradingView doesn't compute strategy report/orders until the Strategy
-// Tester panel is opened — and never computes one for a hidden strategy.
-// Ensure the panel is open (via bottomWidgetBar), unhide any hidden
-// strategies, and wait for reportData to populate, so the strategy read tools
-// work even when the panel started closed or the strategy was hidden.
-// Returns { status, unhidden } — unhidden lists strategies made visible.
-async function ensureStrategyTesterReady(maxWaitMs = 6000) {
+// TradingView will not compute a strategy report at all until the Strategy
+// Tester panel has been opened, and never computes one for a HIDDEN strategy
+// (crossed-out eye in the legend) — a hidden strategy is indistinguishable from
+// "panel never opened". Both are preconditions for a report EXISTING.
+//
+// They are not a substitute for waiting for it to be CURRENT. The 6s poll that
+// used to live here accepted the first report with a non-null `performance`,
+// which after any chart mutation is the previous window's book — measured
+// 2026-09-10, a complete and plausible stale book survives a resolution change
+// by 0.3s to 7.5s with no error of any kind. Waiting is now awaitSettled's job
+// (src/settle.js). This function only makes a report possible; it never decides
+// that one is ready.
+//
+// One shot, no polling. Returns { unhidden, since } — `since` is captured
+// BEFORE the unhide, because unhiding triggers a recompute and the gate must be
+// able to tell the resulting report apart from the one that was already there.
+async function ensureReportPossible() {
+  const since = await captureReportState();
   const unhidden = await evaluate(`
     (function() {
       ${FIND_STRATEGY_JS}
@@ -251,162 +311,180 @@ async function ensureStrategyTesterReady(maxWaitMs = 6000) {
       return unhideStrategies();
     })()
   `);
-  const deadline = Date.now() + maxWaitMs;
-  let status = 'timeout';
-  while (Date.now() < deadline) {
-    const ready = await evaluate(`
-      (function() {
-        ${FIND_STRATEGY_JS}
-        var f = findStrategy();
-        if (!f) return 'no-strategy';
-        return f.report && f.report.performance ? 'ready' : 'pending';
-      })()
-    `);
-    if (ready === 'ready' || ready === 'no-strategy') {
-      status = ready;
-      break;
-    }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  return { status, unhidden: unhidden || [] };
+  return {
+    unhidden: unhidden || [],
+    // Only meaningful as a regeneration baseline if something actually changed.
+    // A bare read has no mutation to prove happened, so passing `since` there
+    // would demand a teardown that is never coming.
+    since: unhidden && unhidden.length ? since : null,
+  };
 }
 
-export async function getStrategyResults() {
-  const ready = await ensureStrategyTesterReady();
-  const results = await evaluate(`
-    (function() {
-      ${FIND_STRATEGY_JS}
-      try {
-        var found = findStrategy();
-        if (!found) return {metrics: {}, source: 'internal_api', error: 'No strategy found on chart. Add a strategy first (e.g. indicator_add with a "... Strategy" script).'};
-        var rd = found.report;
-        if (!rd || !rd.performance) return {metrics: {}, source: 'internal_api', error: 'Strategy report not computed yet. Retry in a few seconds; if it persists, check the Strategy Tester panel is open (ui_open_panel strategy-tester) and the strategy is not hidden on the chart.'};
-        var perf = rd.performance;
-        var all = perf.all || {};
-        // Headline metrics, named to match the Strategy Tester "Key stats".
-        var metrics = {
-          net_profit: all.netProfit,
-          net_profit_percent: all.netProfitPercent,
-          gross_profit: all.grossProfit,
-          gross_loss: all.grossLoss,
-          profit_factor: all.profitFactor,
-          max_drawdown: perf.maxStrategyDrawDown,
-          max_drawdown_percent: perf.maxStrategyDrawDownPercent,
-          total_trades: (all.numberOfWiningTrades || 0) + (all.numberOfLosingTrades || 0),
-          winning_trades: all.numberOfWiningTrades,
-          losing_trades: all.numberOfLosingTrades,
-          percent_profitable: all.percentProfitable,
-          avg_trade: all.avgTrade,
-          largest_win: all.largestWinTrade,
-          largest_loss: all.largestLosTrade,
-          commission_paid: all.commissionPaid,
-          sharpe_ratio: perf.sharpeRatio,
-          sortino_ratio: perf.sortinoRatio,
-          buy_hold_return: perf.buyHoldReturn,
-          open_pl: perf.openPL
-        };
-        var clean = {};
-        for (var k in metrics) { if (metrics[k] !== null && metrics[k] !== undefined) clean[k] = metrics[k]; }
-        var currency = rd.currency || null;
-        return {metrics: clean, currency: currency, strategy: found.name, source: 'internal_api'};
-      } catch(e) { return {metrics: {}, source: 'internal_api', error: e.message}; }
-    })()
-  `);
+/**
+ * Shared failure envelope for the three strategy readers.
+ *
+ * These tools used to return a stale book as `success: true`. They now fail
+ * loudly instead, carrying the settle outcome so the caller can tell "still
+ * computing" from "will never compute".
+ */
+function reportFailure(r, extra = {}) {
   return {
-    success: Object.keys(results?.metrics || {}).length > 0,
-    metric_count: Object.keys(results?.metrics || {}).length,
-    strategy: results?.strategy,
-    currency: results?.currency,
-    source: results?.source,
-    metrics: results?.metrics || {},
-    ...(ready.unhidden.length && {
-      unhidden_strategies: ready.unhidden,
-      note: 'Strategy was hidden on the chart; it was made visible so the report could compute.',
+    success: false,
+    source: 'internal_api',
+    reason: r.reason,
+    error: r.error,
+    ...(r.settle && {
+      settle: {
+        outcome: r.settle.outcome,
+        elapsed_ms: r.settle.elapsed_ms,
+        ...(r.settle.errored_studies && { errored_studies: r.settle.errored_studies }),
+        ...(r.settle.pending_studies && { pending_studies: r.settle.pending_studies }),
+        ...(r.settle.stuck_studies && { stuck_studies: r.settle.stuck_studies }),
+      },
     }),
-    error: results?.error,
+    ...extra,
+  };
+}
+
+const unhiddenNote = (unhidden, what) =>
+  unhidden.length
+    ? {
+        unhidden_strategies: unhidden,
+        note: `Strategy was hidden on the chart; it was made visible so ${what} could compute.`,
+      }
+    : {};
+
+export async function getStrategyResults() {
+  const { unhidden, since } = await ensureReportPossible();
+  const r = await readStrategyReport({ since });
+  if (!r.ok)
+    return reportFailure(r, {
+      metric_count: 0,
+      metrics: {},
+      ...unhiddenNote(unhidden, 'the report'),
+    });
+
+  const p = r.performance;
+  // Legacy key names preserved deliberately: this is a correctness patch, not a
+  // contract change. The envelope is reshaped in a later stage, not here.
+  const metrics = {
+    net_profit: p.net_profit,
+    net_profit_percent: p.net_profit_pct,
+    gross_profit: p.gross_profit,
+    gross_loss: p.gross_loss,
+    profit_factor: p.profit_factor,
+    max_drawdown: p.max_drawdown,
+    max_drawdown_percent: p.max_drawdown_pct,
+    total_trades: p.total_trades,
+    winning_trades: p.winning_trades,
+    losing_trades: p.losing_trades,
+    percent_profitable: p.percent_profitable,
+    avg_trade: p.avg_trade,
+    largest_win: p.largest_win,
+    largest_loss: p.largest_loss,
+    commission_paid: p.commission_paid,
+    sharpe_ratio: p.sharpe_ratio,
+    sortino_ratio: p.sortino_ratio,
+    buy_hold_return: p.buy_hold_return,
+    open_pl: p.open_pl,
+  };
+  const clean = {};
+  for (const k of Object.keys(metrics))
+    if (metrics[k] !== null && metrics[k] !== undefined) clean[k] = metrics[k];
+
+  return {
+    success: Object.keys(clean).length > 0,
+    metric_count: Object.keys(clean).length,
+    strategy: r.title,
+    entity_id: r.entity_id,
+    currency: p.currency,
+    source: 'internal_api',
+    metrics: clean,
+    // Provenance of the numbers above: which report they came from, how long
+    // the barrier held, and whether the arithmetic still reconciles.
+    provenance: {
+      report_gen: r.report_gen,
+      settle_ms: r.settle_ms,
+      window: r.window,
+      reconciliation: r.reconciliation,
+      ...(r.read_consistency?.unstable && { unstable: true }),
+    },
+    ...unhiddenNote(unhidden, 'the report'),
   };
 }
 
 export async function getTrades({ max_trades } = {}) {
   const limit = Math.min(max_trades || 20, MAX_TRADES);
-  const ready = await ensureStrategyTesterReady();
-  const trades = await evaluate(`
-    (function() {
-      ${FIND_STRATEGY_JS}
-      try {
-        var found = findStrategy();
-        if (!found) return {trades: [], source: 'internal_api', error: 'No strategy found on chart.'};
-        var strat = found.strat;
-        var orders = strat.ordersData(); if (orders && typeof orders.value === 'function') orders = orders.value();
-        if (!orders || !Array.isArray(orders)) return {trades: [], source: 'internal_api', total_orders: 0, error: 'Strategy orders not computed yet. Open the Strategy Tester panel (ui_open_panel strategy-tester) and retry.'};
-        var total = orders.length;
-        // Return the most RECENT orders (tail) — that's what a trader wants to see.
-        var start = Math.max(0, total - ${limit});
-        var result = [];
-        for (var t = start; t < total; t++) {
-          var o = orders[t];
-          if (typeof o === 'object' && o !== null) {
-            // Map TradingView's terse order keys to readable names.
-            result.push({
-              id: o.id,
-              type: o.tp,
-              side: o.b ? 'buy' : 'sell',
-              entry: o.e,
-              price: o.p,
-              qty: o.q,
-              time_index: o.tm
-            });
-          }
-        }
-        return {trades: result, total_orders: total, source: 'internal_api'};
-      } catch(e) { return {trades: [], source: 'internal_api', error: e.message}; }
-    })()
-  `);
+  const { unhidden, since } = await ensureReportPossible();
+  const r = await readStrategyReport({ since, includeOrders: true });
+  if (!r.ok)
+    return reportFailure(r, {
+      trade_count: 0,
+      total_orders: 0,
+      trades: [],
+      ...unhiddenNote(unhidden, 'orders'),
+    });
+
+  // Verified 2026-09-10: ordersData() and reportData().filledOrders are the
+  // same array object, so this returns exactly what the old direct read did.
+  const all = r.orders || [];
+  const tail = all.slice(Math.max(0, all.length - limit));
   return {
-    success: (trades?.trades?.length || 0) > 0,
-    trade_count: trades?.trades?.length || 0,
-    total_orders: trades?.total_orders ?? 0,
-    source: trades?.source,
-    trades: trades?.trades || [],
-    ...(ready.unhidden.length && {
-      unhidden_strategies: ready.unhidden,
-      note: 'Strategy was hidden on the chart; it was made visible so orders could compute.',
-    }),
-    error: trades?.error,
+    success: tail.length > 0,
+    trade_count: tail.length,
+    total_orders: all.length,
+    source: 'internal_api',
+    trades: tail.map((o) => ({
+      id: o.id,
+      type: o.order_type,
+      side: o.side,
+      entry: o.is_entry,
+      price: o.price,
+      qty: o.qty,
+      time_index: o.bar_seq,
+      // The order tag was being dropped. It is the metadata channel — feature
+      // vectors encoded at entry come back here — so it is carried now.
+      tag: o.tag,
+    })),
+    provenance: {
+      report_gen: r.report_gen,
+      settle_ms: r.settle_ms,
+      window: r.window,
+      reconciliation: r.reconciliation,
+    },
+    ...unhiddenNote(unhidden, 'orders'),
   };
 }
 
 export async function getEquity() {
-  const ready = await ensureStrategyTesterReady();
-  const equity = await evaluate(`
-    (function() {
-      ${FIND_STRATEGY_JS}
-      try {
-        var found = findStrategy();
-        if (!found) return {data: [], source: 'internal_api', error: 'No strategy found on chart.'};
-        var rd = found.report;
-        if (!rd) return {data: [], source: 'internal_api', error: 'Strategy report not computed yet. Open the Strategy Tester panel and retry.'};
-        // buyHold is the per-bar account curve; the equity curve is built from
-        // filledOrders' cumulative P&L in reportData.
-        var curve = rd.equity || rd.equityChart || null;
-        if (Array.isArray(curve)) return {data: curve, source: 'internal_api'};
-        if (Array.isArray(rd.buyHold)) {
-          return {data: [], buy_hold_points: rd.buyHold.length, source: 'internal_api',
-                  note: 'Per-bar equity curve not exposed directly; buyHold baseline has ' + rd.buyHold.length + ' points. Use data_get_strategy_results for summary P&L.'};
-        }
-        return {data: [], source: 'internal_api', note: 'Equity curve not available via API; use data_get_strategy_results.'};
-      } catch(e) { return {data: [], source: 'internal_api', error: e.message}; }
-    })()
-  `);
+  const { unhidden, since } = await ensureReportPossible();
+  const r = await readStrategyReport({ since, includeEquity: true });
+  if (!r.ok)
+    return reportFailure(r, {
+      data_points: 0,
+      data: [],
+      ...unhiddenNote(unhidden, 'the equity curve'),
+    });
+
+  // `reportData.equity` and `.equityChart` do not exist and never did — verified
+  // absent 2026-09-10. The old code read for them first and always fell through
+  // to a note, so this tool has never returned a curve. What does exist is the
+  // running cumulative P&L on each trade row, which is a real per-trade curve.
+  const eq = r.equity || { points: [] };
   return {
-    success: (equity?.data?.length || 0) > 0,
-    data_points: equity?.data?.length || 0,
-    source: equity?.source,
-    data: equity?.data || [],
-    buy_hold_points: equity?.buy_hold_points,
-    note: equity?.note,
-    ...(ready.unhidden.length && { unhidden_strategies: ready.unhidden }),
-    error: equity?.error,
+    success: eq.points.length > 0,
+    data_points: eq.points.length,
+    source: 'internal_api',
+    basis: eq.basis,
+    per_bar_available: eq.per_bar_available,
+    data: eq.points,
+    note: 'Per closed trade, not per bar. TradingView does not expose a per-bar account curve through reportData; buy_hold on each point is its aligned baseline (based at 100).',
+    provenance: {
+      report_gen: r.report_gen,
+      settle_ms: r.settle_ms,
+      window: r.window,
+    },
+    ...unhiddenNote(unhidden, 'the equity curve'),
   };
 }
 
@@ -447,6 +525,8 @@ async function _getQuoteInternal({ symbol } = {}) {
   }
 
   try {
+    const gate = await requireSettled({ scope: 'all', requireSeries: true });
+    if (!gate.ok) return gate;
     const data = await evaluate(`
       (function() {
         var api = ${CHART_API};
@@ -554,7 +634,9 @@ export async function getDepth() {
   };
 }
 
-export async function getStudyValues() {
+export async function getStudyValues({ wait } = {}) {
+  const gate = await gateRead({ wait });
+  if (!gate.ok) return gate;
   const data = await evaluate(`
     (function() {
       var chart = window.TradingViewApi._activeChartWidgetWV.value()._chartWidget;
@@ -593,14 +675,23 @@ export async function getStudyValues() {
       return results;
     })()
   `);
-  return { success: true, study_count: data?.length || 0, studies: data || [] };
+  return {
+    success: true,
+    study_count: data?.length || 0,
+    studies: data || [],
+    ...(gate.unsettled_by_request
+      ? { settled: false, note: gate.note }
+      : { settled: true, settle_ms: gate.settle.elapsed_ms }),
+  };
 }
 
-export async function getPineLines({ study_filter, verbose } = {}) {
+export async function getPineLines({ study_filter, verbose, wait } = {}) {
+  const gate = await gateRead({ wait });
+  if (!gate.ok) return gate;
   const filter = study_filter || '';
   const raw = await evaluate(buildGraphicsJS('dwglines', 'lines', filter));
   if (!raw || raw.length === 0)
-    return { success: true, study_count: 0, studies: [] };
+    return { success: true, study_count: 0, studies: [], ...settleNote(gate) };
 
   const studies = raw.map((s) => {
     const hLevels = [];
@@ -636,18 +727,21 @@ export async function getPineLines({ study_filter, verbose } = {}) {
     if (verbose) result.all_lines = allLines;
     return result;
   });
-  return { success: true, study_count: studies.length, studies };
+  return { success: true, study_count: studies.length, studies, ...settleNote(gate) };
 }
 
 export async function getPineLabels({
   study_filter,
   max_labels,
   verbose,
+  wait,
 } = {}) {
+  const gate = await gateRead({ wait });
+  if (!gate.ok) return gate;
   const filter = study_filter || '';
   const raw = await evaluate(buildGraphicsJS('dwglabels', 'labels', filter));
   if (!raw || raw.length === 0)
-    return { success: true, study_count: 0, studies: [] };
+    return { success: true, study_count: 0, studies: [], ...settleNote(gate) };
 
   const limit = max_labels || 50;
   const studies = raw.map((s) => {
@@ -678,16 +772,18 @@ export async function getPineLabels({
       labels,
     };
   });
-  return { success: true, study_count: studies.length, studies };
+  return { success: true, study_count: studies.length, studies, ...settleNote(gate) };
 }
 
-export async function getPineTables({ study_filter } = {}) {
+export async function getPineTables({ study_filter, wait } = {}) {
+  const gate = await gateRead({ wait });
+  if (!gate.ok) return gate;
   const filter = study_filter || '';
   const raw = await evaluate(
     buildGraphicsJS('dwgtablecells', 'tableCells', filter),
   );
   if (!raw || raw.length === 0)
-    return { success: true, study_count: 0, studies: [] };
+    return { success: true, study_count: 0, studies: [], ...settleNote(gate) };
 
   const studies = raw.map((s) => {
     const tables = {};
@@ -718,14 +814,16 @@ export async function getPineTables({ study_filter } = {}) {
     });
     return { name: s.name, tables: tableList };
   });
-  return { success: true, study_count: studies.length, studies };
+  return { success: true, study_count: studies.length, studies, ...settleNote(gate) };
 }
 
-export async function getPineBoxes({ study_filter, verbose } = {}) {
+export async function getPineBoxes({ study_filter, verbose, wait } = {}) {
+  const gate = await gateRead({ wait });
+  if (!gate.ok) return gate;
   const filter = study_filter || '';
   const raw = await evaluate(buildGraphicsJS('dwgboxes', 'boxes', filter));
   if (!raw || raw.length === 0)
-    return { success: true, study_count: 0, studies: [] };
+    return { success: true, study_count: 0, studies: [], ...settleNote(gate) };
 
   const studies = raw.map((s) => {
     const zones = [];
@@ -760,5 +858,5 @@ export async function getPineBoxes({ study_filter, verbose } = {}) {
     if (verbose) result.all_boxes = allBoxes;
     return result;
   });
-  return { success: true, study_count: studies.length, studies };
+  return { success: true, study_count: studies.length, studies, ...settleNote(gate) };
 }

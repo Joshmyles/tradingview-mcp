@@ -24,6 +24,42 @@ scraping path — but it will not survive a runtime refactor.
 
 ---
 
+## More than one page context per chart
+
+`/json/list` reports several TradingView pages, and only one of them is the
+chart. Measured 2026-09-10 on a two-layout session:
+
+| target | layout | visibility | viewport | symbol | resolution |
+| --- | --- | --- | --- | --- | --- |
+| `09EBFD9A` | R7HDoRZ2 | **visible** | 1920x1046 | ICMARKETS:XAUUSD | 45S |
+| `962BE3C0` | R7HDoRZ2 | hidden | 500x318 | ICMARKETS:XAUUSD | 45S |
+| `67BD8A45` | bzMBAknq | hidden | 500x318 | OANDA:XAGUSD | 2 |
+| `8AF118B4` | bzMBAknq | hidden | 500x318 | ICMARKETS:XAUUSD | 5 |
+
+The hidden three are the desktop app's layout preview renderers. They are not
+stubs. Each carries a complete `window.TradingViewApi`, its own chart model,
+its own symbol and resolution, its own `dataSources()`, and — for the duplicate
+of the working layout — the same study ids. **Every path in this document
+resolves on them and returns a plausible, wrong answer.**
+
+`/json/list` carries no visibility field and its ordering is not guaranteed, so
+a target chosen by URL match alone is chosen at random from that table. A
+mutation applied to a preview and a read taken from the real chart is
+indistinguishable from exactly the staleness this whole barrier exists to
+catch.
+
+The discriminator is in-page and unambiguous: exactly one context reports
+`document.visibilityState === 'visible'`. `connection.js` probes candidates and
+refuses to attach to anything else, then pins the choice so a reconnect cannot
+re-roll it. The pinned id is carried on the state fence, and a read whose
+context differs from the fence's is refused as `target_changed`.
+
+This one is worth internalising before trusting any other measurement here.
+While it was unknown, a chart reading `bars().size() === 0` with no error on
+any channel looked exactly like a wedged chart, and an entire probe of the
+series event bus recorded zero fires and was very nearly written up as "the
+events do not fire".
+
 ## Two objects per study, and they disagree
 
 A study is represented twice, and the two representations do not agree about
@@ -108,11 +144,86 @@ The two status enums are unrelated. Do not compare a series status to
 `false` on a fully settled chart, because it compares the requested symbol
 (`XAUUSD`) against the resolved one (`ICMARKETS:XAUUSD`).
 
-The usable predicate is `isLoading() === false && bars().size() > 0`, with
-`seriesErrorMessage()` and `unsupportedResolutionState()` as terminal
+`seriesErrorMessage()` and `unsupportedResolutionState()` are the terminal
 conditions. Both are `null` when healthy. A resolution the feed cannot serve
 leaves the chart loading indefinitely while looking completely normal, so it
 must be reported as an error and not as slowness.
+
+`seriesLoaded()` is not a readiness signal either: it is **false** on a fully
+settled chart.
+
+#### There is no instantaneous readiness predicate for the series
+
+`isLoading() === false && bars().size() > 0` looks like one and is not.
+Measured 2026-09-10 across a 45S->30S change, sampled in-page at 20ms:
+
+```
+   0-525ms   isLoading() false   status() 3   bars().size() 310   <- ALL STALE
+     525ms   dataEvents().loading fires
+     527ms   dataEvents().cleared fires        bars().size() -> 0
+     546ms   dataEvents().completed fires      bars().size() -> 300
+```
+
+For the first half-second every signal reads exactly as it does when settled,
+while `bars()` still holds the PREVIOUS resolution's book. The predicate is
+satisfied by stale data.
+
+Stabilisation does not fix it. `bars().size()` does not climb progressively —
+it steps stale -> 0 -> final in about 7ms — so a "wait for the count to hold
+still" check stabilises on the stale value and latches early.
+
+Neither does bar count as a fingerprint: on the measured pair of changes the
+count went 300 -> 300, identical across a genuine rebuild.
+
+#### `dataEvents()` is the signal
+
+`mainSeries().dataEvents()` is a subscribable event bus. Verified firing
+2026-09-10 on the visible chart, once per resolution change:
+
+| event | meaning |
+| --- | --- |
+| `modified` | the mutation registered |
+| `loading` | teardown begins |
+| `cleared` | `bars()` emptied |
+| `completed` | new book in place, `isLoading()` false |
+
+Counting fires gives the series the same barrier the strategy report has: a
+generation number plus positive teardown evidence, neither of which a poll can
+miss. `awaitSettled` requires `completed` to have advanced past the fence AND a
+`loading`/`cleared` to have been counted.
+
+`dataUpdated` fires continuously on a live chart (43 fires in 22 seconds) and
+is evidence of nothing. `barReceived` is a new-bar tick, not a rebuild.
+
+The counters are only required when the mutation could actually have rebuilt
+the series. Unhiding a study bumps the report and leaves the series untouched,
+so demanding a series edge for one waits forever; the fence records which kind
+of mutation it came from.
+
+> An earlier run of this probe recorded **zero fires for every event** and
+> nearly became a finding. That run was reading a hidden preview context. See
+> "More than one page context per chart".
+
+#### Two `status()` methods, overlapping values, opposite meanings
+
+| | study | series |
+| --- | --- | --- |
+| `status()` = 2 | ready | loading |
+| `status()` = 3 | error | ready |
+
+Both objects sit side by side in `dataSources()`. Because a number cannot
+carry which object it came from, neither enum is exported from
+`src/internals/`: `readiness.js` exports kind-checked predicates
+(`isStudyReady`, `isStudyErrored`, `isSeriesErrored`, `seriesRebuilt`) and every
+one of them throws if handed a row of the wrong kind. Snapshot rows carry a
+`kind` tag for that purpose. Diagnostics returned to callers carry a word
+(`ready`, `loading`, `error`, `no_data`), never the raw number.
+
+The same reasoning applies to error reporting. `errorMessage()` returns `null`
+on a study that is definitively errored while `status().errorDescription`
+carries the reason, so the obvious simplification — read `errorMessage`, drop
+the rest — silently discards every error there is. The snapshot does not
+collect `errorMessage()` at all, and `studyErrorReason()` is the only accessor.
 
 ---
 
@@ -266,6 +377,33 @@ running cumulative P&L, with `buyHold` (length = trades + 1, based at 100) as it
 aligned baseline. TradingView does not expose a per-bar account curve through
 this object. Anything presented as one is inferred, and should say so.
 
+#### Never compare a trade-indexed curve to `maxStrategyDrawDown`
+
+`performance.all.maxStrategyDrawDown` comes from TradingView's own curve, which
+is per bar and includes open positions. The reconstruction here is indexed by
+closed trade and cannot see intra-trade depth at all. The two will not match,
+and the difference is not an error in either — they are drawdowns of different
+series. A reconciliation written against that expectation would be chasing a
+discrepancy that is definitionally there.
+
+#### Queued: a per-bar mark-to-market curve
+
+The reconstruction that would close this properly is a per-bar equity curve
+built from `filledOrders` position state joined against OHLCV: carry the
+running position through each bar, mark it at the bar's close, and add realised
+P&L as it lands.
+
+That yields Sharpe, Sortino and maximum drawdown computed by a method that is
+**written down, reproducible across builds, and comparable against live fills**
+once the execution service exists.
+
+This is not a tooling nicety. The acceptance bar for this programme includes
+Sharpe >= 2.3, and the only Sharpe currently available is TradingView's,
+computed by an uninspectable method from a curve that cannot be read. That
+criterion is resting on a black box until this exists.
+
+Not built here. Recorded so it is a known gap rather than an assumption.
+
 ### Reconciliation — 105 trades vs 198 fills
 
 ```
@@ -411,6 +549,54 @@ own fingerprint against the one the latch observed and re-reading if it moved
 
 ---
 
+## The state fence
+
+A generation bump proves *a* rebuild happened. It does not prove the rebuild
+was the one asked for, on the chart it was asked for, under the configuration
+that was set. Those are separate questions and they fail apart: a rebuild
+triggered by a passing bar clears the first and none of the others.
+
+`captureFence()` snapshots, before the mutation: the CDP target identity, the
+symbol and resolution, the per-strategy report generation and fingerprint, the
+series event counts, and a per-strategy **input hash**. `checkFence()` compares
+a read against it.
+
+A fence also records what the mutation is *allowed* to change
+(`expect_series_rebuild`, `expect_inputs_change`, `expect_report_rebuild`).
+Declaring nothing makes it a pure drift baseline that requires no rebuild — an
+early version conflated the two and a clean read against an untouched chart
+waited the full 90-second timeout for a regeneration nobody had triggered.
+
+### The input hash covers 353 of 361 entries
+
+`getInputValues()` returns 361 entries on the reference strategy and 8 of them
+are not settings. Hashing the array whole produced a **different hash every
+time** — measured `b6faec59` -> `1eeb640f` -> `387a93cf` across two recomputes —
+because `first_visible_bar_time` and `last_visible_bar_time` track the
+viewport. A fence built on that reports the configuration as drifting whenever
+the chart scrolls.
+
+Excluded, all host or view state rather than strategy configuration:
+`text` (the 199KB encrypted Pine source; stable, but `pineVersion` identifies
+the script far more cheaply), `pineFeatures`, `__chart_bgcolor`,
+`__chart_fgcolor`, `__log_level`, `first_visible_bar_time`,
+`last_visible_bar_time`, `__profile`.
+
+Allowlisted (`in_<N>`, `pineId`, `pineVersion`) rather than denylisted: a new
+volatile host field added by a TradingView update silently rejoins a denylist
+and breaks the fence, whereas it simply stays out of an allowlist. The
+remaining 353 entries hashed to `d4aa3b87` before, during and after two full
+recomputes.
+
+An input write that did not land is caught in one round trip rather than at the
+end of the settle timeout: if the hash has not moved, no new report is coming,
+and the current one describes the old settings. Measured 33ms against 90s.
+
+> `in_<N>` above is a literal `in_` followed by digits. The pattern is written
+> `[0-9]` and not the shorter character class, because the snippet lives in a
+> template literal where an unknown escape silently loses its backslash — the
+> first version emitted `/^in_d+$/` into the page and matched 2 entries of 361.
+
 ## Falsification record
 
 The disproved models, kept beside the proved ones. A conclusion without its
@@ -429,6 +615,13 @@ being re-argued.
 | `_seriesId` readiness | `symbolSameAsResolved()` | **rejected** | `false` on a fully settled chart |
 | regeneration | generation bump alone | **rejected** | gen 179 → 182 with byte-identical content |
 | entity ids | churn across an app restart | **rejected** | `xVbiv5` / "B14" survived a full restart unchanged |
+| series readiness | `isLoading() === false && bars().size() > 0` | **rejected** | holds, on stale bars, for the first 525ms after a mutation |
+| series readiness | `seriesLoaded()` | **rejected** | `false` on a fully settled chart |
+| series rebuild | bar count as a fingerprint | **rejected** | 300 -> 300 across a genuine rebuild |
+| series rebuild | bars climb progressively during load | **rejected** | steps stale -> 0 -> final in ~7ms; no ramp to stabilise on |
+| series events | `dataEvents()` never fires | **rejected** | fires `loading`/`cleared`/`completed` once per change; the null result came from a hidden preview context |
+| chart target | URL match identifies the chart | **rejected** | 4 chart pages, 3 of them hidden preview renderers with complete APIs |
+| input hash | hash all of `getInputValues()` | **rejected** | 3 different hashes across 2 recomputes; viewport fields move |
 
 Worked example for the `dd` rejection — trade 0, short: entry 4653.54, exit
 4654.53, gross −0.99, `cm` 0.22, net −1.21, `rn` 1.72, `dd` 4.45. The give-back
@@ -442,9 +635,24 @@ Run these after every TradingView update, in this order. Each one has a number
 attached in the Falsification record above; if a number moves, the semantics
 moved with it.
 
+0. **Attach to the right context.** Confirm exactly one chart page reports
+   `document.visibilityState === 'visible'`, and that it is the one you are
+   looking at. Every check below is meaningless against a preview renderer,
+   and none of them will tell you that is what happened.
+
 0. **Barrier terminal conditions.** Confirm `hasError()` still fires on a broken
    study, and that `status().type === 3` still carries `errorDescription`. A
    barrier that cannot terminate is worse than no barrier.
+
+0. **Series event bus.** Confirm `mainSeries().dataEvents()` still exposes
+   `loading`, `cleared` and `completed`, and that each fires exactly once
+   across a resolution change. If they stop firing, check the context before
+   concluding anything.
+
+0. **Input hash stability.** Confirm the settings hash is unchanged across a
+   resolution change. If it moves, `getInputValues()` has gained a volatile
+   field and the allowlist needs it excluded — do not widen the allowlist to
+   make the check pass.
 
 After every TradingView update, before trusting a single number:
 

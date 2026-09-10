@@ -51,12 +51,20 @@ export function readReportJs(entityIdExpr = 'null') {
       found: true,
       strategy_count: candidates.length,
       entity_id: picked.c.id,
+      /* Chart identity, read in the SAME expression as the report so a fence
+         check compares the chart the report came from, not the chart as it is
+         one round-trip later. */
+      symbol: (function () { try { return __cw.symbol(); } catch (e) { return null; } })(),
+      resolution: (function () { try { return __cw.resolution(); } catch (e) { return null; } })(),
       title: (function () { try { return api.title(); } catch (e) { return null; } })(),
       study_type: st ? st.type : null,
       study_data_length: (function () { try { return api.dataLength(); } catch (e) { return null; } })(),
       report_gen: (window.__tvmcp_gen && window.__tvmcp_gen[picked.c.id] != null)
         ? window.__tvmcp_gen[picked.c.id] : null,
       report_fingerprint: __fingerprint(picked.rd),
+      /* Read in the SAME expression as the report, so the fence check cannot
+         be defeated by the inputs changing between two round-trips. */
+      inputs_hash: __inputsHash(api),
       report: picked.rd || null
     };
   })()`;

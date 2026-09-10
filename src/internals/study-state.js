@@ -37,6 +37,66 @@ export const HELPERS_JS = `
      backtest.to drifts with every new bar on a live chart (measured: +30s
      ticks on a 30S chart), so it is deliberately excluded — including it
      would make a settled report look permanently unstable. */
+  /* Hash of a study's SETTINGS.
+
+     getInputValues() returns 361 entries on the reference strategy, and 8 of
+     them are not settings at all. Measured 2026-09-10 across two full
+     recomputes, hashing the whole array produced a DIFFERENT hash every time
+     (b6faec59 -> 1eeb640f -> 387a93cf) because first_visible_bar_time and
+     last_visible_bar_time track the viewport. A fence built on that would
+     report the configuration as drifting whenever the chart scrolled.
+
+     Excluded, all host or view state rather than strategy configuration:
+       text                    the encrypted Pine source (199KB; stable, but
+                               pineVersion identifies the script far cheaper)
+       pineFeatures            engine capability flags
+       __chart_bgcolor         theme
+       __chart_fgcolor         theme
+       __log_level             logging verbosity
+       first_visible_bar_time  viewport, moves on every scroll
+       last_visible_bar_time   viewport, moves on every bar
+       __profile               profiler toggle
+
+     Allowlisted rather than denylisted: a new volatile host field added by a
+     TradingView update would silently rejoin a denylist and break the fence,
+     whereas it simply stays out of an allowlist. The remaining 353 entries
+     hashed to d4aa3b87 before, during and after two recomputes.
+
+     Hash of a study's input VALUES.
+     Part of a state fence: after writing inputs, a report is only the report
+     you asked for if the inputs it was computed under are the ones you set.
+     TradingView's own input read has been observed returning stale values, so
+     the hash is taken from the study-api object, which is the side that tracks
+     recompute (see paths.js).
+     FNV-1a over the stable JSON of the value array. Order is TradingView's own
+     and is stable within a session; this is a change detector, not an identity
+     that survives a script edit. */
+  function __isSettingInput(x) {
+    /* [0-9] not a backslash-d class: this string is a template literal, and
+       an unknown escape there silently loses its backslash. The intended
+       pattern was emitted into the page as /^in_d+$/ and matched 2 of 361
+       entries instead of 353. */
+    return /^in_[0-9]+$/.test(x.id) || x.id === 'pineId' || x.id === 'pineVersion';
+  }
+  function __inputsHash(api) {
+    if (!api || typeof api.getInputValues !== 'function') return null;
+    var json;
+    try {
+      var vals = api.getInputValues();
+      var settings = [];
+      for (var i = 0; i < vals.length; i++) {
+        if (__isSettingInput(vals[i])) settings.push(vals[i]);
+      }
+      json = JSON.stringify(settings);
+    } catch (e) { return null; }
+    if (json == null) return null;
+    var h = 2166136261;
+    for (var i = 0; i < json.length; i++) {
+      h ^= json.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return ('0000000' + h.toString(16)).slice(-8);
+  }
   function __fingerprint(rd) {
     if (!rd) return null;
     var n = rd.trades ? rd.trades.length : -1;
@@ -75,11 +135,16 @@ export function studyStateJs(entityIdExpr = 'null') {
       var isStrat = __isStrategySource(s);
       var rd = isStrat ? __report(s) : null;
       out.push({
+        /* Tagged so readiness.js can refuse a series row. The two status
+           enums overlap numerically and mean opposite things. */
+        kind: 'study',
         id: id,
         housekeeping: id.indexOf('ESD$TV_') === 0,
         is_visible: (function () { try { return !!api.isVisible(); } catch (e) { return null; } })(),
         title: (function () { try { return api.title(); } catch (e) { return null; } })(),
-        type: st ? st.type : null,
+        /* status().type — a STUDY enum. Named so it cannot be compared to a
+           series status by accident. Interpret only via readiness.js. */
+        status_type: st ? st.type : null,
         is_loading: (function () { try { return !!api.isLoading(); } catch (e) { return null; } })(),
         data_length: (function () { try { return api.dataLength(); } catch (e) { return null; } })(),
         has_error: (function () { try { return !!api.hasError(); } catch (e) { return null; } })(),
@@ -93,7 +158,9 @@ export function studyStateJs(entityIdExpr = 'null') {
         is_strategy: isStrat,
         report_present: !!rd,
         report_fingerprint: __fingerprint(rd),
-        report_gen: (window.__tvmcp_gen && window.__tvmcp_gen[id] != null) ? window.__tvmcp_gen[id] : null
+        report_gen: (window.__tvmcp_gen && window.__tvmcp_gen[id] != null) ? window.__tvmcp_gen[id] : null,
+        inputs_hash: __inputsHash(api),
+        backtest_from: (function () { try { return rd.settings.dateRange.backtest.from; } catch (e) { return null; } })()
       });
     }
     /* The price series, which the loop above cannot reach: it lives in
@@ -104,10 +171,24 @@ export function studyStateJs(entityIdExpr = 'null') {
     var series = null;
     if (ms) {
       series = {
+        kind: 'series',
         is_loading: (function () { try { return !!ms.isLoading(); } catch (e) { return null; } })(),
         bar_count: (function () { try { return ms.bars().size(); } catch (e) { return null; } })(),
-        /* Observational only. This is NOT the study status enum. */
-        status_raw: (function () { try { return ms.status(); } catch (e) { return null; } })(),
+        /* Observational only, and deliberately not used by any predicate:
+           2 = loading, 3 = ready on THIS object, the reverse of a study, and
+           it reads 3 both before a mutation tears the series down and after
+           the rebuild completes. See readiness.js. */
+        series_status_raw: (function () { try { return ms.status(); } catch (e) { return null; } })(),
+        /* Edge counts from dataEvents(). The only signal that separates
+           "has not started reloading" from "has finished reloading". Null
+           when the counters are not installed. */
+        events: (window.__tvmcp_sev && window.__tvmcp_sev.counts)
+          ? { loading: window.__tvmcp_sev.counts.loading,
+              cleared: window.__tvmcp_sev.counts.cleared,
+              completed: window.__tvmcp_sev.counts.completed,
+              error: window.__tvmcp_sev.counts.error,
+              unsupported: window.__tvmcp_sev.counts.unsupportedResolutionRequested }
+          : null,
         error: (function () { try { var v = ms.seriesErrorMessage(); return (v && v.value) ? v.value() : (v || null); } catch (e) { return null; } })(),
         unsupported_resolution: (function () { try { var v = ms.unsupportedResolutionState(); return (v && v.value) ? v.value() : (v || null); } catch (e) { return null; } })(),
         symbol: (function () { try { var si = ms.symbolInfo(); return si ? (si.full_name || si.name) : null; } catch (e) { return null; } })()
@@ -180,7 +261,44 @@ export const INSTALL_GEN_COUNTER_JS = `
       if (!id2) continue;
       fps[id2] = __fingerprint(__report(s2));
     }
-    return { installed: bound, gen: window.__tvmcp_gen, fp: fps };
+
+    /* The price series needs the same treatment for the same reason, and it
+       is not optional: measured 2026-09-10, every instantaneous series signal
+       reads exactly as it does when settled for the first ~525ms after a
+       mutation, while still holding the previous resolution's bars. Counting
+       dataEvents() fires is what closes that window.
+
+       Only edges that mean a rebuild are counted. dataUpdated fires on every
+       tick (43 times in 22s on a live 45S chart) and would count as evidence
+       of nothing. */
+    if (!window.__tvmcp_sev) {
+      var ms2 = null; try { ms2 = __chart.model().mainSeries(); } catch (e) {}
+      if (ms2) {
+        try {
+          var de = ms2.dataEvents();
+          var sev = { counts: {}, subs: [] };
+          var evNames = ['loading', 'cleared', 'completed', 'error',
+                         'unsupportedResolutionRequested'];
+          for (var e2 = 0; e2 < evNames.length; e2++) {
+            (function (n) {
+              var d = de[n]();
+              var h = function () { sev.counts[n] = (sev.counts[n] || 0) + 1; };
+              d.subscribe(null, h);
+              sev.subs.push({ d: d, h: h });
+              sev.counts[n] = 0;
+            })(evNames[e2]);
+          }
+          window.__tvmcp_sev = sev;
+        } catch (e) { /* bus moved; barrier degrades to the weak test */ }
+      }
+    }
+
+    return {
+      installed: bound,
+      gen: window.__tvmcp_gen,
+      fp: fps,
+      events: window.__tvmcp_sev ? window.__tvmcp_sev.counts : null
+    };
   })()`;
 
 /** Remove the generation counters. Used by tests and on CDP reconnect. */
@@ -193,5 +311,13 @@ export const UNINSTALL_GEN_COUNTER_JS = `
     }
     delete window.__tvmcp_gen_subs;
     delete window.__tvmcp_gen;
-    return { removed: removed };
+    var seriesRemoved = 0;
+    if (window.__tvmcp_sev) {
+      var ss = window.__tvmcp_sev.subs || [];
+      for (var i = 0; i < ss.length; i++) {
+        try { ss[i].d.unsubscribe(null, ss[i].h); seriesRemoved++; } catch (e) {}
+      }
+      delete window.__tvmcp_sev;
+    }
+    return { removed: removed, series_events_removed: seriesRemoved };
   })()`;

@@ -66,7 +66,7 @@ export const STUDY_OBJECTS = {
  *   1  loading or recomputing (carries startTime, epoch ms)
  *   2  ready
  */
-export const STUDY_STATUS = {
+const STUDY_STATUS = {
   NO_DATA: 0,
   LOADING: 1,
   READY: 2,
@@ -79,6 +79,33 @@ export const STUDY_STATUS = {
      reason worth reporting. */
   ERROR: 3,
 };
+
+/**
+ * Series status() enum — a DIFFERENT enum on a DIFFERENT object.
+ *
+ * Measured 2026-09-10 across resolution changes: 2 while loading, 3 when ready.
+ * A study reads 2 for ready and 3 for error. Same method name, inverted
+ * meaning, on two objects that sit side by side in dataSources().
+ *
+ * Observational only. Nothing predicates on it, because it fails open: it
+ * reads 3 before a mutation has torn the series down as well as after the
+ * rebuild finished. See readiness.js.
+ */
+const SERIES_STATUS = {
+  LOADING: 2,
+  READY: 3,
+};
+
+/**
+ * Neither enum is exported from this directory.
+ *
+ * They are numerically overlapping and semantically opposed, so any code
+ * holding both can silently apply the wrong one. readiness.js exports typed,
+ * kind-checked predicates instead; those are the only sanctioned reading of
+ * either value. A comment saying "do not mix these up" does not survive a
+ * refactor — an unexported constant does.
+ */
+export const __STATUS_ENUMS_INTERNAL_ONLY = { STUDY_STATUS, SERIES_STATUS };
 
 /**
  * graphicsViewsReady() returns true WHILE the study is still loading.
@@ -116,8 +143,57 @@ export const isHousekeepingStudy = (id) =>
  *     requested symbol to the resolved one, and "XAUUSD" != "ICMARKETS:XAUUSD").
  *     It reads like a readiness signal and is not one.
  *
- * The usable predicate is: isLoading() === false && bars().size() > 0.
+ * There is NO usable instantaneous readiness predicate for the series.
+ * Measured 2026-09-10 across a 45S->30S change, sampling in-page at 20ms:
+ *
+ *      0-525ms   isLoading() false, status() 3, bars().size() 310  <- ALL STALE
+ *    525ms       dataEvents().loading fires
+ *    527ms       dataEvents().cleared fires, bars().size() -> 0
+ *    546ms       dataEvents().completed fires, bars().size() -> 300
+ *
+ * `isLoading() === false && bars().size() > 0` is satisfied throughout the
+ * first half-second by the PREVIOUS resolution's book. bars().size() does not
+ * climb progressively — it steps stale -> 0 -> final in ~7ms — so a
+ * stabilisation check does not close the gap either; it stabilises on the
+ * stale value.
+ *
+ * What closes it is the event bus. See SERIES_EVENTS below.
+ *
  * Terminal errors surface on seriesErrorMessage() and
- * unsupportedResolutionState(), both null when healthy.
+ * unsupportedResolutionState(), both null when healthy. seriesLoaded() is NOT
+ * a readiness signal: it is false on a fully settled chart.
  */
 export const MAIN_SERIES_ID = '_seriesId';
+
+/**
+ * mainSeries().dataEvents() is a subscribable event bus, and it is the only
+ * signal that distinguishes "the series has not started reloading yet" from
+ * "the series has finished reloading".
+ *
+ * Verified firing 2026-09-10 on the visible chart, once per resolution change:
+ *
+ *   modified   the mutation registered
+ *   loading    teardown begins
+ *   cleared    bars() emptied
+ *   completed  new book in place, isLoading() false
+ *
+ * Counting fires gives the series the same barrier the strategy report has: a
+ * generation number plus positive teardown evidence, neither of which a poll
+ * can miss.
+ *
+ * dataUpdated fires continuously on a live chart (43 fires in 22s) and is
+ * useless as a settle signal. barReceived is a new-bar tick, not a rebuild.
+ *
+ * WARNING: an earlier run of this probe recorded ZERO fires for every event.
+ * That measurement was taken against a hidden layout preview context, not the
+ * chart — see targets.js. Re-verify only against a target that reports
+ * document.visibilityState === 'visible'.
+ */
+export const SERIES_EVENTS = {
+  TEARDOWN: ['loading', 'cleared'],
+  COMPLETED: 'completed',
+  ERROR: ['error', 'seriesError', 'symbolError', 'symbolInvalid'],
+  UNSUPPORTED: 'unsupportedResolutionRequested',
+  /* Fires on every tick; never gate on these. */
+  NOISE: ['dataUpdated', 'barReceived'],
+};

@@ -11,9 +11,19 @@
  * Outcomes are deliberately not booleans. A caller must be able to tell
  * "still loading" from "will never load".
  */
-import { evaluate } from './connection.js';
+import { evaluate, getTargetIdentity } from './connection.js';
 import { studyStateJs, INSTALL_GEN_COUNTER_JS } from './internals/study-state.js';
-import { STUDY_STATUS, PATHS } from './internals/paths.js';
+import { PATHS } from './internals/paths.js';
+import {
+  isStudyReady,
+  isStudyLoading,
+  isStudyErrored,
+  studyErrorReason,
+  studyStateLabel,
+  isSeriesErrored,
+  seriesErrorReason,
+  seriesRebuilt,
+} from './internals/readiness.js';
 
 /** Measured worst case on this hardware was 28.4s for a 45S->30S change. */
 export const DEFAULT_TIMEOUT_MS = Number(process.env.TV_SETTLE_TIMEOUT_MS) || 90000;
@@ -30,13 +40,6 @@ export const SETTLE = {
 };
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-/** A study is computed when it is ready, not loading, and actually holds bars. */
-function isComputed(s) {
-  return (
-    s.type === STUDY_STATUS.READY && s.is_loading === false && (s.data_length || 0) > 0
-  );
-}
 
 /**
  * Which studies this call is allowed to block on.
@@ -60,21 +63,29 @@ function selectTargets(studies, scope, entityId) {
  * require that the report was genuinely rebuilt rather than accepting the stale
  * one that outlives the mutation that invalidated it.
  *
- * Returns { gen, fp } — the generation counters AND the current fingerprints.
- * Both are needed: measured 2026-09-10, reportChanged() fired three times with
- * byte-identical content, so a generation bump on its own does not prove a new
- * book. See awaitSettled's teardown check.
+ * Returns { gen, fp, events }:
+ *   gen     per-strategy report generation counters
+ *   fp      per-strategy report fingerprints
+ *   events  price-series rebuild edge counts
+ *
+ * gen and fp are both needed: measured 2026-09-10, reportChanged() fired three
+ * times with byte-identical content, so a generation bump on its own does not
+ * prove a new book. See awaitSettled's teardown check.
+ *
+ * events covers the price series, which has no usable instantaneous readiness
+ * signal at all — every one of them reads "settled" for the first ~525ms after
+ * a mutation while still holding the previous resolution's bars.
  *
  * Installs the counters if they are not present. Safe to call repeatedly.
  */
 export async function captureReportState() {
   try {
     const r = await evaluate(INSTALL_GEN_COUNTER_JS);
-    return { gen: r?.gen || {}, fp: r?.fp || {} };
+    return { gen: r?.gen || {}, fp: r?.fp || {}, events: r?.events || null };
   } catch {
     // Counter unavailable (page reloaded, internals moved). awaitSettled falls
     // back to fingerprint stability, which is weaker but not wrong.
-    return { gen: {}, fp: {} };
+    return { gen: {}, fp: {}, events: null };
   }
 }
 
@@ -100,6 +111,18 @@ export async function captureReportState() {
  *                                        before the mutation. Supplying it
  *                                        upgrades the report gate from "stable"
  *                                        to "demonstrably rebuilt".
+ * @param {boolean} [opts.expectSeriesRebuild]
+ *                                        Whether the mutation could have
+ *                                        rebuilt the PRICE SERIES, as a symbol
+ *                                        or resolution change does. Only then
+ *                                        is `since.events` treated as a
+ *                                        requirement. Unhiding a study bumps
+ *                                        the report and leaves the series
+ *                                        untouched, so demanding series edge
+ *                                        evidence for one waits for something
+ *                                        that is never coming. A fence proves
+ *                                        a rebuild happened; it cannot say a
+ *                                        rebuild was due.
  * @param {number}  [opts.timeoutMs]
  * @param {number}  [opts.stuckMs]
  * @param {number}  [opts.stableReads]    Consecutive identical report
@@ -112,6 +135,7 @@ export async function awaitSettled({
   requireReport = false,
   requireSeries = false,
   since = null,
+  expectSeriesRebuild = false,
   timeoutMs = DEFAULT_TIMEOUT_MS,
   stuckMs = DEFAULT_STUCK_MS,
   stableReads = 2,
@@ -164,20 +188,23 @@ export async function awaitSettled({
     // data provider does not support leaves the chart loading indefinitely
     // while looking perfectly normal, so it must not be reported as slowness.
     if (requireSeries && series) {
-      const seriesFault = series.unsupported_resolution || series.error;
-      if (seriesFault) {
+      if (isSeriesErrored(series)) {
+        const reason = seriesErrorReason(series);
         return {
           outcome: SETTLE.ERRORED,
           elapsed_ms: Date.now() - started,
           polls,
           series,
-          error: series.unsupported_resolution
-            ? 'The data feed does not support the requested resolution for this symbol. The chart will never finish loading it.'
-            : `Price series error: ${series.error}`,
+          error: reason.message,
+          error_kind: reason.kind,
           studies,
         };
       }
-      if (series.is_loading === false && (series.bar_count || 0) > 0) {
+      // seriesRebuilt is only conclusive with a `since`, and a `since` is only
+      // meaningful when the mutation could have rebuilt the series. Without
+      // both it falls back to the instantaneous test, which is documented as
+      // weak rather than silently trusted — see readiness.js.
+      if (seriesRebuilt(series, expectSeriesRebuild ? since : null)) {
         seriesComputedOnce = true;
       }
     }
@@ -201,22 +228,23 @@ export async function awaitSettled({
 
     // --- Terminal: compile error. A study with hasError() never reaches type 2,
     // so without this the barrier hangs forever on the commonest dev case.
-    const errored = targets.filter((s) => s.has_error === true);
+    const errored = targets.filter(isStudyErrored);
     if (errored.length) {
+      const reasons = errored.map(studyErrorReason);
       return {
         outcome: SETTLE.ERRORED,
         elapsed_ms: Date.now() - started,
         polls,
-        errored_studies: errored.map((s) => ({
+        errored_studies: errored.map((s, i) => ({
           id: s.id,
           title: s.title,
-          type: s.type,
-          ...(s.error_description && { detail: s.error_description }),
+          state: studyStateLabel(s),
+          ...(reasons[i] && { detail: reasons[i] }),
         })),
         error:
           // A resolve error is a data problem, not a script problem, and sending
           // the caller to pine_get_errors for one wastes their time.
-          errored.some((s) => s.error_description?.error === 'resolve error')
+          reasons.some((r) => r?.kind === 'data')
             ? 'The chart failed to resolve its data ("resolve error"). This is a data/symbol failure, not a script error — the studies will never compute until the chart re-resolves. Check the symbol is valid and the connection is live.'
             : 'Study has a compile or runtime error and will never finish computing. Read pine_get_errors.',
         studies,
@@ -224,7 +252,7 @@ export async function awaitSettled({
     }
 
     for (const s of targets) {
-      if (isComputed(s)) computedOnce.add(s.id);
+      if (isStudyReady(s)) computedOnce.add(s.id);
       if (requireReport && s.is_strategy) {
         const priorFp = since?.fp?.[s.id];
         if (
@@ -273,6 +301,14 @@ export async function awaitSettled({
         entity_id: entityId,
         report_gated: requireReport,
         series_gated: requireSeries,
+        ...(requireSeries && {
+          // 'proven' means an observed teardown-then-completion edge pair.
+          // 'assumed' means nothing was expected to change and the series was
+          // simply found loaded — correct for a read on a quiet chart, and not
+          // a guarantee that a pending rebuild has finished.
+          series_evidence:
+            expectSeriesRebuild && since?.events ? 'proven' : 'assumed',
+        }),
         ...(requireSeries && { series }),
         studies,
       };
@@ -283,7 +319,7 @@ export async function awaitSettled({
     const stuck = targets.filter(
       (s) =>
         !computedOnce.has(s.id) &&
-        s.type === STUDY_STATUS.LOADING &&
+        isStudyLoading(s) &&
         (s.loading_since_ms || 0) > stuckMs,
     );
     if (stuck.length) {
@@ -324,11 +360,22 @@ export async function awaitSettled({
         pending_studies: pending.map((s) => ({
           id: s.id,
           title: s.title,
-          type: s.type,
+          state: studyStateLabel(s),
           data_length: s.data_length,
         })),
         ...(staleReports.length && { reports_not_regenerated: staleReports }),
-        ...(requireSeries && !seriesComputedOnce && { series_not_ready: series }),
+        ...(requireSeries &&
+          !seriesComputedOnce && {
+            series_not_ready: {
+              ...series,
+              expected_series_rebuild: expectSeriesRebuild,
+              ...(expectSeriesRebuild &&
+                since?.events && {
+                  prior_events: since.events,
+                  note: 'The series gate was armed with a fence and no rebuild edge arrived. Either the mutation did not touch the price series, or it has not started.',
+                }),
+            },
+          }),
         error: `Timed out after ${timeoutMs}ms. Studies are still computing — any read taken now describes the previous chart state. Raise TV_SETTLE_TIMEOUT_MS or retry.`,
         studies,
       };
@@ -354,9 +401,14 @@ export const isSettled = (r) => r?.outcome === SETTLE.SETTLED;
  * it is the live chart edge and advances on every bar, so it can never be part
  * of an identity.
  */
-export async function captureFence() {
+export async function captureFence({
+  seriesAffecting = false,
+  inputsAffecting = false,
+  reportAffecting = false,
+} = {}) {
   const report = await captureReportState();
   let chart = {};
+  let strategies = {};
   try {
     chart = await evaluate(`
       (function() {
@@ -369,12 +421,120 @@ export async function captureFence() {
   } catch {
     chart = {};
   }
+  try {
+    const snap = await evaluate(studyStateJs('null'));
+    for (const st of snap?.studies || []) {
+      if (!st.is_strategy) continue;
+      strategies[st.id] = {
+        inputs_hash: st.inputs_hash ?? null,
+        backtest_from: st.backtest_from ?? null,
+      };
+    }
+  } catch {
+    strategies = {};
+  }
   return {
     symbol: chart?.symbol ?? null,
     resolution: chart?.resolution ?? null,
     report,
+    strategies,
+    // Carried on the fence so a caller handing it back gets the right gate
+    // without having to remember what kind of mutation produced it.
+    expect_series_rebuild: seriesAffecting,
+    expect_inputs_change: inputsAffecting,
+    // Whether a REGENERATION is owed at all.
+    //
+    // A fence has two jobs that were initially conflated: proving a rebuild
+    // happened, and detecting drift that should not have happened. Only the
+    // first needs a mutation. A fence taken purely as a drift baseline that
+    // demanded a regeneration would wait forever for one nobody triggered —
+    // measured: a clean read timed out at 90s against an untouched chart.
+    expect_report_rebuild: reportAffecting || seriesAffecting || inputsAffecting,
+    target: getTargetIdentity(),
     at: Date.now(),
   };
+}
+
+/**
+ * Check a read against the fence taken before the mutation.
+ *
+ * The generation gate answers "was the report rebuilt". This answers the
+ * separate question "was it rebuilt for the state I set, on the chart I set it
+ * on". They fail differently: a rebuild triggered by a passing bar satisfies
+ * the first and not the second.
+ *
+ * Returns null when the read is consistent with the fence, otherwise
+ * { code, message, ...evidence }.
+ *
+ * Declaring nothing means the mutation must leave the chart identity and the
+ * strategy configuration alone: the fence then asserts stability and requires
+ * no rebuild.
+ *
+ * `backtest_from` is deliberately NOT a hard check. On a seconds chart the
+ * backtest window is a rolling cap that slides as bars arrive, so equality
+ * would fail on a chart that had done nothing wrong. A caller that genuinely
+ * set a window asserts it with expectWindow, which is exact.
+ */
+export function checkFence(fence, observed) {
+  if (!fence) return null;
+
+  const fenceTarget = fence.target?.target_id ?? null;
+  if (fenceTarget && observed.target_id && fenceTarget !== observed.target_id) {
+    return {
+      code: 'target_changed',
+      message:
+        'This read came from a different TradingView page context than the mutation was applied to. TradingView Desktop runs hidden preview renderers alongside the real chart, each with its own symbol and studies, so the two are not comparable. See internals/targets.js.',
+      fence_target: fenceTarget,
+      observed_target: observed.target_id,
+    };
+  }
+
+  if (!fence.expect_series_rebuild) {
+    if (fence.symbol && observed.symbol && fence.symbol !== observed.symbol) {
+      return {
+        code: 'chart_drifted',
+        message: `The chart symbol changed from ${fence.symbol} to ${observed.symbol} between the mutation and this read. Something else moved the chart.`,
+        fence_symbol: fence.symbol,
+        observed_symbol: observed.symbol,
+      };
+    }
+    if (
+      fence.resolution &&
+      observed.resolution &&
+      fence.resolution !== observed.resolution
+    ) {
+      return {
+        code: 'chart_drifted',
+        message: `The chart resolution changed from ${fence.resolution} to ${observed.resolution} between the mutation and this read. Something else moved the chart.`,
+        fence_resolution: fence.resolution,
+        observed_resolution: observed.resolution,
+      };
+    }
+  }
+
+  const priorInputs = fence.strategies?.[observed.entity_id]?.inputs_hash ?? null;
+  const nowInputs = observed.inputs_hash ?? null;
+  if (priorInputs != null && nowInputs != null) {
+    if (fence.expect_inputs_change && priorInputs === nowInputs) {
+      return {
+        code: 'inputs_not_applied',
+        message:
+          'The strategy inputs are unchanged from before the write, so the report describes the OLD settings. The input write did not land.',
+        inputs_hash: nowInputs,
+      };
+    }
+    if (!fence.expect_inputs_change && priorInputs !== nowInputs) {
+      return {
+        code: 'inputs_drifted',
+        message:
+          'The strategy inputs changed between the mutation and this read. The report does not describe the configuration that was fenced.',
+        fence_inputs_hash: priorInputs,
+        observed_inputs_hash: nowInputs,
+      };
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -383,9 +543,22 @@ export async function captureFence() {
  * Reads of computed data call this; mutations do not. The hazard being defended
  * against is a read that describes the previous chart state, and that hazard
  * exists at the moment of reading, not at the moment of mutating.
+ *
+ * Pass `fence` (from captureFence) to upgrade the gate from "the chart looks
+ * settled" to "the chart was demonstrably rebuilt since that fence". The fence
+ * carries its own knowledge of whether a series rebuild was due.
  */
 export async function requireSettled(opts = {}) {
-  const settle = await awaitSettled(opts);
+  const { fence, ...rest } = opts;
+  const settle = await awaitSettled(
+    fence
+      ? {
+          ...rest,
+          since: fence.report,
+          expectSeriesRebuild: fence.expect_series_rebuild === true,
+        }
+      : rest,
+  );
   if (settle.outcome === SETTLE.SETTLED) return { ok: true, settle };
   return {
     ok: false,

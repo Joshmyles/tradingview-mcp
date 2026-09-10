@@ -5,8 +5,8 @@
  * a book it cannot prove is current, because the failure it exists to prevent
  * is a plausible-looking book from the previous chart state.
  */
-import { evaluate } from './connection.js';
-import { awaitSettled, captureReportState, SETTLE } from './settle.js';
+import { evaluate, getTargetIdentity } from './connection.js';
+import { awaitSettled, captureFence, checkFence, SETTLE } from './settle.js';
 import {
   readReportJs,
   normaliseTrade,
@@ -37,6 +37,12 @@ const MAX_REREADS = 3;
  *                                    fingerprint stability, which cannot
  *                                    distinguish a stable current report from a
  *                                    stable stale one.
+ * @param {object}  [opts.fence]      captureFence() taken before the mutation.
+ *                                    Supersedes `since` (it carries it) and
+ *                                    additionally proves the read describes the
+ *                                    same page context, the same chart, and the
+ *                                    intended input configuration. See
+ *                                    checkFence in settle.js.
  * @param {object}  [opts.expectWindow]  { from } — assert the report's backtest
  *                                    window actually starts where the caller
  *                                    set it. See "Why a generation bump is not
@@ -49,6 +55,7 @@ const MAX_REREADS = 3;
 export async function readStrategyReport({
   entityId = null,
   since = null,
+  fence = null,
   expectWindow = null,
   gate = true,
   includeOrders = false,
@@ -59,12 +66,47 @@ export async function readStrategyReport({
   let latchedAt = null;
   let latchedFingerprint = null;
 
+  // A fence carries the pre-mutation report state, so a caller that has one
+  // never needs to pass `since` as well — but ONLY when the fence declares
+  // that a rebuild is owed. A fence taken as a drift baseline must not turn
+  // into a demand for a regeneration nobody triggered.
+  const effectiveSince = fence
+    ? fence.expect_report_rebuild
+      ? fence.report
+      : null
+    : since;
+
+  // --- Fail fast on an input write that did not land.
+  //
+  // Waiting out the full settle timeout to discover the inputs never changed
+  // wastes ninety seconds on a question answerable in one round trip, and the
+  // timeout reports the wrong cause. TradingView's own input read has been
+  // seen returning stale values, so this failure is not hypothetical.
+  if (fence?.expect_inputs_change) {
+    const probe = await evaluate(readReportJs(entityId ? JSON.stringify(entityId) : 'null'));
+    const prior = fence.strategies?.[probe?.entity_id]?.inputs_hash ?? null;
+    if (probe?.found && prior != null && probe.inputs_hash === prior) {
+      return {
+        ok: false,
+        reason: 'fence_violation',
+        error:
+          'The strategy inputs are unchanged from before the write, so no new report is coming and the current one describes the OLD settings. The input write did not land.',
+        violation: { code: 'inputs_not_applied', inputs_hash: probe.inputs_hash },
+        entity_id: probe.entity_id,
+      };
+    }
+  }
+
   if (gate) {
     settle = await awaitSettled({
       entityId,
       scope: entityId ? 'target' : 'strategies',
       requireReport: true,
-      since,
+      since: effectiveSince,
+      ...(fence && {
+        expectSeriesRebuild:
+          fence.expect_series_rebuild === true && fence.expect_report_rebuild === true,
+      }),
       ...(timeoutMs && { timeoutMs }),
     });
     if (settle.outcome !== SETTLE.SETTLED) {
@@ -137,6 +179,31 @@ export async function readStrategyReport({
   const trades = (report.trades || []).map(normaliseTrade);
   const window = normaliseWindow(report);
 
+  // --- Assert the state fence.
+  //
+  // The generation gate proves A rebuild happened. This proves it happened on
+  // the chart the caller mutated, for the configuration the caller set. The
+  // two fail apart: a rebuild triggered by a passing bar clears the first and
+  // not the second, and a read taken from a hidden preview context clears both
+  // gates while describing a different chart entirely.
+  const fenceViolation = checkFence(fence, {
+    target_id: getTargetIdentity()?.target_id ?? null,
+    symbol: raw.symbol ?? null,
+    resolution: raw.resolution ?? null,
+    entity_id: raw.entity_id,
+    inputs_hash: raw.inputs_hash ?? null,
+  });
+  if (fenceViolation) {
+    return {
+      ok: false,
+      reason: 'fence_violation',
+      error: fenceViolation.message,
+      violation: fenceViolation,
+      entity_id: raw.entity_id,
+      window,
+    };
+  }
+
   // --- Assert the window, not just the generation.
   //
   // `report_gen > since.gen` proves A regeneration happened. It does not prove it
@@ -163,7 +230,27 @@ export async function readStrategyReport({
     title: raw.title,
     report_gen: raw.report_gen,
     report_fingerprint: raw.report_fingerprint,
+    inputs_hash: raw.inputs_hash ?? null,
     gated: gate,
+    ...(fence && {
+      fence_check: {
+        passed: true,
+        target_id: getTargetIdentity()?.target_id ?? null,
+        expect_series_rebuild: fence.expect_series_rebuild === true,
+        expect_inputs_change: fence.expect_inputs_change === true,
+        // Reported, never asserted: on a seconds chart the backtest window is
+        // a rolling cap that slides as bars arrive, so a moved `from` is
+        // normal. expectWindow is the exact check when one was actually set.
+        window_moved:
+          fence.strategies?.[raw.entity_id]?.backtest_from != null &&
+          fence.strategies[raw.entity_id].backtest_from !== window.backtest_from
+            ? {
+                from: fence.strategies[raw.entity_id].backtest_from,
+                to: window.backtest_from,
+              }
+            : null,
+      },
+    }),
     ...(gate && {
       settle_ms: settle.elapsed_ms,
       read_consistency: {
@@ -194,13 +281,20 @@ export async function readStrategyReport({
 /**
  * Convenience wrapper for the mutate-then-read pattern.
  *
- * Captures the report generation counter, runs the mutation, then reads with
- * the gate armed. Any tool that changes the chart and then reports a result
- * should use this rather than sequencing the three steps itself.
+ * Captures a state fence, runs the mutation, then reads with the gate armed.
+ * Any tool that changes the chart and then reports a result should use this
+ * rather than sequencing the three steps itself.
+ *
+ * `fenceOpts` declares what the mutation is allowed to change:
+ * { seriesAffecting } for a symbol or resolution change, { inputsAffecting }
+ * for an input write. Declaring nothing means the mutation must leave the
+ * chart identity and the strategy configuration alone, and the read fails if
+ * either moved.
  */
-export async function mutateThenRead(mutate, readOpts = {}) {
-  const since = await captureReportState();
+export async function mutateThenRead(mutate, readOpts = {}, fenceOpts = {}) {
+  // A mutation is being run, so a rebuild is owed by default.
+  const fence = await captureFence({ reportAffecting: true, ...fenceOpts });
   const mutation = await mutate();
-  const result = await readStrategyReport({ ...readOpts, since });
+  const result = await readStrategyReport({ ...readOpts, fence });
   return { mutation, ...result };
 }

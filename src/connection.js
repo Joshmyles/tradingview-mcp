@@ -1,7 +1,12 @@
 import CDP from 'chrome-remote-interface';
+import { TARGET_IDENTITY_JS, isWorkingChart } from './internals/targets.js';
 
 let client = null;
 let targetInfo = null;
+let targetIdentity = null;
+// Once a working chart context has been chosen, stay on it. Reconnects must not
+// re-roll the choice: see findChartTarget for why the pool is not homogeneous.
+let pinnedTargetId = process.env.TV_CDP_TARGET || null;
 // Overridable via TV_CDP_HOST/TV_CDP_PORT (or CDP_HOST/CDP_PORT) env vars.
 // Default is 127.0.0.1, not localhost: on some Windows machines localhost
 // resolves to ::1 first, and Electron's --remote-debugging-port only listens on IPv4.
@@ -87,6 +92,18 @@ export async function connect(targetId = null) {
 
       // Enable required domains
       await client.Runtime.enable();
+      if (targetId) {
+        // An explicitly named target skipped findChartTarget's probe.
+        try {
+          const r = await client.Runtime.evaluate({
+            expression: TARGET_IDENTITY_JS,
+            returnByValue: true,
+          });
+          targetIdentity = r.result?.value ?? null;
+        } catch {
+          targetIdentity = null;
+        }
+      }
       await client.Page.enable();
       await client.DOM.enable();
 
@@ -109,6 +126,7 @@ export async function connect(targetId = null) {
  * glued to the target picked at first connect.
  */
 export async function reconnectTo(targetId) {
+  pinnedTargetId = targetId;
   if (client) {
     try {
       await client.close();
@@ -121,17 +139,87 @@ export async function reconnectTo(targetId) {
   return connect(targetId);
 }
 
+/**
+ * Read a candidate target's page identity over a short-lived connection.
+ * Returns null if the target cannot be reached or evaluated.
+ */
+async function probeIdentity(target) {
+  let c = null;
+  try {
+    c = await CDP({ host: CDP_HOST, port: CDP_PORT, target: target.id });
+    await c.Runtime.enable();
+    const r = await c.Runtime.evaluate({
+      expression: TARGET_IDENTITY_JS,
+      returnByValue: true,
+    });
+    return r.result?.value ?? null;
+  } catch {
+    return null;
+  } finally {
+    if (c) {
+      try {
+        await c.close();
+      } catch {
+        /* already gone */
+      }
+    }
+  }
+}
+
+/**
+ * Choose the page context that IS the chart the user is looking at.
+ *
+ * TradingView Desktop runs several page contexts per session: the visible
+ * chart, plus a hidden preview renderer for every saved layout. The previews
+ * carry a complete TradingViewApi with their own symbol, resolution and
+ * studies, so matching on URL alone picks one at random and every read and
+ * mutation afterwards may be aimed at a chart nobody can see. See
+ * internals/targets.js for the measurement.
+ *
+ * `document.visibilityState` is the discriminator, and it is only readable
+ * in-page — `/json/list` does not carry it. So candidates are probed.
+ */
 async function findChartTarget() {
   const resp = await fetch(`http://${CDP_HOST}:${CDP_PORT}/json/list`);
   const targets = await resp.json();
-  // Prefer targets with tradingview.com/chart in the URL
-  return (
-    targets.find(
-      (t) => t.type === 'page' && /tradingview\.com\/chart/i.test(t.url),
-    ) ||
-    targets.find((t) => t.type === 'page' && /tradingview/i.test(t.url)) ||
-    null
+  const candidates = targets.filter(
+    (t) => t.type === 'page' && /tradingview\.com\/chart/i.test(t.url),
   );
+  const pool = candidates.length
+    ? candidates
+    : targets.filter((t) => t.type === 'page' && /tradingview/i.test(t.url));
+  if (!pool.length) return null;
+
+  // An explicit pin wins outright, including over visibility: a caller that
+  // named a target meant it.
+  if (pinnedTargetId) {
+    const pinned = pool.find((t) => t.id === pinnedTargetId);
+    if (pinned) {
+      targetIdentity = await probeIdentity(pinned);
+      return pinned;
+    }
+  }
+
+  const rejected = [];
+  for (const t of pool) {
+    const identity = await probeIdentity(t);
+    if (isWorkingChart(identity)) {
+      targetIdentity = identity;
+      pinnedTargetId = t.id;
+      return t;
+    }
+    rejected.push({ id: t.id, url: t.url, identity });
+  }
+
+  // Nothing visible. Refuse rather than silently attaching to a preview, which
+  // would answer every question plausibly and wrongly.
+  const err = new Error(
+    `No visible TradingView chart context. ${pool.length} chart page(s) found, all hidden or not loaded — ` +
+      "these are the desktop app's layout preview renderers, not the chart. " +
+      'Bring a TradingView chart window to the foreground, or pin a context with TV_CDP_TARGET.',
+  );
+  err.rejectedTargets = rejected;
+  throw err;
 }
 
 async function findTargetById(id) {
@@ -176,7 +264,19 @@ export async function disconnect() {
     } catch {}
     client = null;
     targetInfo = null;
+    targetIdentity = null;
   }
+}
+
+/**
+ * The page identity of the currently attached context.
+ *
+ * Part of a state fence: a read that describes a different context from the
+ * one a mutation was applied to is not stale, it is unrelated. Returns null
+ * before the first connect.
+ */
+export function getTargetIdentity() {
+  return targetIdentity ? { ...targetIdentity, target_id: targetInfo?.id ?? null } : null;
 }
 
 // --- Direct API path helpers ---

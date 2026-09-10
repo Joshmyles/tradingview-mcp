@@ -2,7 +2,7 @@
  * Core chart control logic.
  */
 import { evaluate as _evaluate, evaluateAsync as _evaluateAsync, safeString, requireFinite } from '../connection.js';
-import { waitForChartReady as _waitForChartReady } from '../wait.js';
+import { captureFence as _captureFence } from '../settle.js';
 
 const CHART_API = 'window.TradingViewApi._activeChartWidgetWV.value()';
 
@@ -10,7 +10,33 @@ function _resolve(deps) {
   return {
     evaluate: deps?.evaluate || _evaluate,
     evaluateAsync: deps?.evaluateAsync || _evaluateAsync,
-    waitForChartReady: deps?.waitForChartReady || _waitForChartReady,
+    captureFence: deps?.captureFence || _captureFence,
+  };
+}
+
+/**
+ * Mutations do not wait, and do not claim readiness.
+ *
+ * `chart_ready: true` used to be returned here on the strength of a DOM-element
+ * count that stabilised after ~400ms, while the strategy behind it was still
+ * recomputing 20 seconds later. The claim was false, and being false it was
+ * worse than absent.
+ *
+ * The hazard a barrier defends against is a stale READ, and it is at the read
+ * that the barrier now sits. A mutation reports only what it did, plus the
+ * fence a later read needs to prove the chart moved on. This also composes:
+ * symbol, then timeframe, then window, then one read — the settle is paid once
+ * at the end rather than once per mutation.
+ */
+function applied(detail, fence) {
+  return {
+    success: true,
+    applied: true,
+    // Deliberately not a readiness claim. Nothing here has been waited on.
+    settled: false,
+    ...detail,
+    fence,
+    next: 'Reads gate themselves. Call chart_await_settled first only if you need to know the chart has caught up before doing something else.',
   };
 }
 
@@ -38,7 +64,8 @@ export async function getState({ _deps } = {}) {
 }
 
 export async function setSymbol({ symbol, _deps }) {
-  const { evaluateAsync, waitForChartReady } = _resolve(_deps);
+  const { evaluateAsync, captureFence } = _resolve(_deps);
+  const fence = await captureFence();
   await evaluateAsync(`
     (function() {
       var chart = ${CHART_API};
@@ -48,20 +75,19 @@ export async function setSymbol({ symbol, _deps }) {
       });
     })()
   `);
-  const ready = await waitForChartReady(symbol);
-  return { success: true, symbol, chart_ready: ready };
+  return applied({ symbol }, fence);
 }
 
 export async function setTimeframe({ timeframe, _deps }) {
-  const { evaluate, waitForChartReady } = _resolve(_deps);
+  const { evaluate, captureFence } = _resolve(_deps);
+  const fence = await captureFence();
   await evaluate(`
     (function() {
       var chart = ${CHART_API};
       chart.setResolution(${safeString(timeframe)}, {});
     })()
   `);
-  const ready = await waitForChartReady(null, timeframe);
-  return { success: true, timeframe, chart_ready: ready };
+  return applied({ timeframe }, fence);
 }
 
 export async function setType({ chart_type, _deps }) {

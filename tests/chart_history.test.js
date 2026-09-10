@@ -22,7 +22,7 @@ function mockDeps({ firstTime = 500, more = true, step = 2000 } = {}) {
   };
   evaluate.calls = calls;
   const pageCount = () => calls.filter((c) => c.includes('requestMoreData(1000)')).length;
-  return { _deps: { evaluate, evaluateAsync: evaluate, waitForChartReady: async () => true, getChartApi: async () => 'window.__api' }, evaluate, pageCount };
+  return { _deps: { evaluate, evaluateAsync: evaluate, waitForChartReady: async () => true, captureFence: async () => ({ symbol: 'MOCK', resolution: '1', report: { gen: {}, fp: {} }, at: 0 }), getChartApi: async () => 'window.__api' }, evaluate, pageCount };
 }
 
 describe('setVisibleRange() — history paging', () => {

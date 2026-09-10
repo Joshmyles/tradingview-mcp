@@ -26,6 +26,7 @@ function mockDeps(overrides = {}) {
       evaluate,
       evaluateAsync: evaluate,
       waitForChartReady: async () => true,
+      captureFence: async () => ({ symbol: 'MOCK', resolution: '1', report: { gen: {}, fp: {} }, at: 0 }),
       getChartApi: async () => 'window.__api',
       ...overrides,
     },

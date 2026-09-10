@@ -1,0 +1,55 @@
+// @version=6
+// MCP Fixture Strategy
+//
+// The strategy the destructive test suites run against. Committed so the
+// fixture is reproducible rather than something that happened to be on a
+// chart once.
+//
+// Deliberately trivial and deliberately NOT a research build:
+//   - it must produce a non-empty trade book on any liquid symbol, so the
+//     report reader has something to read
+//   - it must produce BOTH long and short trades, and both winners and
+//     losers, so reconciliation and the P&L identity are actually exercised
+//   - it must never resemble a candidate strategy, so a result from it can
+//     never be mistaken for a research measurement
+//
+// Commission is set here, not left at zero. Every backtest in this programme
+// is priced net; a fixture that reported gross would train the wrong reflex.
+
+strategy("MCP Fixture Strategy",
+     overlay              = true,
+     initial_capital      = 10000,
+     default_qty_type     = strategy.fixed,
+     default_qty_value    = 1,
+     commission_type      = strategy.commission.cash_per_order,
+     commission_value     = 0.11,
+     calc_on_every_tick   = false,
+     process_orders_on_close = true)
+
+fastLen = input.int(9,  "Fast MA", minval = 1)
+slowLen = input.int(21, "Slow MA", minval = 2)
+stopUsd = input.float(5.0, "Hard stop (USD)", minval = 0.0)
+
+fast = ta.sma(close, fastLen)
+slow = ta.sma(close, slowLen)
+
+goLong  = ta.crossover(fast, slow)
+goShort = ta.crossunder(fast, slow)
+
+if goLong
+    strategy.entry("FIXLONG", strategy.long, comment = "FIX B UP")
+
+if goShort
+    strategy.entry("FIXSHORT", strategy.short, comment = "FIX B DN")
+
+// A hard stop, so the book contains stopped-out losers as well as crossover
+// exits. Without it every exit shares one cause and the exit-tag paths in the
+// report reader are never exercised.
+if stopUsd > 0 and strategy.position_size != 0
+    stopPrice = strategy.position_size > 0
+         ? strategy.position_avg_price - stopUsd
+         : strategy.position_avg_price + stopUsd
+    strategy.exit("FIX HS", stop = stopPrice)
+
+plot(fast, "Fast", color.new(color.aqua, 0))
+plot(slow, "Slow", color.new(color.orange, 0))

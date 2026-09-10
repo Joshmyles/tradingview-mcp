@@ -1,8 +1,14 @@
 /**
  * Comprehensive E2E tests for all 70 TradingView MCP tools.
+ *
+ * DESTRUCTIVE. This suite adds and removes studies, changes the symbol and
+ * resolution, and drives the UI of a LIVE chart. It runs only against the
+ * dedicated fixture layout and only with TV_MCP_ALLOW_DESTRUCTIVE=1 — see
+ * tests/fixtures/README.md, and the incident that made the guard necessary.
+ *
  * Requires TradingView Desktop running with --remote-debugging-port=9222
  *
- * Run: node --test tests/e2e.test.js
+ * Run: TV_MCP_ALLOW_DESTRUCTIVE=1 node --test tests/e2e.test.js
  *
  * Coverage: 70+ tests across 12 tool modules
  * - Health & Connection (4 tools)
@@ -22,6 +28,32 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import CDP from 'chrome-remote-interface';
+import { requireFixtureLayout } from './_fixture-guard.js';
+
+/**
+ * The visible chart context, not just a URL match.
+ * See src/internals/targets.js: the hidden preview renderers are complete.
+ */
+async function pickVisibleChartTarget(targets) {
+  for (const t of targets) {
+    if (!(t.url || '').includes('tradingview.com/chart')) continue;
+    let c = null;
+    try {
+      c = await CDP({ host: '127.0.0.1', port: 9222, target: t.id });
+      await c.Runtime.enable();
+      const r = await c.Runtime.evaluate({
+        expression: "document.visibilityState === 'visible'",
+        returnByValue: true,
+      });
+      if (r.result?.value === true) return t;
+    } catch {
+      /* keep looking */
+    } finally {
+      if (c) try { await c.close(); } catch { /* gone */ }
+    }
+  }
+  return null;
+}
 
 let client;
 let Runtime;
@@ -70,22 +102,27 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 describe('TradingView MCP — Full E2E (70 tools)', () => {
 
   before(async () => {
-    try {
-      const targets = await CDP.List({ host: '127.0.0.1', port: 9222 });
-      const chartTarget = targets.find(t => t.url && t.url.includes('tradingview.com/chart'));
-      if (!chartTarget) throw new Error('No TradingView chart target found');
+    // This suite is destructive. The guard refuses unless the environment
+    // variable is set AND the visible chart is the fixture layout. Its errors
+    // must reach the runner: the previous version caught everything and called
+    // process.exit(1) with a message about CDP, which would report a refusal
+    // to wreck the working chart as a connection problem.
+    const identity = await requireFixtureLayout();
+    console.log(`fixture layout: ${identity.layout} (${identity.symbol} ${identity.resolution})`);
 
-      client = await CDP({ host: '127.0.0.1', port: 9222, target: chartTarget.id });
-      await client.Runtime.enable();
-      await client.Page.enable();
-      await client.DOM.enable();
-      Runtime = client.Runtime;
-      Input = client.Input;
-      Page = client.Page;
-    } catch (err) {
-      console.error('Cannot connect to TradingView. Make sure it is running with --remote-debugging-port=9222');
-      process.exit(1);
-    }
+    const targets = await CDP.List({ host: '127.0.0.1', port: 9222 });
+    // Attach to the SAME context the guard verified, not merely one whose URL
+    // matches — the hidden preview renderers match the URL too.
+    const chartTarget = await pickVisibleChartTarget(targets);
+    if (!chartTarget) throw new Error('No visible TradingView chart target found');
+
+    client = await CDP({ host: '127.0.0.1', port: 9222, target: chartTarget.id });
+    await client.Runtime.enable();
+    await client.Page.enable();
+    await client.DOM.enable();
+    Runtime = client.Runtime;
+    Input = client.Input;
+    Page = client.Page;
   });
 
   after(async () => {

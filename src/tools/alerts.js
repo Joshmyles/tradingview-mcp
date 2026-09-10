@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { jsonResult } from './_format.js';
+import { jsonResult, fromThrown } from './_format.js';
 import * as core from '../core/alerts.js';
 
 export function registerAlertTools(server) {
@@ -9,12 +9,12 @@ export function registerAlertTools(server) {
     message: z.string().optional().describe('Alert message'),
   }, async ({ condition, price, message }) => {
     try { return jsonResult(await core.create({ condition, price, message })); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 
   server.tool('alert_list', 'List active alerts', {}, async () => {
     try { return jsonResult(await core.list()); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 
   server.tool('alert_delete', 'Delete a specific alert by id, or all active alerts', {
@@ -22,6 +22,6 @@ export function registerAlertTools(server) {
     delete_all: z.coerce.boolean().optional().describe('Delete all active alerts'),
   }, async ({ alert_id, delete_all }) => {
     try { return jsonResult(await core.deleteAlerts({ alert_id, delete_all })); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 }

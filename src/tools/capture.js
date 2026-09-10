@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { jsonResult } from './_format.js';
+import { jsonResult, fromThrown } from './_format.js';
 import * as core from '../core/capture.js';
 
 export function registerCaptureTools(server) {
@@ -11,6 +11,6 @@ export function registerCaptureTools(server) {
     wait: z.coerce.boolean().optional().describe('Default true: wait for the chart to finish recomputing before capturing. Set false to photograph the loading state deliberately.'),
   }, async ({ region, filename, method, wait_for_render, wait }) => {
     try { return jsonResult(await core.captureScreenshot({ region, filename, method, waitForRender: wait_for_render, wait })); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 }

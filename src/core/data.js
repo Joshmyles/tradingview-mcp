@@ -9,6 +9,7 @@ import {
 } from '../connection.js';
 import { waitForChartReady } from '../wait.js';
 import { readStrategyReport } from '../strategy-report.js';
+import { fromReaderFailure } from '../tools/_format.js';
 import { captureReportState, requireSettled } from '../settle.js';
 
 const MAX_OHLCV_BARS = 500;
@@ -328,22 +329,23 @@ async function ensureReportPossible() {
  * computing" from "will never compute".
  */
 function reportFailure(r, extra = {}) {
-  return {
-    success: false,
-    source: 'internal_api',
-    reason: r.reason,
-    error: r.error,
-    ...(r.settle && {
-      settle: {
-        outcome: r.settle.outcome,
-        elapsed_ms: r.settle.elapsed_ms,
-        ...(r.settle.errored_studies && { errored_studies: r.settle.errored_studies }),
-        ...(r.settle.pending_studies && { pending_studies: r.settle.pending_studies }),
-        ...(r.settle.stuck_studies && { stuck_studies: r.settle.stuck_studies }),
-      },
-    }),
-    ...extra,
-  };
+  return fromReaderFailure(
+    {
+      ok: false,
+      reason: r.reason,
+      error: r.error,
+      ...(r.settle && {
+        settle: {
+          outcome: r.settle.outcome,
+          elapsed_ms: r.settle.elapsed_ms,
+          ...(r.settle.errored_studies && { errored_studies: r.settle.errored_studies }),
+          ...(r.settle.pending_studies && { pending_studies: r.settle.pending_studies }),
+          ...(r.settle.stuck_studies && { stuck_studies: r.settle.stuck_studies }),
+        },
+      }),
+    },
+    { source: 'internal_api', ...extra },
+  );
 }
 
 const unhiddenNote = (unhidden, what) =>

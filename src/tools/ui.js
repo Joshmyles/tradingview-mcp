@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { jsonResult } from './_format.js';
+import { jsonResult, fromThrown } from './_format.js';
 import * as core from '../core/ui.js';
 
 export function registerUiTools(server) {
@@ -8,32 +8,32 @@ export function registerUiTools(server) {
     value: z.string().describe('Value to match against the chosen selector strategy'),
   }, async ({ by, value }) => {
     try { return jsonResult(await core.click({ by, value })); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 
-  server.tool('ui_open_panel', 'Open, close, or toggle TradingView panels (pine-editor, strategy-tester, watchlist, alerts, trading)', {
-    panel: z.enum(['pine-editor', 'strategy-tester', 'watchlist', 'alerts', 'trading']).describe('Panel name'),
+  server.tool('ui_open_panel', 'Open, close, or toggle TradingView panels (pine-editor, strategy-tester, watchlist, alerts)', {
+    panel: z.enum(['pine-editor', 'strategy-tester', 'watchlist', 'alerts']).describe('Panel name. The trading panel is deliberately not reachable: this bridge has no path to a broker.'),
     action: z.enum(['open', 'close', 'toggle']).describe('Action to perform'),
   }, async ({ panel, action }) => {
     try { return jsonResult(await core.openPanel({ panel, action })); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 
   server.tool('ui_fullscreen', 'Toggle TradingView fullscreen mode', {}, async () => {
     try { return jsonResult(await core.fullscreen()); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 
   server.tool('layout_list', 'List saved chart layouts', {}, async () => {
     try { return jsonResult(await core.layoutList()); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 
   server.tool('layout_switch', 'Switch to a saved chart layout by name or ID', {
     name: z.string().describe('Name or ID of the layout to switch to'),
   }, async ({ name }) => {
     try { return jsonResult(await core.layoutSwitch({ name })); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 
   server.tool('ui_keyboard', 'Press keyboard keys or shortcuts (e.g., Enter, Escape, Alt+S, Ctrl+Z)', {
@@ -41,14 +41,14 @@ export function registerUiTools(server) {
     modifiers: z.array(z.enum(['ctrl', 'alt', 'shift', 'meta'])).optional().describe('Modifier keys to hold (e.g., ["ctrl", "shift"])'),
   }, async ({ key, modifiers }) => {
     try { return jsonResult(await core.keyboard({ key, modifiers })); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 
   server.tool('ui_type_text', 'Type text into the currently focused input/textarea element', {
     text: z.string().describe('Text to type into the focused element'),
   }, async ({ text }) => {
     try { return jsonResult(await core.typeText({ text })); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 
   server.tool('ui_hover', 'Hover over a UI element by aria-label, data-name, or text content', {
@@ -56,7 +56,7 @@ export function registerUiTools(server) {
     value: z.string().describe('Value to match'),
   }, async ({ by, value }) => {
     try { return jsonResult(await core.hover({ by, value })); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 
   server.tool('ui_scroll', 'Scroll the chart or page up/down/left/right', {
@@ -64,7 +64,7 @@ export function registerUiTools(server) {
     amount: z.coerce.number().optional().describe('Scroll amount in pixels (default 300)'),
   }, async ({ direction, amount }) => {
     try { return jsonResult(await core.scroll({ direction, amount })); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 
   server.tool('ui_mouse_click', 'Click at specific x,y coordinates on the TradingView window', {
@@ -74,7 +74,7 @@ export function registerUiTools(server) {
     double_click: z.coerce.boolean().optional().describe('Double click (default false)'),
   }, async ({ x, y, button, double_click }) => {
     try { return jsonResult(await core.mouseClick({ x, y, button, double_click })); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 
   server.tool('ui_find_element', 'Find UI elements by text, aria-label, or CSS selector and return their positions', {
@@ -82,13 +82,25 @@ export function registerUiTools(server) {
     strategy: z.enum(['text', 'aria-label', 'css']).optional().describe('Search strategy (default: text)'),
   }, async ({ query, strategy }) => {
     try { return jsonResult(await core.findElement({ query, strategy })); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 
+}
+
+/**
+ * ui_evaluate, registered separately because it belongs to a different
+ * profile from the rest of this file.
+ *
+ * The other tools here synthesise input — clicks, keystrokes, pointer events —
+ * and are diagnostic-only for the reason set out in profiles.js. This one
+ * evaluates an expression, and it is the route to the Pine Logs and to
+ * historical bars beyond data_get_ohlcv's reach, so strategy work needs it.
+ */
+export function registerUiEvaluateTool(server) {
   server.tool('ui_evaluate', 'Execute JavaScript code in the TradingView page context for advanced automation', {
-    expression: z.string().describe('JavaScript expression to evaluate in the page context. Wrap in IIFE for complex logic.'),
+    expression: z.string().describe('JavaScript expression to evaluate in the page context. Wrap in IIFE for complex logic. A Promise is awaited and its resolved value returned.'),
   }, async ({ expression }) => {
     try { return jsonResult(await core.uiEvaluate({ expression })); }
-    catch (err) { return jsonResult({ success: false, error: err.message }, true); }
+    catch (err) { return jsonResult(fromThrown(err)); }
   });
 }

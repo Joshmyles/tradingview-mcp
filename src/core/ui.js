@@ -68,9 +68,13 @@ export async function openPanel({ panel, action }) {
     const selectorMap = {
       'watchlist': { dataNames: ['base-watchlist-widget-button', 'base'], ariaLabels: ['Watchlist', 'Watchlist, details, and news'] },
       'alerts': { dataNames: ['alerts-button', 'alerts'], ariaLabels: ['Alerts'] },
-      'trading': { dataNames: ['trading-button'], ariaLabels: ['Trading Panel'] },
     };
     const sel = selectorMap[panel];
+    // DELETED, not disabled: the 'trading' target opened the order panel of a
+    // connected live broker account. There is no flag here to turn back on.
+    // Orders leave this system by alert webhook to a separate execution
+    // service; nothing in this bridge may reach a broker. See PROVENANCE.md.
+    if (!sel) throw new Error(`Unknown panel: ${panel}`);
     const result = await evaluate(`
       (function() {
         var dataNames = ${JSON.stringify(sel.dataNames)};
@@ -297,6 +301,10 @@ export async function findElement({ query, strategy }) {
 }
 
 export async function uiEvaluate({ expression }) {
-  const result = await evaluate(expression);
+  // awaitPromise: an expression evaluating to a Promise previously returned the
+  // Promise object itself, which serialises as {} — so every async probe
+  // reported success with an empty result and no error. Awaiting it means a
+  // rejection surfaces as a thrown error rather than as a silent blank.
+  const result = await evaluateAsync(expression);
   return { success: true, result };
 }

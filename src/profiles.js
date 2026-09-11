@@ -30,6 +30,7 @@ import { registerHealthTools } from './tools/health.js';
 import { registerChartTools } from './tools/chart.js';
 import { registerPineTools } from './tools/pine.js';
 import { registerDataTools } from './tools/data.js';
+import { registerBacktestTools } from './tools/backtest.js';
 import { registerCaptureTools } from './tools/capture.js';
 import { registerDrawingTools } from './tools/drawing.js';
 import { registerAlertTools } from './tools/alerts.js';
@@ -67,6 +68,7 @@ export function registerWorkflowTools(server) {
   registerChartTools(server);
   registerPineTools(server);
   registerDataTools(server);
+  registerBacktestTools(server);
   registerCaptureTools(server);
   registerAlertTools(server);
   registerReplayTools(server);

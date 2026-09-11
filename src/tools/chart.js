@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { jsonResult, fromThrown } from './_format.js';
 import * as core from '../core/chart.js';
 import { awaitSettled } from '../settle.js';
+import { resolveEntity } from '../core/pine-inputs.js';
 
 export function registerChartTools(server) {
   server.tool('chart_get_state', 'Get current chart state (symbol, timeframe, chart type, indicators)', {}, async () => {
@@ -97,4 +98,25 @@ export function registerChartTools(server) {
     try { return jsonResult(await core.symbolSearch({ query, type })); }
     catch (err) { return jsonResult(fromThrown(err)); }
   });
+
+  server.tool(
+    'resolve_entity',
+    'Find a study on the chart and return its entity_id, without reading the whole chart state. ' +
+      'With no hint it resolves the strategy that has a computed report, which is what every backtest read wants. ' +
+      'With a hint it matches an exact entity_id first, then a case-insensitive substring of the title. ' +
+      'Returns ok:false with the candidate list when the hint matches more than one, rather than guessing.',
+    {
+      hint: z
+        .string()
+        .optional()
+        .describe('Entity ID or part of the study title. Omit to resolve the strategy with a report.'),
+    },
+    async ({ hint }) => {
+      try {
+        return jsonResult(await resolveEntity({ hint: hint || null }));
+      } catch (err) {
+        return jsonResult(fromThrown(err));
+      }
+    },
+  );
 }

@@ -4,9 +4,23 @@
  * Every mutating tool must await this before returning. Without it,
  * `chart_ready: true` is a lie: measured on this machine, chart_set_timeframe
  * returned success at ~3s while the strategy did not finish recomputing until
- * 21.3s, 28.4s and 19.2s across three measured 45S->30S changes. Reads issued in that window hit a
- * study holding dataLength 0, or — worse — a strategy report still describing
- * the PREVIOUS chart state.
+ * 21.3s, 28.4s and 19.2s across three 45S->30S changes. Re-measured 2026-09-10
+ * on the pinned visible context, sampling in-page at 4ms so neither CDP
+ * round-trip latency nor hidden-page timer throttling is in the number:
+ * 30.2s going 45S->30S and 21.6s coming back. Reads issued in that window hit
+ * a study holding dataLength 0, or — worse — a strategy report still
+ * describing the PREVIOUS chart state.
+ *
+ * Two things that window is NOT:
+ *
+ *   - It is not throttling. The 21.3s figure was taken before target selection
+ *     was pinned and could have been a background-throttled preview; it
+ *     reproduces at 21.6s on the confirmed-visible window.
+ *   - It is not one-shot. On a live streaming chart the study drops back to
+ *     LOADING on every new bar and takes another full recompute to return to
+ *     READY — measured 13.1s and 21.4s of a 45s bar period. A barrier that
+ *     samples once and finds LOADING has not necessarily missed anything; it
+ *     may simply have arrived mid-cycle.
  *
  * Outcomes are deliberately not booleans. A caller must be able to tell
  * "still loading" from "will never load".
@@ -73,8 +87,8 @@ function selectTargets(studies, scope, entityId) {
  * prove a new book. See awaitSettled's teardown check.
  *
  * events covers the price series, which has no usable instantaneous readiness
- * signal at all — every one of them reads "settled" for the first ~525ms after
- * a mutation while still holding the previous resolution's bars.
+ * signal at all — every one of them reads "settled" for the first 139-380ms
+ * after a mutation while still holding the previous resolution's bars.
  *
  * Installs the counters if they are not present. Safe to call repeatedly.
  */
@@ -405,6 +419,7 @@ export async function captureFence({
   seriesAffecting = false,
   inputsAffecting = false,
   reportAffecting = false,
+  entityId = null,
 } = {}) {
   const report = await captureReportState();
   let chart = {};
@@ -422,12 +437,15 @@ export async function captureFence({
     chart = {};
   }
   try {
-    const snap = await evaluate(studyStateJs('null'));
+    const snap = await evaluate(studyStateJs('null', { withDigest: true }));
     for (const st of snap?.studies || []) {
       if (!st.is_strategy) continue;
       strategies[st.id] = {
         inputs_hash: st.inputs_hash ?? null,
         backtest_from: st.backtest_from ?? null,
+        // Per-key, so a hash mismatch can name the keys instead of asserting
+        // that something, somewhere, moved. See C4 in study-state.js.
+        inputs_digest: st.inputs_digest ?? null,
       };
     }
   } catch {
@@ -438,6 +456,14 @@ export async function captureFence({
     resolution: chart?.resolution ?? null,
     report,
     strategies,
+    // Which study this fence is about, when the caller resolved one.
+    //
+    // Without it a read of a DIFFERENT study clears the fence silently: the
+    // per-strategy checks below are keyed by the observed entity id, so an
+    // unfenced study simply has no prior to compare against and every check
+    // is skipped. With two builds loaded at once — B14 and B15 — that is the
+    // wrong-study read arriving with a clean bill of health.
+    entity_id: entityId,
     // Carried on the fence so a caller handing it back gets the right gate
     // without having to remember what kind of mutation produced it.
     expect_series_rebuild: seriesAffecting,
@@ -475,6 +501,46 @@ export async function captureFence({
  * would fail on a chart that had done nothing wrong. A caller that genuinely
  * set a window asserts it with expectWindow, which is exact.
  */
+/**
+ * Which allowlisted inputs differ between two digests.
+ *
+ * The point of the digest: "the hash moved" is not actionable, and the
+ * allowlist WILL go stale the next time TradingView adds a volatile field in
+ * the in_N range. Naming the keys turns that from a permanent false drift into
+ * a one-line diagnosis.
+ */
+export function diffInputDigests(before, after, limit = 12) {
+  const pairs = (d) => (d && Array.isArray(d.pairs) ? d.pairs : null);
+  const a = pairs(before), b = pairs(after);
+  if (!a || !b) return null;
+  const toMap = (list) => {
+    const m = new Map();
+    for (const p of list) {
+      const i = p.indexOf(':');
+      m.set(p.slice(0, i), p.slice(i + 1));
+    }
+    return m;
+  };
+  const ma = toMap(a), mb = toMap(b);
+  const moved = [];
+  for (const [k, v] of ma) {
+    const w = mb.get(k);
+    if (w === undefined) moved.push({ id: k, from: v, to: null });
+    else if (w !== v) moved.push({ id: k, from: v, to: w });
+  }
+  for (const [k, v] of mb) if (!ma.has(k)) moved.push({ id: k, from: null, to: v });
+  return {
+    moved_count: moved.length,
+    moved: moved.slice(0, limit),
+    kept_before: before.kept ?? null,
+    kept_after: after.kept ?? null,
+    // A collapse here means the allowlist stopped matching, not that the
+    // strategy was reconfigured.
+    allowlist_collapsed:
+      before.kept != null && after.kept != null && before.kept !== after.kept,
+  };
+}
+
 export function checkFence(fence, observed) {
   if (!fence) return null;
 
@@ -486,6 +552,21 @@ export function checkFence(fence, observed) {
         'This read came from a different TradingView page context than the mutation was applied to. TradingView Desktop runs hidden preview renderers alongside the real chart, each with its own symbol and studies, so the two are not comparable. See internals/targets.js.',
       fence_target: fenceTarget,
       observed_target: observed.target_id,
+    };
+  }
+
+  // The fence named a study; this read is of another one. Checked before the
+  // chart identity because it is the more specific failure: a chart carrying
+  // two builds answers every other check correctly while describing the wrong
+  // strategy.
+  if (fence.entity_id && observed.entity_id && fence.entity_id !== observed.entity_id) {
+    return {
+      code: 'wrong_study',
+      message:
+        `This read describes study ${observed.entity_id}, and the fence was taken on ${fence.entity_id}. ` +
+        'Two studies on one chart are not interchangeable — resolve the entity explicitly and pass it through.',
+      fence_entity: fence.entity_id,
+      observed_entity: observed.entity_id,
     };
   }
 
@@ -515,6 +596,7 @@ export function checkFence(fence, observed) {
   const priorInputs = fence.strategies?.[observed.entity_id]?.inputs_hash ?? null;
   const nowInputs = observed.inputs_hash ?? null;
   if (priorInputs != null && nowInputs != null) {
+    const priorDigest = fence.strategies?.[observed.entity_id]?.inputs_digest ?? null;
     if (fence.expect_inputs_change && priorInputs === nowInputs) {
       return {
         code: 'inputs_not_applied',
@@ -524,12 +606,34 @@ export function checkFence(fence, observed) {
       };
     }
     if (!fence.expect_inputs_change && priorInputs !== nowInputs) {
+      const diff = diffInputDigests(priorDigest, observed.inputs_digest);
       return {
         code: 'inputs_drifted',
-        message:
-          'The strategy inputs changed between the mutation and this read. The report does not describe the configuration that was fenced.',
+        message: diff?.allowlist_collapsed
+          ? 'The input allowlist stopped matching between the two reads ' +
+            `(${diff.kept_before} settings then, ${diff.kept_after} now). This is a TradingView-side ` +
+            'change to the input list, not a reconfiguration of the strategy. See C4 in internals/study-state.js.'
+          : diff
+            ? `The strategy inputs changed between the mutation and this read: ${diff.moved_count} ` +
+              `setting(s) moved (${diff.moved.map((m) => m.id).join(', ')}). The report does not ` +
+              'describe the configuration that was fenced.'
+            : 'The strategy inputs changed between the mutation and this read. The report does not describe the configuration that was fenced.',
         fence_inputs_hash: priorInputs,
         observed_inputs_hash: nowInputs,
+        inputs_diff: diff,
+      };
+    }
+    // A hash that will not reproduce across two immediate reads is a broken
+    // allowlist, not drift, and it must not be reported as configuration.
+    if (observed.inputs_digest && observed.inputs_digest.stable === false) {
+      return {
+        code: 'inputs_unstable',
+        message:
+          'The input hash does not reproduce across two consecutive reads, so it cannot fence anything. ' +
+          `Volatile keys: ${(observed.inputs_digest.volatile_keys || []).join(', ') || 'unknown'}. ` +
+          'A TradingView update has added a volatile field inside the allowlisted in_N range — ' +
+          'exclude it in internals/study-state.js.',
+        volatile_keys: observed.inputs_digest.volatile_keys || [],
       };
     }
   }

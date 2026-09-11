@@ -1,5 +1,5 @@
 import CDP from 'chrome-remote-interface';
-import { TARGET_IDENTITY_JS, isWorkingChart } from './internals/targets.js';
+import { TARGET_IDENTITY_JS, selectTarget } from './internals/targets.js';
 
 let client = null;
 let targetInfo = null;
@@ -7,6 +7,7 @@ let targetIdentity = null;
 // Once a working chart context has been chosen, stay on it. Reconnects must not
 // re-roll the choice: see findChartTarget for why the pool is not homogeneous.
 let pinnedTargetId = process.env.TV_CDP_TARGET || null;
+const layoutFilter = process.env.TV_CDP_LAYOUT || null;
 // Overridable via TV_CDP_HOST/TV_CDP_PORT (or CDP_HOST/CDP_PORT) env vars.
 // Default is 127.0.0.1, not localhost: on some Windows machines localhost
 // resolves to ::1 first, and Electron's --remote-debugging-port only listens on IPv4.
@@ -100,6 +101,7 @@ export async function connect(targetId = null) {
             returnByValue: true,
           });
           targetIdentity = r.result?.value ?? null;
+          if (targetIdentity) targetIdentity.selected_by = 'explicit_target';
         } catch {
           targetIdentity = null;
         }
@@ -169,15 +171,18 @@ async function probeIdentity(target) {
 /**
  * Choose the page context that IS the chart the user is looking at.
  *
- * TradingView Desktop runs several page contexts per session: the visible
- * chart, plus a hidden preview renderer for every saved layout. The previews
- * carry a complete TradingViewApi with their own symbol, resolution and
- * studies, so matching on URL alone picks one at random and every read and
- * mutation afterwards may be aimed at a chart nobody can see. See
- * internals/targets.js for the measurement.
+ * TradingView Desktop runs several page contexts per session: the chart, a
+ * same-layout duplicate that is re-used as the layout preview renderer, and a
+ * preview renderer per other saved layout. All of them carry a complete
+ * TradingViewApi with their own symbol, resolution and studies, and two
+ * contexts on ONE layout were measured holding different loaded histories, so
+ * matching on URL alone picks one at random and can pick differently on each
+ * reconnect.
  *
- * `document.visibilityState` is the discriminator, and it is only readable
- * in-page — `/json/list` does not carry it. So candidates are probed.
+ * `document.visibilityState` does not separate them and is not used as the
+ * rule; see internals/targets.js for what does and for the measurements.
+ * Candidates are probed in-page, ranked, and the winning rule is recorded on
+ * the identity as `selected_by`. A tie is refused, never broken arbitrarily.
  */
 async function findChartTarget() {
   const resp = await fetch(`http://${CDP_HOST}:${CDP_PORT}/json/list`);
@@ -190,35 +195,56 @@ async function findChartTarget() {
     : targets.filter((t) => t.type === 'page' && /tradingview/i.test(t.url));
   if (!pool.length) return null;
 
-  // An explicit pin wins outright, including over visibility: a caller that
-  // named a target meant it.
+  // An explicit pin wins outright: a caller that named a target meant it.
   if (pinnedTargetId) {
     const pinned = pool.find((t) => t.id === pinnedTargetId);
     if (pinned) {
       targetIdentity = await probeIdentity(pinned);
+      if (targetIdentity) targetIdentity.selected_by = 'pinned';
       return pinned;
     }
   }
 
-  const rejected = [];
+  const probed = [];
   for (const t of pool) {
-    const identity = await probeIdentity(t);
-    if (isWorkingChart(identity)) {
-      targetIdentity = identity;
-      pinnedTargetId = t.id;
-      return t;
-    }
-    rejected.push({ id: t.id, url: t.url, identity });
+    probed.push({ id: t.id, url: t.url, target: t, identity: await probeIdentity(t) });
   }
 
-  // Nothing visible. Refuse rather than silently attaching to a preview, which
-  // would answer every question plausibly and wrongly.
-  const err = new Error(
-    `No visible TradingView chart context. ${pool.length} chart page(s) found, all hidden or not loaded — ` +
-      "these are the desktop app's layout preview renderers, not the chart. " +
-      'Bring a TradingView chart window to the foreground, or pin a context with TV_CDP_TARGET.',
-  );
-  err.rejectedTargets = rejected;
+  const { candidate, rule, tied, ruleName } = selectTarget(probed, layoutFilter);
+  if (candidate) {
+    targetIdentity = { ...candidate.identity, selected_by: rule };
+    pinnedTargetId = candidate.id;
+    return candidate.target;
+  }
+
+  const describe = (x) =>
+    `${x.id.slice(0, 8)} layout=${x.identity?.layout ?? '?'} ` +
+    `${x.identity?.symbol ?? '?'} ${x.identity?.resolution ?? '?'} ` +
+    `inner=${(x.identity?.viewport || []).join('x')} outer=${(x.identity?.outer || []).join('x')}`;
+
+  const usable = probed.filter((x) => x.identity?.has_api);
+  if (!usable.length) {
+    const err = new Error(
+      `No usable TradingView chart context. ${pool.length} chart page(s) found, none with a loaded ` +
+        'TradingViewApi. Open a chart, or pin a context with TV_CDP_TARGET.',
+    );
+    err.rejectedTargets = probed.map((x) => ({ id: x.id, url: x.url, identity: x.identity }));
+    throw err;
+  }
+
+  // Ambiguous. These contexts are NOT interchangeable — measured, two on one
+  // layout held 329 and 381 bars — so picking one would be a coin toss with a
+  // wrong side.
+  const lines = [
+    `Ambiguous TradingView chart context: ${(tied || []).length} candidates tied at rule ` +
+      `"${ruleName ?? 'none'}" and no stronger rule separated them.`,
+    ...(tied || []).map(describe),
+    'Bring the chart window to the foreground, or pin one with TV_CDP_TARGET=<id> ' +
+      '(or narrow to a layout with TV_CDP_LAYOUT=<name>).',
+  ];
+  const err = new Error(lines.join('\n'));
+  err.rejectedTargets = probed.map((x) => ({ id: x.id, url: x.url, identity: x.identity }));
+  err.ambiguous = true;
   throw err;
 }
 

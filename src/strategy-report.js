@@ -9,6 +9,7 @@ import { evaluate, getTargetIdentity } from './connection.js';
 import { awaitSettled, captureFence, checkFence, SETTLE } from './settle.js';
 import {
   readReportJs,
+  markOpenTrades,
   normaliseTrade,
   normaliseOrder,
   normaliseEquity,
@@ -177,6 +178,9 @@ export async function readStrategyReport({
 
   const report = raw.report;
   const trades = (report.trades || []).map(normaliseTrade);
+  // Must run before reconcile(): an open position's row is a moving
+  // mark-to-market number that satisfies neither identity.
+  const openInfo = markOpenTrades(report, trades);
   const window = normaliseWindow(report);
 
   // --- Assert the state fence.
@@ -192,6 +196,7 @@ export async function readStrategyReport({
     resolution: raw.resolution ?? null,
     entity_id: raw.entity_id,
     inputs_hash: raw.inputs_hash ?? null,
+    inputs_digest: raw.inputs_digest ?? null,
   });
   if (fenceViolation) {
     return {
@@ -270,6 +275,7 @@ export async function readStrategyReport({
     window,
     performance: normalisePerformance(report),
     reconciliation: reconcile(report, trades),
+    open_position: openInfo.open_count > 0 ? openInfo : null,
     trades,
     ...(includeOrders && {
       orders: (report.filledOrders || []).map(normaliseOrder),

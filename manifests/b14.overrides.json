@@ -1,0 +1,56 @@
+{
+  "build": "b14",
+  "title": "B14",
+  "source_file": "../../second round/build 7.0/build14.pine",
+  "note": "The ONLY hand-written part of build 14's reference manifest. Everything else is derived from the source's input.* defaults. Each entry says why it is not at its default; an override without a reason is indistinguishable from the drift this mechanism exists to catch.",
+
+  "script_overrides": {
+    "in_22": { "value": "Large/Huge Only", "why": "DVB order-flow display scope. Deliberate, as found; not a decision input." },
+    "in_23": { "value": 90, "why": "DVB bubble volume percentile. Deliberate, as found." },
+    "in_29": { "value": "Net Delta", "why": "DVB filter type. Deliberate, as found." },
+    "in_42": { "value": "2000-2400", "why": "SESX entry session, exchange timezone. As found. FLAGGED: the recorded champion for this lever is 2000-1400, so this is an open discrepancy - left unchanged here deliberately, because changing it in the same run as the three lever corrections would confound the two." },
+    "in_44": { "value": true, "why": "Status panel visible. Display only." },
+    "in_46": { "value": "45S", "why": "The study's own timeframe. Must match the chart resolution or every figure describes a different series." },
+    "in_61": { "value": 5, "why": "Order-block extend length. Drawing only." },
+    "in_65": { "value": false, "why": "Order-block border off. Drawing only." },
+    "in_93": { "value": 0, "why": "Order-block border transparency. Drawing only." },
+    "in_94": { "value": "Newest", "why": "Active order-block selection rule. Decision-relevant; deliberate, as found." },
+    "in_250": { "value": false, "why": "Census log.info lines off. Logging only - and on at 45S it floods the Pine log." },
+    "in_274": { "value": false, "why": "Live-window tint off. Drawing only." }
+  },
+
+  "corrections": {
+    "in_278": { "value": false, "why": "PYRX - add on same-direction CZ breaks. Found ON against a default of false. Off is the source default and the recorded intent. With it on, TradingView pairs stacked exits FIFO, so per-row attribution inside a stack is TradingView's construct - which is exactly what a top-three-winners statistic measures." },
+    "in_315": { "value": false, "why": "RVX - take the opposite side after a CZX hard stop. Found ON against a default of false. REFUTED on deep+OOS, n=117: +0.147/trade, PF 1.06, t=0.29." },
+    "in_323": { "value": false, "why": "OPPX - re-enter on the opposite CZ break. Found ON against a default of false. REFUTED on deep: -45.88 (496.76 to 450.88), PF 1.92 to 1.62." }
+  },
+
+  "properties": {
+    "_why": "in_328..in_352 are TradingView's STRATEGY PROPERTIES, not Pine source. They cannot be derived from the script and they decide what a backtest means - costs, fills, stacking and the reported statistics - so they are pinned by hand. Verified against the chart, not copied from it: each value below is the TradingView default except in_344, which is called out.",
+    "in_328": { "value": 100, "why": "Initial capital. The denominator of every percentage figure." },
+    "in_329": { "value": "fixed", "why": "Order size type." },
+    "in_330": { "value": 1, "why": "Order size - 1 contract, which is why every trade row carries q=1 and per-leg MAE is unambiguous." },
+    "in_331": { "value": "cash_per_contract", "why": "Commission model." },
+    "in_332": { "value": 0.11, "why": "0.11 per side, 0.22 round trip. This is the constant inside every MAE and MFE figure." },
+    "in_333": { "value": 0, "why": "Slippage. Zero, so every net figure is optimistic by the real spread." },
+    "in_334": { "value": 0, "why": "Margin long - unconstrained." },
+    "in_335": { "value": 0, "why": "Margin short - unconstrained." },
+    "in_336": { "value": 10, "why": "TradingView-level pyramiding allowance. Inert once PYRX is off, because the script stops requesting stacked entries." },
+    "in_337": { "value": true, "why": "Calculate on every tick." },
+    "in_338": { "value": false, "why": "Do not process orders on bar close - orders fill intrabar." },
+    "in_339": { "value": false, "why": "Do not recalculate after an order fills." },
+    "in_340": { "value": 0, "why": "Limit-order fill assumption." },
+    "in_341": { "value": "NONE", "why": "Base currency - report stays in the account currency, USD." },
+    "in_342": { "value": "FIFO", "why": "Exit pairing rule. Load-bearing while a position can hold more than one leg; moot once PYRX is off." },
+    "in_343": { "value": 2, "why": "Risk free rate, 2%. FLAGGED: this setting exists and an earlier note said no risk-free-rate setting was exposed. Whether TradingView applies it to the displayed Sharpe is a separate question and is tested, not assumed." },
+    "in_344": { "value": true, "why": "Bar Magnifier ON - the one property away from its default. It changes intrabar fill simulation in Deep Backtesting, so it is held fixed across every window and every A/B configuration; changing it would move the fills under the comparison." },
+    "in_345": { "value": false, "why": "Do not fill orders using standard OHLC." },
+    "in_346": { "value": "BACKTEST", "why": "Run mode." },
+    "in_347": { "value": "", "why": "Alert message template - unused in backtest mode." },
+    "in_348": { "value": "order_fills", "why": "Alert type. The alert surface is order fills only, which is the ALRTX finding." },
+    "in_349": { "value": "", "why": "exclude_from_report." },
+    "in_350": { "value": true, "why": "trim_orders." },
+    "in_351": { "value": "", "why": "calc_range." },
+    "in_352": { "value": false, "why": "Do not calculate on every history tick." }
+  }
+}

@@ -20,6 +20,10 @@ export default [
         URLSearchParams: 'readonly', WebSocket: 'readonly', AbortController: 'readonly',
         TextEncoder: 'readonly', TextDecoder: 'readonly', global: 'readonly',
         __dirname: 'readonly', structuredClone: 'readonly',
+        queueMicrotask: 'readonly', performance: 'readonly',
+        // Page context: these appear inside CDP-evaluated expression strings
+        // and in the test doubles that stand in for them.
+        window: 'readonly', document: 'readonly',
       },
     },
     rules: {

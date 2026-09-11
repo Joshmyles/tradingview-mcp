@@ -45,6 +45,13 @@ TV_MCP_ALLOW_DESTRUCTIVE=1 npm run test:smoke
 
 `npm test` runs neither. It runs the unit suites, which use no live chart.
 
+The smoke suite also spawns both server entry points (`src/server.js`,
+`src/server-diag.js`) over stdio and checks that `tools/list` returns every
+tool of each profile. That part needs no fixture and no environment variable,
+but it is in the smoke suite on purpose: "smoke is green" has to mean the
+server a client connects to actually exposes its tools. It once exposed none
+for days while the unit suite stayed green.
+
 ## What the guard checks
 
 [`tests/_fixture-guard.js`](../_fixture-guard.js) refuses to proceed unless all

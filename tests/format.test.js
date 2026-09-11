@@ -116,12 +116,30 @@ describe('response budget', () => {
     assert.equal(JSON.parse(text).response_budget.applied, true);
   });
 
-  it('passes a full 105-trade book through untouched', () => {
-    // The measured trade book is ~77k pretty-printed chars. The budget exists
-    // to stop runaway responses, not to quietly halve the deliverable.
+  it('defaults under the client cap: a full 105-trade book is trimmed and says so', () => {
+    // The measured trade book is ~77k pretty-printed chars, which Claude Code
+    // refuses outright (measured 2026-09-11: 86,118 chars rejected). A default
+    // that lets it through delivers nothing; a trim delivers most of it and
+    // reports the rest.
     const book = { trades: rows(105, 690) };
     assert.ok(JSON.stringify(book, null, 2).length > 70000, 'fixture too small to be the real test');
-    assert.equal(applyBudget(book).report, null);
+    // 60,000 was the first default chosen for this reason, and a 59,539-char
+    // snapshot trimmed to it was refused through the surface: the client's
+    // estimate runs at about 2.3 characters a token on this JSON, so the cap
+    // bites near 57,000. 40,000 leaves the margin.
+    assert.ok(MAX_RESPONSE_CHARS <= 40000, `default ${MAX_RESPONSE_CHARS} is above what the client accepts`);
+    const { payload, report } = applyBudget(book);
+    assert.equal(report.applied, true);
+    assert.equal(report.truncated[0].of, 105);
+    assert.equal(payload.trades.length, report.truncated[0].kept);
+    // Each fixture trade is ~740 chars pretty-printed, so the budget less its
+    // report reserve holds about 52; anything far below that is over-trimming.
+    assert.ok(payload.trades.length >= 45, `trim went far past what the budget required: ${payload.trades.length}`);
+  });
+
+  it('passes a full 105-trade book untouched at the harness setting', () => {
+    // TV_MAX_RESPONSE_CHARS=120000 is how the direct harness reads whole books.
+    assert.equal(applyBudget({ trades: rows(105, 690) }, 120000).report, null);
   });
 
   it('says so rather than cutting when there is no list to trim', () => {

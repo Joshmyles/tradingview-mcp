@@ -1,0 +1,3699 @@
+{
+  "build": "b14",
+  "title": "B14",
+  "state": "saved-baseline",
+  "captured_at": "2026-09-11T09:26:22.299Z",
+  "layout": "Trial Ground",
+  "layout_saved_at": "2026-09-11T08:17:22Z",
+  "note": "The configuration the SAVED Trial Ground layout holds for B14 after the explicit save of 2026-09-11 08:17:22 UTC — what a layout reload restores. Recorded because that save persisted whatever was in memory at the time, so the saved baseline moved from the as-found file. Read from the in-memory study 29 minutes after the save with both dirty flags false and no API input write in between; the only strict proof of a saved copy is a reload, which was not done (it is a chart change). Differs from the intended manifest in in_315 only. Never assert against it; diff against it to detect the next drift.",
+  "entity_id": "xVbiv5",
+  "symbol": "ICMARKETS:XAUUSD",
+  "resolution": "45S",
+  "pine_id": "USER;e003abfb1017423c8f9137fd2c9ffd95",
+  "pine_version": "0.46",
+  "manifest_hash": "d6707b26",
+  "count": 351,
+  "non_default_count": 16,
+  "differs_from_as_found": [
+    {
+      "id": "in_278",
+      "name": "Add on same-direction CZ breaks while in a CZX trade",
+      "as_found": true,
+      "saved": false
+    },
+    {
+      "id": "in_323",
+      "name": "Re-enter on the opposite CZ break that closed the position",
+      "as_found": true,
+      "saved": false
+    }
+  ],
+  "differs_from_intended": [
+    {
+      "id": "in_315",
+      "name": "Take the opposite side after a CZX HS (0 = OFF, the default)",
+      "intended": false,
+      "saved": true
+    }
+  ],
+  "non_default": [
+    {
+      "id": "in_22",
+      "name": "Show Bubbles",
+      "type": "text",
+      "group": "DVB · Order Flow",
+      "value": "Large/Huge Only",
+      "default": "Show All",
+      "is_default": false
+    },
+    {
+      "id": "in_23",
+      "name": "Bubble Volume %ile",
+      "type": "float",
+      "group": "DVB · Order Flow",
+      "value": 90,
+      "default": 60,
+      "is_default": false
+    },
+    {
+      "id": "in_29",
+      "name": "Filter Type",
+      "type": "text",
+      "group": "DVB · Order Flow",
+      "value": "Net Delta",
+      "default": "Delta Strength",
+      "is_default": false
+    },
+    {
+      "id": "in_42",
+      "name": "Session (exchange timezone)",
+      "type": "session",
+      "group": "DVB · Session Filter",
+      "value": "2000-2400",
+      "default": "0000-2400",
+      "is_default": false
+    },
+    {
+      "id": "in_44",
+      "name": "Show Status Panel",
+      "type": "bool",
+      "group": "DVB · Diagnostics",
+      "value": true,
+      "default": false,
+      "is_default": false
+    },
+    {
+      "id": "in_46",
+      "name": "Timeframe",
+      "type": "resolution",
+      "group": "DVB · Order Flow",
+      "value": "45S",
+      "default": "1",
+      "is_default": false
+    },
+    {
+      "id": "in_61",
+      "name": "Extend",
+      "type": "integer",
+      "group": "FVG · Style",
+      "value": 5,
+      "default": 0,
+      "is_default": false
+    },
+    {
+      "id": "in_63",
+      "name": "Bullish FVG",
+      "type": "color",
+      "group": "FVG · Style",
+      "value": 880908552,
+      "default": "rgba(8,153,129,0.1)",
+      "is_default": false
+    },
+    {
+      "id": "in_64",
+      "name": "Bearish FVG",
+      "type": "color",
+      "group": "FVG · Style",
+      "value": 876951282,
+      "default": "rgba(242,54,69,0.1)",
+      "is_default": false
+    },
+    {
+      "id": "in_65",
+      "name": "Border",
+      "type": "bool",
+      "group": "FVG · Style",
+      "value": false,
+      "default": true,
+      "is_default": false
+    },
+    {
+      "id": "in_93",
+      "name": "OB Border Transparency",
+      "type": "integer",
+      "group": "IOF · Visualization",
+      "value": 0,
+      "default": 20,
+      "is_default": false
+    },
+    {
+      "id": "in_94",
+      "name": "Active OB Rule",
+      "type": "text",
+      "group": "IOF · Visualization",
+      "value": "Newest",
+      "default": "Price Inside",
+      "is_default": false
+    },
+    {
+      "id": "in_250",
+      "name": "Census lines (log.info)",
+      "type": "bool",
+      "group": "PS · 7 Census (all order-inert)",
+      "value": false,
+      "default": true,
+      "is_default": false
+    },
+    {
+      "id": "in_274",
+      "name": "Tint the live window",
+      "type": "bool",
+      "group": "SESX · session entry filter (build8 item 19)",
+      "value": false,
+      "default": true,
+      "is_default": false
+    },
+    {
+      "id": "in_315",
+      "name": "Take the opposite side after a CZX HS (0 = OFF, the default)",
+      "type": "bool",
+      "group": "RVX · reversal after a hard stop (build14 item 31)",
+      "value": true,
+      "default": false,
+      "is_default": false
+    },
+    {
+      "id": "in_344",
+      "name": "Use Bar Magnifier",
+      "type": "bool",
+      "group": null,
+      "value": true,
+      "default": false,
+      "is_default": false
+    }
+  ],
+  "inputs": [
+    {
+      "id": "in_0",
+      "name": "Loopback Period",
+      "type": "integer",
+      "group": "CZ · Structure",
+      "value": 10,
+      "default": 10,
+      "is_default": true
+    },
+    {
+      "id": "in_1",
+      "name": "Min Consolidation Length",
+      "type": "integer",
+      "group": "CZ · Structure",
+      "value": 5,
+      "default": 5,
+      "is_default": true
+    },
+    {
+      "id": "in_2",
+      "name": "Paint Consolidation Area ",
+      "type": "bool",
+      "group": "CZ · Drawing",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_3",
+      "name": "Zone Color",
+      "type": "color",
+      "group": "CZ · Drawing",
+      "value": 1308582441,
+      "default": "rgba(41,98,255,0.3)",
+      "is_default": true
+    },
+    {
+      "id": "in_4",
+      "name": "Zone high line",
+      "type": "color",
+      "group": "CZ · Drawing",
+      "value": 4282726130,
+      "default": "#F23645",
+      "is_default": true
+    },
+    {
+      "id": "in_5",
+      "name": "Zone low line",
+      "type": "color",
+      "group": "CZ · Drawing",
+      "value": 4285982208,
+      "default": "#00E676",
+      "is_default": true
+    },
+    {
+      "id": "in_6",
+      "name": "Max historical zones",
+      "type": "integer",
+      "group": "CZ · Drawing",
+      "value": 20,
+      "default": 20,
+      "is_default": true
+    },
+    {
+      "id": "in_7",
+      "name": "Completed zone transparency",
+      "type": "integer",
+      "group": "CZ · Drawing",
+      "value": 60,
+      "default": 60,
+      "is_default": true
+    },
+    {
+      "id": "in_8",
+      "name": "Breakout markers",
+      "type": "bool",
+      "group": "CZ · Drawing",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_9",
+      "name": "ATR length",
+      "type": "integer",
+      "group": "CZ · Breakout / width",
+      "value": 14,
+      "default": 14,
+      "is_default": true
+    },
+    {
+      "id": "in_10",
+      "name": "Breakout margin (ATR)",
+      "type": "float",
+      "group": "CZ · Breakout / width",
+      "value": 0.3,
+      "default": 0.3,
+      "is_default": true
+    },
+    {
+      "id": "in_11",
+      "name": "Max zone width (ATR)",
+      "type": "float",
+      "group": "CZ · Breakout / width",
+      "value": 1.5,
+      "default": 1.5,
+      "is_default": true
+    },
+    {
+      "id": "in_12",
+      "name": "Zone edge mode",
+      "type": "text",
+      "group": "CZ · Breakout / width",
+      "value": "Ratchet",
+      "default": "Ratchet",
+      "is_default": true
+    },
+    {
+      "id": "in_13",
+      "name": "Width cap ATR reference",
+      "type": "text",
+      "group": "CZ · Breakout / width",
+      "value": "Live",
+      "default": "Live",
+      "is_default": true
+    },
+    {
+      "id": "in_14",
+      "name": "Formation session",
+      "type": "bool",
+      "group": "CZ · Session",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_15",
+      "name": "",
+      "type": "session",
+      "group": "CZ · Session",
+      "value": "0000-2400",
+      "default": "0000-2400",
+      "is_default": true
+    },
+    {
+      "id": "in_16",
+      "name": "Session timezone",
+      "type": "text",
+      "group": "CZ · Session",
+      "value": "",
+      "default": "",
+      "is_default": true
+    },
+    {
+      "id": "in_17",
+      "name": "End active zone at session close",
+      "type": "bool",
+      "group": "CZ · Session",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_18",
+      "name": "Log zone events (Pine Logs)",
+      "type": "bool",
+      "group": "CZ · Diagnostics",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_19",
+      "name": "Data window channel 1",
+      "type": "text",
+      "group": "CZ · Data Window Outputs",
+      "value": "CZ zone active",
+      "default": "CZ zone active",
+      "is_default": true
+    },
+    {
+      "id": "in_20",
+      "name": "Data window channel 2",
+      "type": "text",
+      "group": "CZ · Data Window Outputs",
+      "value": "CZ close to nearest edge (ATR)",
+      "default": "CZ close to nearest edge (ATR)",
+      "is_default": true
+    },
+    {
+      "id": "in_21",
+      "name": "Data window channel 3",
+      "type": "text",
+      "group": "CZ · Data Window Outputs",
+      "value": "CZ count (conscnt)",
+      "default": "CZ count (conscnt)",
+      "is_default": true
+    },
+    {
+      "id": "in_22",
+      "name": "Show Bubbles",
+      "type": "text",
+      "group": "DVB · Order Flow",
+      "value": "Large/Huge Only",
+      "default": "Show All",
+      "is_default": false
+    },
+    {
+      "id": "in_23",
+      "name": "Bubble Volume %ile",
+      "type": "float",
+      "group": "DVB · Order Flow",
+      "value": 90,
+      "default": 60,
+      "is_default": false
+    },
+    {
+      "id": "in_24",
+      "name": "Show Numbers in Bubbles",
+      "type": "bool",
+      "group": "DVB · Bubble Labels",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_25",
+      "name": "Label Volume %ile",
+      "type": "float",
+      "group": "DVB · Bubble Labels",
+      "value": 90,
+      "default": 90,
+      "is_default": true
+    },
+    {
+      "id": "in_26",
+      "name": "Intensity Mode",
+      "type": "bool",
+      "group": "DVB · Order Flow",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_27",
+      "name": "Delta Z-Score Length",
+      "type": "integer",
+      "group": "DVB · Order Flow",
+      "value": 120,
+      "default": 120,
+      "is_default": true
+    },
+    {
+      "id": "in_28",
+      "name": "Percentile Lookback",
+      "type": "integer",
+      "group": "DVB · Order Flow",
+      "value": 400,
+      "default": 400,
+      "is_default": true
+    },
+    {
+      "id": "in_29",
+      "name": "Filter Type",
+      "type": "text",
+      "group": "DVB · Order Flow",
+      "value": "Net Delta",
+      "default": "Delta Strength",
+      "is_default": false
+    },
+    {
+      "id": "in_30",
+      "name": "Normalization",
+      "type": "text",
+      "group": "DVB · Order Flow",
+      "value": "Zero-Relative Z-Score",
+      "default": "Zero-Relative Z-Score",
+      "is_default": true
+    },
+    {
+      "id": "in_31",
+      "name": "Aggression Threshold (|delta| / volume)",
+      "type": "float",
+      "group": "DVB · Order Flow",
+      "value": 0.35,
+      "default": 0.35,
+      "is_default": true
+    },
+    {
+      "id": "in_32",
+      "name": "Bubble Placement",
+      "type": "text",
+      "group": "DVB · Order Flow",
+      "value": "Candle VWAP",
+      "default": "Candle VWAP",
+      "is_default": true
+    },
+    {
+      "id": "in_33",
+      "name": "Minimal Mode (tiny dots above/below bar; ignores placement)",
+      "type": "bool",
+      "group": "DVB · Order Flow",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_34",
+      "name": "Bubble Scale",
+      "type": "text",
+      "group": "DVB · Order Flow",
+      "value": "Compact",
+      "default": "Compact",
+      "is_default": true
+    },
+    {
+      "id": "in_35",
+      "name": "Show Live-Bar Preview (repaints)",
+      "type": "bool",
+      "group": "DVB · Order Flow",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_36",
+      "name": "Minimal-Dot Offset (ATR multiple)",
+      "type": "float",
+      "group": "DVB · Order Flow",
+      "value": 0.25,
+      "default": 0.25,
+      "is_default": true
+    },
+    {
+      "id": "in_37",
+      "name": "Small ≥",
+      "type": "float",
+      "group": "DVB · Sizing Thresholds",
+      "value": 0.5,
+      "default": 0.5,
+      "is_default": true
+    },
+    {
+      "id": "in_38",
+      "name": "Normal ≥",
+      "type": "float",
+      "group": "DVB · Sizing Thresholds",
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_39",
+      "name": "Large ≥",
+      "type": "float",
+      "group": "DVB · Sizing Thresholds",
+      "value": 1.5,
+      "default": 1.5,
+      "is_default": true
+    },
+    {
+      "id": "in_40",
+      "name": "Huge ≥",
+      "type": "float",
+      "group": "DVB · Sizing Thresholds",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_41",
+      "name": "Restrict to Session",
+      "type": "bool",
+      "group": "DVB · Session Filter",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_42",
+      "name": "Session (exchange timezone)",
+      "type": "session",
+      "group": "DVB · Session Filter",
+      "value": "2000-2400",
+      "default": "0000-2400",
+      "is_default": false
+    },
+    {
+      "id": "in_43",
+      "name": "Warn Below Intrabars",
+      "type": "integer",
+      "group": "DVB · Diagnostics",
+      "value": 10,
+      "default": 10,
+      "is_default": true
+    },
+    {
+      "id": "in_44",
+      "name": "Show Status Panel",
+      "type": "bool",
+      "group": "DVB · Diagnostics",
+      "value": true,
+      "default": false,
+      "is_default": false
+    },
+    {
+      "id": "in_45",
+      "name": "Use custom timeframe",
+      "type": "bool",
+      "group": "DVB · Order Flow",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_46",
+      "name": "Timeframe",
+      "type": "resolution",
+      "group": "DVB · Order Flow",
+      "value": "45S",
+      "default": "1",
+      "is_default": false
+    },
+    {
+      "id": "in_47",
+      "name": "Data window channel 1",
+      "type": "text",
+      "group": "DVB · Data Window Outputs",
+      "value": "Net Delta",
+      "default": "Net Delta",
+      "is_default": true
+    },
+    {
+      "id": "in_48",
+      "name": "Data window channel 2",
+      "type": "text",
+      "group": "DVB · Data Window Outputs",
+      "value": "Delta |Z| (zero-relative)",
+      "default": "Delta |Z| (zero-relative)",
+      "is_default": true
+    },
+    {
+      "id": "in_49",
+      "name": "Threshold %",
+      "type": "float",
+      "group": "FVG · Detection & Tracking",
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_50",
+      "name": "Auto",
+      "type": "bool",
+      "group": "FVG · Detection & Tracking",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_51",
+      "name": "Auto Length",
+      "type": "integer",
+      "group": "FVG · Detection & Tracking",
+      "value": 200,
+      "default": 200,
+      "is_default": true
+    },
+    {
+      "id": "in_52",
+      "name": "Unmitigated Levels",
+      "type": "integer",
+      "group": "FVG · Detection & Tracking",
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_53",
+      "name": "Mitigation Levels",
+      "type": "bool",
+      "group": "FVG · Detection & Tracking",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_54",
+      "name": "Max Mitigation Lines",
+      "type": "integer",
+      "group": "FVG · Detection & Tracking",
+      "value": 50,
+      "default": 50,
+      "is_default": true
+    },
+    {
+      "id": "in_55",
+      "name": "Max Tracked Gaps",
+      "type": "integer",
+      "group": "FVG · Detection & Tracking",
+      "value": 200,
+      "default": 200,
+      "is_default": true
+    },
+    {
+      "id": "in_56",
+      "name": "Timeframe",
+      "type": "resolution",
+      "group": "FVG · Detection & Tracking",
+      "value": "",
+      "default": "",
+      "is_default": true
+    },
+    {
+      "id": "in_57",
+      "name": "Confirmed HTF Bars Only",
+      "type": "bool",
+      "group": "FVG · Detection & Tracking",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_58",
+      "name": "Restrict to Session",
+      "type": "bool",
+      "group": "FVG · Session Filter",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_59",
+      "name": "Session",
+      "type": "session",
+      "group": "FVG · Session Filter",
+      "value": "0000-2400",
+      "default": "0000-2400",
+      "is_default": true
+    },
+    {
+      "id": "in_60",
+      "name": "Session Timezone",
+      "type": "text",
+      "group": "FVG · Session Filter",
+      "value": "",
+      "default": "",
+      "is_default": true
+    },
+    {
+      "id": "in_61",
+      "name": "Extend",
+      "type": "integer",
+      "group": "FVG · Style",
+      "value": 5,
+      "default": 0,
+      "is_default": false
+    },
+    {
+      "id": "in_62",
+      "name": "Dynamic",
+      "type": "bool",
+      "group": "FVG · Style",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_63",
+      "name": "Bullish FVG",
+      "type": "color",
+      "group": "FVG · Style",
+      "value": 880908552,
+      "default": "rgba(8,153,129,0.1)",
+      "is_default": false
+    },
+    {
+      "id": "in_64",
+      "name": "Bearish FVG",
+      "type": "color",
+      "group": "FVG · Style",
+      "value": 876951282,
+      "default": "rgba(242,54,69,0.1)",
+      "is_default": false
+    },
+    {
+      "id": "in_65",
+      "name": "Border",
+      "type": "bool",
+      "group": "FVG · Style",
+      "value": false,
+      "default": true,
+      "is_default": false
+    },
+    {
+      "id": "in_66",
+      "name": "Transparency",
+      "type": "integer",
+      "group": "FVG · Style",
+      "value": 30,
+      "default": 30,
+      "is_default": true
+    },
+    {
+      "id": "in_67",
+      "name": "Show Dashboard",
+      "type": "bool",
+      "group": "FVG · Dashboard",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_68",
+      "name": "Location",
+      "type": "text",
+      "group": "FVG · Dashboard",
+      "value": "Top Right",
+      "default": "Top Right",
+      "is_default": true
+    },
+    {
+      "id": "in_69",
+      "name": "Size",
+      "type": "text",
+      "group": "FVG · Dashboard",
+      "value": "Small",
+      "default": "Small",
+      "is_default": true
+    },
+    {
+      "id": "in_70",
+      "name": "ATR Length (distance output)",
+      "type": "integer",
+      "group": "FVG · Data Window Outputs",
+      "value": 14,
+      "default": 14,
+      "is_default": true
+    },
+    {
+      "id": "in_71",
+      "name": "Size Percentile Lookback (gaps)",
+      "type": "integer",
+      "group": "FVG · Data Window Outputs",
+      "value": 100,
+      "default": 100,
+      "is_default": true
+    },
+    {
+      "id": "in_72",
+      "name": "Data window channel 1",
+      "type": "text",
+      "group": "FVG · Data Window Outputs",
+      "value": "FVG Nearest Distance (ATR)",
+      "default": "FVG Nearest Distance (ATR)",
+      "is_default": true
+    },
+    {
+      "id": "in_73",
+      "name": "Data window channel 2",
+      "type": "text",
+      "group": "FVG · Data Window Outputs",
+      "value": "FVG Nearest Direction",
+      "default": "FVG Nearest Direction",
+      "is_default": true
+    },
+    {
+      "id": "in_74",
+      "name": "Pivot Lookback",
+      "type": "integer",
+      "group": "IOF · Order Block Settings",
+      "value": 5,
+      "default": 5,
+      "is_default": true
+    },
+    {
+      "id": "in_75",
+      "name": "Max Unmitigated OBs",
+      "type": "integer",
+      "group": "IOF · Order Block Settings",
+      "value": 5,
+      "default": 5,
+      "is_default": true
+    },
+    {
+      "id": "in_76",
+      "name": "Max Search Length (bars)",
+      "type": "integer",
+      "group": "IOF · Order Block Settings",
+      "value": 500,
+      "default": 500,
+      "is_default": true
+    },
+    {
+      "id": "in_77",
+      "name": "OB Anchor",
+      "type": "text",
+      "group": "IOF · Order Block Settings",
+      "value": "Extreme Candle",
+      "default": "Extreme Candle",
+      "is_default": true
+    },
+    {
+      "id": "in_78",
+      "name": "Min Strength",
+      "type": "float",
+      "group": "IOF · Order Block Settings",
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_79",
+      "name": "Max Stored OBs",
+      "type": "integer",
+      "group": "IOF · Order Block Settings",
+      "value": 100,
+      "default": 100,
+      "is_default": true
+    },
+    {
+      "id": "in_80",
+      "name": "Consume Pivot On Failed Search",
+      "type": "bool",
+      "group": "IOF · Order Block Settings",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_81",
+      "name": "Invalidation",
+      "type": "text",
+      "group": "IOF · Order Block Settings",
+      "value": "Body Close",
+      "default": "Body Close",
+      "is_default": true
+    },
+    {
+      "id": "in_82",
+      "name": "Displacement Normalisation",
+      "type": "text",
+      "group": "IOF · Strength Score",
+      "value": "ATR",
+      "default": "ATR",
+      "is_default": true
+    },
+    {
+      "id": "in_83",
+      "name": "ATR Multiple To Saturate",
+      "type": "float",
+      "group": "IOF · Strength Score",
+      "value": 3,
+      "default": 3,
+      "is_default": true
+    },
+    {
+      "id": "in_84",
+      "name": "OB-Height Multiple To Saturate",
+      "type": "float",
+      "group": "IOF · Strength Score",
+      "value": 5,
+      "default": 5,
+      "is_default": true
+    },
+    {
+      "id": "in_85",
+      "name": "ATR Length",
+      "type": "integer",
+      "group": "IOF · Strength Score",
+      "value": 14,
+      "default": 14,
+      "is_default": true
+    },
+    {
+      "id": "in_86",
+      "name": "Use Volume In Score",
+      "type": "bool",
+      "group": "IOF · Strength Score",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_87",
+      "name": "Volume Average Length",
+      "type": "integer",
+      "group": "IOF · Strength Score",
+      "value": 20,
+      "default": 20,
+      "is_default": true
+    },
+    {
+      "id": "in_88",
+      "name": "Relative Volume To Saturate",
+      "type": "float",
+      "group": "IOF · Strength Score",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_89",
+      "name": "Displacement Weight",
+      "type": "float",
+      "group": "IOF · Strength Score",
+      "value": 0.6,
+      "default": 0.6,
+      "is_default": true
+    },
+    {
+      "id": "in_90",
+      "name": "Bullish OB Color",
+      "type": "color",
+      "group": "IOF · Visualization",
+      "value": 1082235144,
+      "default": "rgba(8,153,129,0.25)",
+      "is_default": true
+    },
+    {
+      "id": "in_91",
+      "name": "Bearish OB Color",
+      "type": "color",
+      "group": "IOF · Visualization",
+      "value": 1078277874,
+      "default": "rgba(242,54,69,0.25)",
+      "is_default": true
+    },
+    {
+      "id": "in_92",
+      "name": "Active OB Border",
+      "type": "color",
+      "group": "IOF · Visualization",
+      "value": 4281719037,
+      "default": "rgba(253,216,53,1)",
+      "is_default": true
+    },
+    {
+      "id": "in_93",
+      "name": "OB Border Transparency",
+      "type": "integer",
+      "group": "IOF · Visualization",
+      "value": 0,
+      "default": 20,
+      "is_default": false
+    },
+    {
+      "id": "in_94",
+      "name": "Active OB Rule",
+      "type": "text",
+      "group": "IOF · Visualization",
+      "value": "Newest",
+      "default": "Price Inside",
+      "is_default": false
+    },
+    {
+      "id": "in_95",
+      "name": "Active OB Border Style",
+      "type": "text",
+      "group": "IOF · Visualization",
+      "value": "Solid",
+      "default": "Solid",
+      "is_default": true
+    },
+    {
+      "id": "in_96",
+      "name": "Active OB Border Width",
+      "type": "integer",
+      "group": "IOF · Visualization",
+      "value": 3,
+      "default": 3,
+      "is_default": true
+    },
+    {
+      "id": "in_97",
+      "name": "Past OB Border Style",
+      "type": "text",
+      "group": "IOF · Visualization",
+      "value": "Dashed",
+      "default": "Dashed",
+      "is_default": true
+    },
+    {
+      "id": "in_98",
+      "name": "Past OB Border Width",
+      "type": "integer",
+      "group": "IOF · Visualization",
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_99",
+      "name": "Hide Overlapped Zones",
+      "type": "bool",
+      "group": "IOF · Visualization",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_100",
+      "name": "Zone Priority",
+      "type": "text",
+      "group": "IOF · Visualization",
+      "value": "Strongest",
+      "default": "Strongest",
+      "is_default": true
+    },
+    {
+      "id": "in_101",
+      "name": "Show Strength Labels",
+      "type": "bool",
+      "group": "IOF · Visualization",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_102",
+      "name": "Labels Show Components",
+      "type": "bool",
+      "group": "IOF · Visualization",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_103",
+      "name": "Strength Label Color",
+      "type": "color",
+      "group": "IOF · Visualization",
+      "value": 4294967295,
+      "default": "#FFFFFF",
+      "is_default": true
+    },
+    {
+      "id": "in_104",
+      "name": "Strength Label Size",
+      "type": "text",
+      "group": "IOF · Visualization",
+      "value": "Normal",
+      "default": "Normal",
+      "is_default": true
+    },
+    {
+      "id": "in_105",
+      "name": "Strength Label Position",
+      "type": "text",
+      "group": "IOF · Visualization",
+      "value": "Top",
+      "default": "Top",
+      "is_default": true
+    },
+    {
+      "id": "in_106",
+      "name": "Volume Notice Location",
+      "type": "text",
+      "group": "IOF · Visualization",
+      "value": "Bottom Right",
+      "default": "Bottom Right",
+      "is_default": true
+    },
+    {
+      "id": "in_107",
+      "name": "Show Volume Notice Panel",
+      "type": "bool",
+      "group": "IOF · Visualization",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_108",
+      "name": "Show Strongest OB Plot",
+      "type": "bool",
+      "group": "IOF · Strongest OB Plot",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_109",
+      "name": "Strongest OB Buffer Size",
+      "type": "integer",
+      "group": "IOF · Strongest OB Plot",
+      "value": 5,
+      "default": 5,
+      "is_default": true
+    },
+    {
+      "id": "in_110",
+      "name": "Max Distance From Price (ATR)",
+      "type": "float",
+      "group": "IOF · Strongest OB Plot",
+      "value": 5,
+      "default": 5,
+      "is_default": true
+    },
+    {
+      "id": "in_111",
+      "name": "Side Filter",
+      "type": "text",
+      "group": "IOF · Strongest OB Plot",
+      "value": "Both",
+      "default": "Both",
+      "is_default": true
+    },
+    {
+      "id": "in_112",
+      "name": "Limit OB Creation To Session",
+      "type": "bool",
+      "group": "IOF · Session Filter",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_113",
+      "name": "",
+      "type": "session",
+      "group": "IOF · Session Filter",
+      "value": "0800-1700",
+      "default": "0800-1700",
+      "is_default": true
+    },
+    {
+      "id": "in_114",
+      "name": "Session Timezone",
+      "type": "text",
+      "group": "IOF · Session Filter",
+      "value": "Etc/UTC",
+      "default": "Etc/UTC",
+      "is_default": true
+    },
+    {
+      "id": "in_115",
+      "name": "Zone Entry Alert Min Strength",
+      "type": "float",
+      "group": "IOF · Alerts",
+      "value": 60,
+      "default": 60,
+      "is_default": true
+    },
+    {
+      "id": "in_116",
+      "name": "Data window channel 1",
+      "type": "text",
+      "group": "IOF · Data Window Outputs",
+      "value": "Nearest OB strength",
+      "default": "Nearest OB strength",
+      "is_default": true
+    },
+    {
+      "id": "in_117",
+      "name": "Data window channel 2",
+      "type": "text",
+      "group": "IOF · Data Window Outputs",
+      "value": "Nearest OB distance to edge (ATR)",
+      "default": "Nearest OB distance to edge (ATR)",
+      "is_default": true
+    },
+    {
+      "id": "in_118",
+      "name": "Data window channel 3",
+      "type": "text",
+      "group": "IOF · Data Window Outputs",
+      "value": "Active OB count",
+      "default": "Active OB count",
+      "is_default": true
+    },
+    {
+      "id": "in_119",
+      "name": "Data window channel 4",
+      "type": "text",
+      "group": "IOF · Data Window Outputs",
+      "value": "New OB this bar (+1/-1/0)",
+      "default": "New OB this bar (+1/-1/0)",
+      "is_default": true
+    },
+    {
+      "id": "in_120",
+      "name": "Swings",
+      "type": "integer",
+      "group": "LS · Liquidity Sweeps",
+      "value": 5,
+      "default": 5,
+      "is_default": true
+    },
+    {
+      "id": "in_121",
+      "name": "options",
+      "type": "text",
+      "group": "LS · Liquidity Sweeps",
+      "value": "Only Wicks",
+      "default": "Only Wicks",
+      "is_default": true
+    },
+    {
+      "id": "in_122",
+      "name": "Bull ",
+      "type": "color",
+      "group": "LS · Liquidity Sweeps",
+      "value": 4286683400,
+      "default": "#089981",
+      "is_default": true
+    },
+    {
+      "id": "in_123",
+      "name": "Bear",
+      "type": "color",
+      "group": "LS · Liquidity Sweeps",
+      "value": 4282726130,
+      "default": "#f23645",
+      "is_default": true
+    },
+    {
+      "id": "in_124",
+      "name": "",
+      "type": "color",
+      "group": "LS · Liquidity Sweeps",
+      "value": 2155976968,
+      "default": "rgba(8,153,129,0.5)",
+      "is_default": true
+    },
+    {
+      "id": "in_125",
+      "name": "",
+      "type": "color",
+      "group": "LS · Liquidity Sweeps",
+      "value": 2152019698,
+      "default": "rgba(242,54,69,0.5)",
+      "is_default": true
+    },
+    {
+      "id": "in_126",
+      "name": "Pivot Max Age (bars)",
+      "type": "integer",
+      "group": "LS · Liquidity Sweeps",
+      "value": 2000,
+      "default": 2000,
+      "is_default": true
+    },
+    {
+      "id": "in_127",
+      "name": "Max tracked swings per side",
+      "type": "integer",
+      "group": "LS · Liquidity Sweeps",
+      "value": 500,
+      "default": 500,
+      "is_default": true
+    },
+    {
+      "id": "in_128",
+      "name": "Second swing length",
+      "type": "bool",
+      "group": "LS · Major Swings",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_129",
+      "name": "",
+      "type": "integer",
+      "group": "LS · Major Swings",
+      "value": 25,
+      "default": 25,
+      "is_default": true
+    },
+    {
+      "id": "in_130",
+      "name": "Major line width",
+      "type": "integer",
+      "group": "LS · Major Swings",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_131",
+      "name": "Major box border",
+      "type": "bool",
+      "group": "LS · Major Swings",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_132",
+      "name": "Extend",
+      "type": "bool",
+      "group": "LS · Sweep Area",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_133",
+      "name": "Max bars",
+      "type": "integer",
+      "group": "LS · Sweep Area",
+      "value": 300,
+      "default": 300,
+      "is_default": true
+    },
+    {
+      "id": "in_134",
+      "name": "Bull ",
+      "type": "color",
+      "group": "LS · Sweep Area",
+      "value": 1077270781,
+      "default": "rgba(253,216,53,0.25)",
+      "is_default": true
+    },
+    {
+      "id": "in_135",
+      "name": "Bear",
+      "type": "color",
+      "group": "LS · Sweep Area",
+      "value": 1077270781,
+      "default": "rgba(253,216,53,0.25)",
+      "is_default": true
+    },
+    {
+      "id": "in_136",
+      "name": "Max sweep events kept",
+      "type": "integer",
+      "group": "LS · Sweep Area",
+      "value": 50,
+      "default": 50,
+      "is_default": true
+    },
+    {
+      "id": "in_137",
+      "name": "Reaction line",
+      "type": "bool",
+      "group": "LS · Sweep Area",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_138",
+      "name": "Min wick-sweep depth (ATR)",
+      "type": "float",
+      "group": "LS · Filters",
+      "value": 0.4,
+      "default": 0.4,
+      "is_default": true
+    },
+    {
+      "id": "in_139",
+      "name": "Min retest depth (ATR)",
+      "type": "float",
+      "group": "LS · Filters",
+      "value": 0.4,
+      "default": 0.4,
+      "is_default": true
+    },
+    {
+      "id": "in_140",
+      "name": "ATR length",
+      "type": "integer",
+      "group": "LS · Filters",
+      "value": 14,
+      "default": 14,
+      "is_default": true
+    },
+    {
+      "id": "in_141",
+      "name": "Formation session",
+      "type": "bool",
+      "group": "LS · Sessions",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_142",
+      "name": "",
+      "type": "session",
+      "group": "LS · Sessions",
+      "value": "0100-0900",
+      "default": "0100-0900",
+      "is_default": true
+    },
+    {
+      "id": "in_143",
+      "name": "Sweep session",
+      "type": "bool",
+      "group": "LS · Sessions",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_144",
+      "name": "",
+      "type": "session",
+      "group": "LS · Sessions",
+      "value": "0700-1100",
+      "default": "0700-1100",
+      "is_default": true
+    },
+    {
+      "id": "in_145",
+      "name": "Session timezone",
+      "type": "text",
+      "group": "LS · Sessions",
+      "value": "Etc/UTC",
+      "default": "Etc/UTC",
+      "is_default": true
+    },
+    {
+      "id": "in_146",
+      "name": "Show live (unconfirmed) preview",
+      "type": "bool",
+      "group": "LS · Realtime",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_147",
+      "name": "Data window channel 1",
+      "type": "text",
+      "group": "LS · Data Window Outputs",
+      "value": "Last sweep depth (ATR)",
+      "default": "Last sweep depth (ATR)",
+      "is_default": true
+    },
+    {
+      "id": "in_148",
+      "name": "Data window channel 2",
+      "type": "text",
+      "group": "LS · Data Window Outputs",
+      "value": "Bars since last sweep",
+      "default": "Bars since last sweep",
+      "is_default": true
+    },
+    {
+      "id": "in_149",
+      "name": "fade",
+      "type": "integer",
+      "group": "SR · Grading",
+      "value": 10,
+      "default": 10,
+      "is_default": true
+    },
+    {
+      "id": "in_150",
+      "name": "value",
+      "type": "text",
+      "group": "SR · Grading",
+      "value": "line",
+      "default": "line",
+      "is_default": true
+    },
+    {
+      "id": "in_151",
+      "name": "              ",
+      "type": "color",
+      "group": "SR · Grading",
+      "value": 4285982208,
+      "default": "#00E676",
+      "is_default": true
+    },
+    {
+      "id": "in_152",
+      "name": "",
+      "type": "color",
+      "group": "SR · Grading",
+      "value": 4282726130,
+      "default": "#F23645",
+      "is_default": true
+    },
+    {
+      "id": "in_153",
+      "name": "left",
+      "type": "integer",
+      "group": "SR · Swings settings",
+      "value": 10,
+      "default": 10,
+      "is_default": true
+    },
+    {
+      "id": "in_154",
+      "name": "right",
+      "type": "integer",
+      "group": "SR · Swings settings",
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_155",
+      "name": "show",
+      "type": "bool",
+      "group": "SR · Swings settings",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_156",
+      "name": "Max Swings Evaluated",
+      "type": "integer",
+      "group": "SR · Swings settings",
+      "value": 20,
+      "default": 20,
+      "is_default": true
+    },
+    {
+      "id": "in_157",
+      "name": "Max Stored Pivots",
+      "type": "integer",
+      "group": "SR · Swings settings",
+      "value": 100,
+      "default": 100,
+      "is_default": true
+    },
+    {
+      "id": "in_158",
+      "name": "Restrict Pivots to Session",
+      "type": "bool",
+      "group": "SR · Swings settings",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_159",
+      "name": "Session",
+      "type": "session",
+      "group": "SR · Swings settings",
+      "value": "0000-2400",
+      "default": "0000-2400",
+      "is_default": true
+    },
+    {
+      "id": "in_160",
+      "name": "Session Timezone",
+      "type": "text",
+      "group": "SR · Swings settings",
+      "value": "",
+      "default": "",
+      "is_default": true
+    },
+    {
+      "id": "in_161",
+      "name": "Lookback Cap (bars)",
+      "type": "integer",
+      "group": "SR · Window",
+      "value": 2000,
+      "default": 2000,
+      "is_default": true
+    },
+    {
+      "id": "in_162",
+      "name": "Fixed Window",
+      "type": "bool",
+      "group": "SR · Window",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_163",
+      "name": "Fixed Lookback (bars)",
+      "type": "integer",
+      "group": "SR · Window",
+      "value": 2000,
+      "default": 2000,
+      "is_default": true
+    },
+    {
+      "id": "in_164",
+      "name": "Max Rendered Levels",
+      "type": "integer",
+      "group": "SR · Window",
+      "value": 25,
+      "default": 25,
+      "is_default": true
+    },
+    {
+      "id": "in_165",
+      "name": "Show Readout",
+      "type": "bool",
+      "group": "SR · Readout",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_166",
+      "name": "Position",
+      "type": "text",
+      "group": "SR · Readout",
+      "value": "Top Left",
+      "default": "Top Left",
+      "is_default": true
+    },
+    {
+      "id": "in_167",
+      "name": "ATR Length (distance outputs)",
+      "type": "integer",
+      "group": "SR · Readout",
+      "value": 14,
+      "default": 14,
+      "is_default": true
+    },
+    {
+      "id": "in_168",
+      "name": "1",
+      "type": "text",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "SMA",
+      "default": "SMA",
+      "is_default": true
+    },
+    {
+      "id": "in_169",
+      "name": "",
+      "type": "integer",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 50,
+      "default": 50,
+      "is_default": true
+    },
+    {
+      "id": "in_170",
+      "name": "",
+      "type": "float",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_171",
+      "name": "",
+      "type": "resolution",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "D",
+      "default": "D",
+      "is_default": true
+    },
+    {
+      "id": "in_172",
+      "name": "2",
+      "type": "text",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "SMA",
+      "default": "SMA",
+      "is_default": true
+    },
+    {
+      "id": "in_173",
+      "name": "",
+      "type": "integer",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 100,
+      "default": 100,
+      "is_default": true
+    },
+    {
+      "id": "in_174",
+      "name": "",
+      "type": "float",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_175",
+      "name": "",
+      "type": "resolution",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "D",
+      "default": "D",
+      "is_default": true
+    },
+    {
+      "id": "in_176",
+      "name": "3",
+      "type": "text",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "SMA",
+      "default": "SMA",
+      "is_default": true
+    },
+    {
+      "id": "in_177",
+      "name": "",
+      "type": "integer",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 20,
+      "default": 20,
+      "is_default": true
+    },
+    {
+      "id": "in_178",
+      "name": "",
+      "type": "float",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_179",
+      "name": "",
+      "type": "resolution",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "W",
+      "default": "W",
+      "is_default": true
+    },
+    {
+      "id": "in_180",
+      "name": "4",
+      "type": "text",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "Previous High",
+      "default": "Previous High",
+      "is_default": true
+    },
+    {
+      "id": "in_181",
+      "name": "",
+      "type": "integer",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 20,
+      "default": 20,
+      "is_default": true
+    },
+    {
+      "id": "in_182",
+      "name": "",
+      "type": "float",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_183",
+      "name": "",
+      "type": "resolution",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "W",
+      "default": "W",
+      "is_default": true
+    },
+    {
+      "id": "in_184",
+      "name": "5",
+      "type": "text",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "Previous Low",
+      "default": "Previous Low",
+      "is_default": true
+    },
+    {
+      "id": "in_185",
+      "name": "",
+      "type": "integer",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 20,
+      "default": 20,
+      "is_default": true
+    },
+    {
+      "id": "in_186",
+      "name": "",
+      "type": "float",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_187",
+      "name": "",
+      "type": "resolution",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "W",
+      "default": "W",
+      "is_default": true
+    },
+    {
+      "id": "in_188",
+      "name": "6",
+      "type": "text",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "Upper",
+      "default": "Upper",
+      "is_default": true
+    },
+    {
+      "id": "in_189",
+      "name": "",
+      "type": "integer",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 20,
+      "default": 20,
+      "is_default": true
+    },
+    {
+      "id": "in_190",
+      "name": "",
+      "type": "float",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_191",
+      "name": "",
+      "type": "resolution",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "D",
+      "default": "D",
+      "is_default": true
+    },
+    {
+      "id": "in_192",
+      "name": "7",
+      "type": "text",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "Lower",
+      "default": "Lower",
+      "is_default": true
+    },
+    {
+      "id": "in_193",
+      "name": "",
+      "type": "integer",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 20,
+      "default": 20,
+      "is_default": true
+    },
+    {
+      "id": "in_194",
+      "name": "",
+      "type": "float",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_195",
+      "name": "",
+      "type": "resolution",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "D",
+      "default": "D",
+      "is_default": true
+    },
+    {
+      "id": "in_196",
+      "name": "8",
+      "type": "text",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "Swings",
+      "default": "Swings",
+      "is_default": true
+    },
+    {
+      "id": "in_197",
+      "name": "",
+      "type": "integer",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 20,
+      "default": 20,
+      "is_default": true
+    },
+    {
+      "id": "in_198",
+      "name": "",
+      "type": "float",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_199",
+      "name": "",
+      "type": "resolution",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "D",
+      "default": "D",
+      "is_default": true
+    },
+    {
+      "id": "in_200",
+      "name": "9",
+      "type": "text",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "Fibonacci",
+      "default": "Fibonacci",
+      "is_default": true
+    },
+    {
+      "id": "in_201",
+      "name": "",
+      "type": "integer",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 20,
+      "default": 20,
+      "is_default": true
+    },
+    {
+      "id": "in_202",
+      "name": "",
+      "type": "float",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_203",
+      "name": "",
+      "type": "resolution",
+      "group": "SR · SET (N° – Type – Length – Mult – HTF)",
+      "value": "W",
+      "default": "W",
+      "is_default": true
+    },
+    {
+      "id": "in_204",
+      "name": "A",
+      "type": "bool",
+      "group": "SR · show values",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_205",
+      "name": "",
+      "type": "integer",
+      "group": "SR · show values",
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_206",
+      "name": "B",
+      "type": "bool",
+      "group": "SR · show values",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_207",
+      "name": "",
+      "type": "integer",
+      "group": "SR · show values",
+      "value": 3,
+      "default": 3,
+      "is_default": true
+    },
+    {
+      "id": "in_208",
+      "name": "C",
+      "type": "bool",
+      "group": "SR · show values",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_209",
+      "name": "",
+      "type": "integer",
+      "group": "SR · show values",
+      "value": 5,
+      "default": 5,
+      "is_default": true
+    },
+    {
+      "id": "in_210",
+      "name": "D",
+      "type": "bool",
+      "group": "SR · show values",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_211",
+      "name": "",
+      "type": "integer",
+      "group": "SR · show values",
+      "value": 7,
+      "default": 7,
+      "is_default": true
+    },
+    {
+      "id": "in_212",
+      "name": "E",
+      "type": "bool",
+      "group": "SR · show values",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_213",
+      "name": "",
+      "type": "integer",
+      "group": "SR · show values",
+      "value": 9,
+      "default": 9,
+      "is_default": true
+    },
+    {
+      "id": "in_214",
+      "name": "Pivot ladder from",
+      "type": "text",
+      "group": "SR · show values",
+      "value": "E",
+      "default": "E",
+      "is_default": true
+    },
+    {
+      "id": "in_215",
+      "name": "Data window channel 1",
+      "type": "text",
+      "group": "SR · Data Window Outputs",
+      "value": "Above – Distance (ATR)",
+      "default": "Above – Distance (ATR)",
+      "is_default": true
+    },
+    {
+      "id": "in_216",
+      "name": "Data window channel 2",
+      "type": "text",
+      "group": "SR · Data Window Outputs",
+      "value": "Below – Distance (ATR)",
+      "default": "Below – Distance (ATR)",
+      "is_default": true
+    },
+    {
+      "id": "in_217",
+      "name": "H_atr",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 3,
+      "default": 3,
+      "is_default": true
+    },
+    {
+      "id": "in_218",
+      "name": "prox_atr",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 0.5,
+      "default": 0.5,
+      "is_default": true
+    },
+    {
+      "id": "in_219",
+      "name": "depart_atr",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_220",
+      "name": "backing_min_S",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 25,
+      "default": 25,
+      "is_default": true
+    },
+    {
+      "id": "in_221",
+      "name": "magnet_min_S",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 25,
+      "default": 25,
+      "is_default": true
+    },
+    {
+      "id": "in_222",
+      "name": "magnet_strong_S",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 60,
+      "default": 60,
+      "is_default": true
+    },
+    {
+      "id": "in_223",
+      "name": "stop_buf_atr",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 0.25,
+      "default": 0.25,
+      "is_default": true
+    },
+    {
+      "id": "in_224",
+      "name": "R_min  (GATE)",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 1.5,
+      "default": 1.5,
+      "is_default": true
+    },
+    {
+      "id": "in_225",
+      "name": "contra_max  (GATE)",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 0.6,
+      "default": 0.6,
+      "is_default": true
+    },
+    {
+      "id": "in_226",
+      "name": "contra_exit",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 0.75,
+      "default": 0.75,
+      "is_default": true
+    },
+    {
+      "id": "in_227",
+      "name": "trigger_prox_atr  (TRIGGER)",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_228",
+      "name": "lik_min  (TRIGGER)",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 50,
+      "default": 50,
+      "is_default": true
+    },
+    {
+      "id": "in_229",
+      "name": "runway_min_atr  (stamp)",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_230",
+      "name": "Backing selection",
+      "type": "text",
+      "group": "PS · 2 Interpretation choices (each ablatable)",
+      "value": "Strength-thresholded",
+      "default": "Strength-thresholded",
+      "is_default": true
+    },
+    {
+      "id": "in_231",
+      "name": "Contradiction composite",
+      "type": "text",
+      "group": "PS · 2 Interpretation choices (each ablatable)",
+      "value": "Max",
+      "default": "Max",
+      "is_default": true
+    },
+    {
+      "id": "in_232",
+      "name": "No next rung",
+      "type": "text",
+      "group": "PS · 2 Interpretation choices (each ablatable)",
+      "value": "Hold with stop",
+      "default": "Hold with stop",
+      "is_default": true
+    },
+    {
+      "id": "in_233",
+      "name": "Trade side",
+      "type": "text",
+      "group": "PS · 2 Interpretation choices (each ablatable)",
+      "value": "Both",
+      "default": "Both",
+      "is_default": true
+    },
+    {
+      "id": "in_234",
+      "name": "Promote CZ range state to a gate",
+      "type": "bool",
+      "group": "PS · 2 Interpretation choices (each ablatable)",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_235",
+      "name": "TRIGGER: proximity to the break level",
+      "type": "bool",
+      "group": "PS · 2 Interpretation choices (each ablatable)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_236",
+      "name": "TRIGGER: formation likelihood",
+      "type": "bool",
+      "group": "PS · 2 Interpretation choices (each ablatable)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_237",
+      "name": "TRIGGER: at most one entry per candidate",
+      "type": "bool",
+      "group": "PS · 2 Interpretation choices (each ablatable)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_238",
+      "name": "Promote runway to a gate",
+      "type": "bool",
+      "group": "PS · 2 Interpretation choices (each ablatable)",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_239",
+      "name": "Proximity scale (ATR)",
+      "type": "float",
+      "group": "PS · 3 Likelihood components (stamp; unfitted scales)",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_240",
+      "name": "Approach scale (ATR)",
+      "type": "float",
+      "group": "PS · 3 Likelihood components (stamp; unfitted scales)",
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_241",
+      "name": "ATR baseline length",
+      "type": "integer",
+      "group": "PS · 4 Volatility ratio",
+      "value": 100,
+      "default": 100,
+      "is_default": true
+    },
+    {
+      "id": "in_242",
+      "name": "Exit on VOL < 1 while stalled at a barrier",
+      "type": "bool",
+      "group": "PS · 4 Volatility ratio",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_243",
+      "name": "Order size (contracts)",
+      "type": "float",
+      "group": "PS · 5 Execution & bounds",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_244",
+      "name": "Partial exit fraction at a weak rung",
+      "type": "float",
+      "group": "PS · 5 Execution & bounds",
+      "value": 0.5,
+      "default": 0.5,
+      "is_default": true
+    },
+    {
+      "id": "in_245",
+      "name": "Leg range-median cap (bars)",
+      "type": "integer",
+      "group": "PS · 5 Execution & bounds",
+      "value": 500,
+      "default": 500,
+      "is_default": true
+    },
+    {
+      "id": "in_246",
+      "name": "Pending-traverse memory (zones)",
+      "type": "integer",
+      "group": "PS · 5 Execution & bounds",
+      "value": 16,
+      "default": 16,
+      "is_default": true
+    },
+    {
+      "id": "in_247",
+      "name": "Refusal marker on the refused candidate",
+      "type": "bool",
+      "group": "PS · 6 Drawing (all order-inert)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_248",
+      "name": "The four objects (entry line, stop band, target band, R)",
+      "type": "bool",
+      "group": "PS · 6 Drawing (all order-inert)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_249",
+      "name": "Band length (bars back from current)",
+      "type": "integer",
+      "group": "PS · 6 Drawing (all order-inert)",
+      "value": 30,
+      "default": 30,
+      "is_default": true
+    },
+    {
+      "id": "in_250",
+      "name": "Census lines (log.info)",
+      "type": "bool",
+      "group": "PS · 7 Census (all order-inert)",
+      "value": false,
+      "default": true,
+      "is_default": false
+    },
+    {
+      "id": "in_251",
+      "name": "Trade lines (OPEN / RUNG / TRAIL / CLOSE / NOFILL)",
+      "type": "bool",
+      "group": "PS · 7 Census (all order-inert)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_252",
+      "name": "Census every bar (not just on change)",
+      "type": "bool",
+      "group": "PS · 7 Census (all order-inert)",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_253",
+      "name": "backing_max_atr  (GATE)",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_254",
+      "name": "stop_max_atr  (GATE)",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 2.5,
+      "default": 2.5,
+      "is_default": true
+    },
+    {
+      "id": "in_255",
+      "name": "stale_exit_atr",
+      "type": "float",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 0.5,
+      "default": 0.5,
+      "is_default": true
+    },
+    {
+      "id": "in_256",
+      "name": "stale_decay_bars",
+      "type": "integer",
+      "group": "PS · 1 Spec §13 parameters",
+      "value": 20,
+      "default": 20,
+      "is_default": true
+    },
+    {
+      "id": "in_257",
+      "name": "Barrier line (thin, unlabelled)",
+      "type": "bool",
+      "group": "PS · 6 Drawing (all order-inert)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_258",
+      "name": "Draw the four objects for",
+      "type": "text",
+      "group": "PS · 6 Drawing (all order-inert)",
+      "value": "Any geometry at all",
+      "default": "Any geometry at all",
+      "is_default": true
+    },
+    {
+      "id": "in_259",
+      "name": "R label size",
+      "type": "text",
+      "group": "PS · 6 Drawing (all order-inert)",
+      "value": "Large",
+      "default": "Large",
+      "is_default": true
+    },
+    {
+      "id": "in_260",
+      "name": "NOCAND lines: census a side with NO candidate",
+      "type": "bool",
+      "group": "PS · 7 Census (all order-inert)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_261",
+      "name": "Continuation candidate after a break",
+      "type": "bool",
+      "group": "PS · 8 Continuation entries (build6 items 15-17)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_262",
+      "name": "Continuation reference",
+      "type": "text",
+      "group": "PS · 8 Continuation entries (build6 items 15-17)",
+      "value": "Nearer of the two",
+      "default": "Nearer of the two",
+      "is_default": true
+    },
+    {
+      "id": "in_263",
+      "name": "cont_retest_atr",
+      "type": "float",
+      "group": "PS · 8 Continuation entries (build6 items 15-17)",
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_264",
+      "name": "cont_max_bars",
+      "type": "integer",
+      "group": "PS · 8 Continuation entries (build6 items 15-17)",
+      "value": 30,
+      "default": 30,
+      "is_default": true
+    },
+    {
+      "id": "in_265",
+      "name": "TRIGGER: bar closes in the trade direction (RESUME)",
+      "type": "bool",
+      "group": "PS · 8 Continuation entries (build6 items 15-17)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_266",
+      "name": "Projected target when no magnet exists (CONTINUATION ONLY)",
+      "type": "bool",
+      "group": "PS · 8 Continuation entries (build6 items 15-17)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_267",
+      "name": "cont_tgt_R",
+      "type": "float",
+      "group": "PS · 8 Continuation entries (build6 items 15-17)",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_268",
+      "name": "CZ breakouts place orders",
+      "type": "bool",
+      "group": "CZX · CZ breakout execution (build7 item 18)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_269",
+      "name": "PS decision layer places orders",
+      "type": "bool",
+      "group": "CZX · CZ breakout execution (build7 item 18)",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_270",
+      "name": "Exit at the opposite CZ break",
+      "type": "bool",
+      "group": "CZX · CZ breakout execution (build7 item 18)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_271",
+      "name": "Only enter inside the session window",
+      "type": "bool",
+      "group": "SESX · session entry filter (build8 item 19)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_272",
+      "name": "Entry window",
+      "type": "session",
+      "group": "SESX · session entry filter (build8 item 19)",
+      "value": "2000-1400",
+      "default": "2000-1400",
+      "is_default": true
+    },
+    {
+      "id": "in_273",
+      "name": "Window timezone",
+      "type": "text",
+      "group": "SESX · session entry filter (build8 item 19)",
+      "value": "Africa/Nairobi",
+      "default": "Africa/Nairobi",
+      "is_default": true
+    },
+    {
+      "id": "in_274",
+      "name": "Tint the live window",
+      "type": "bool",
+      "group": "SESX · session entry filter (build8 item 19)",
+      "value": false,
+      "default": true,
+      "is_default": false
+    },
+    {
+      "id": "in_275",
+      "name": "RTX rung: arm after +Y ATR (read only while the keep-RTX switch below is on)",
+      "type": "float",
+      "group": "RTX · CZX deep-green ratchet tier (build10 item 21)",
+      "value": 6,
+      "default": 6,
+      "is_default": true
+    },
+    {
+      "id": "in_276",
+      "name": "RTX rung: floor offset from the fill (ATR)",
+      "type": "float",
+      "group": "RTX · CZX deep-green ratchet tier (build10 item 21)",
+      "value": 1.5,
+      "default": 1.5,
+      "is_default": true
+    },
+    {
+      "id": "in_277",
+      "name": "Log one line per CZX entry (log.info, order-inert)",
+      "type": "bool",
+      "group": "TELX · CZX entry telemetry (build11 item 23)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_278",
+      "name": "Add on same-direction CZ breaks while in a CZX trade",
+      "type": "bool",
+      "group": "PYRX · CZX same-direction pyramiding (build12 item 25)",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_279",
+      "name": "Max add-ons per position",
+      "type": "integer",
+      "group": "PYRX · CZX same-direction pyramiding (build12 item 25)",
+      "value": 9,
+      "default": 9,
+      "is_default": true
+    },
+    {
+      "id": "in_280",
+      "name": "Hard stop under the leg's OWN fill (ATR, 0 = off)",
+      "type": "float",
+      "group": "HSX · hard initial stop (build13 item 26)",
+      "value": 5,
+      "default": 5,
+      "is_default": true
+    },
+    {
+      "id": "in_281",
+      "name": "Keep the RTX tier-2 rung as an extra floor",
+      "type": "bool",
+      "group": "RTX · CZX deep-green ratchet tier (build10 item 21)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_282",
+      "name": "Skip NEW entries when the signal-bar ATR is below ($, 0 = off)",
+      "type": "float",
+      "group": "MINX · minimum ATR gate (build13 item 28)",
+      "value": 0.9,
+      "default": 0.9,
+      "is_default": true
+    },
+    {
+      "id": "in_283",
+      "name": "Weight: nearest OB strength >= threshold (PRE-REGISTERED penalty)",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": -2,
+      "default": -2,
+      "is_default": true
+    },
+    {
+      "id": "in_284",
+      "name": "   threshold: OB strength for the penalty",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 70,
+      "default": 70,
+      "is_default": true
+    },
+    {
+      "id": "in_285",
+      "name": "Weight: nearest OB strength < threshold",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_286",
+      "name": "   threshold: OB strength for the bonus",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 45,
+      "default": 45,
+      "is_default": true
+    },
+    {
+      "id": "in_287",
+      "name": "Weight: signal hour 04-07 in the SESX timezone",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_288",
+      "name": "Weight: signal hour 00-03 in the SESX timezone",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_289",
+      "name": "Weight: vol ratio (ATR / SMA100 of ATR) < threshold",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_290",
+      "name": "   threshold: vol ratio",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 0.9,
+      "default": 0.9,
+      "is_default": true
+    },
+    {
+      "id": "in_291",
+      "name": "Weight: broken zone exactly 5 bars old",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_292",
+      "name": "Weight: broken zone width >= threshold (ATR)",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_293",
+      "name": "   threshold: zone width (ATR)",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 1.4,
+      "default": 1.4,
+      "is_default": true
+    },
+    {
+      "id": "in_294",
+      "name": "Weight: entry >= threshold ATR past the broken edge",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_295",
+      "name": "   threshold: edge distance (ATR)",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 0.8,
+      "default": 0.8,
+      "is_default": true
+    },
+    {
+      "id": "in_296",
+      "name": "Weight: short (down-break)",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_297",
+      "name": "Weight: nearest FVG on the trade's side",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_298",
+      "name": "Weight: last liquidity sweep <= threshold bars ago",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_299",
+      "name": "   threshold: bars since sweep",
+      "type": "integer",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 30,
+      "default": 30,
+      "is_default": true
+    },
+    {
+      "id": "in_300",
+      "name": "Weight: <= threshold bars since the previous exit",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_301",
+      "name": "   threshold: bars since previous exit",
+      "type": "integer",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 60,
+      "default": 60,
+      "is_default": true
+    },
+    {
+      "id": "in_302",
+      "name": "Grade A+ at score >=",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 3,
+      "default": 3,
+      "is_default": true
+    },
+    {
+      "id": "in_303",
+      "name": "Grade A at score >=",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_304",
+      "name": "Grade B at score >=",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_305",
+      "name": "Grade C at score >=",
+      "type": "float",
+      "group": "GRX · grade at the signal bar (build13 item 29)",
+      "value": -1,
+      "default": -1,
+      "is_default": true
+    },
+    {
+      "id": "in_306",
+      "name": "Base unit",
+      "type": "text",
+      "group": "SZX · grade sizing (build13 item 30)",
+      "value": "Fixed base unit",
+      "default": "Fixed base unit",
+      "is_default": true
+    },
+    {
+      "id": "in_307",
+      "name": "Base unit (contracts = oz)",
+      "type": "float",
+      "group": "SZX · grade sizing (build13 item 30)",
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_308",
+      "name": "base_f (% of equity per 1 ATR, per base unit)",
+      "type": "float",
+      "group": "SZX · grade sizing (build13 item 30)",
+      "value": 0.167,
+      "default": 0.167,
+      "is_default": true
+    },
+    {
+      "id": "in_309",
+      "name": "Size multiplier A+",
+      "type": "float",
+      "group": "SZX · grade sizing (build13 item 30)",
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_310",
+      "name": "Size multiplier A",
+      "type": "float",
+      "group": "SZX · grade sizing (build13 item 30)",
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_311",
+      "name": "Size multiplier B",
+      "type": "float",
+      "group": "SZX · grade sizing (build13 item 30)",
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_312",
+      "name": "Size multiplier C",
+      "type": "float",
+      "group": "SZX · grade sizing (build13 item 30)",
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_313",
+      "name": "Size multiplier F",
+      "type": "float",
+      "group": "SZX · grade sizing (build13 item 30)",
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_314",
+      "name": "Log a CFG line on load",
+      "type": "bool",
+      "group": "ECHO · configuration echo (build13 verification)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_315",
+      "name": "Take the opposite side after a CZX HS (0 = OFF, the default)",
+      "type": "bool",
+      "group": "RVX · reversal after a hard stop (build14 item 31)",
+      "value": true,
+      "default": false,
+      "is_default": false
+    },
+    {
+      "id": "in_316",
+      "name": "Stop below the RVX fill (ATR) - bracket mode only",
+      "type": "float",
+      "group": "RVX · reversal after a hard stop (build14 item 31)",
+      "value": 3,
+      "default": 3,
+      "is_default": true
+    },
+    {
+      "id": "in_317",
+      "name": "Take-profit above the RVX fill (ATR) - bracket mode only",
+      "type": "float",
+      "group": "RVX · reversal after a hard stop (build14 item 31)",
+      "value": 3,
+      "default": 3,
+      "is_default": true
+    },
+    {
+      "id": "in_318",
+      "name": "Give up after N bars - bracket mode only",
+      "type": "integer",
+      "group": "RVX · reversal after a hard stop (build14 item 31)",
+      "value": 160,
+      "default": 160,
+      "is_default": true
+    },
+    {
+      "id": "in_319",
+      "name": "Apply the SESX session window to RVX entries",
+      "type": "bool",
+      "group": "RVX · reversal after a hard stop (build14 item 31)",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_320",
+      "name": "Apply the MINX minimum-ATR gate to RVX entries",
+      "type": "bool",
+      "group": "RVX · reversal after a hard stop (build14 item 31)",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_321",
+      "name": "Manage the RVX trade with the standard CZX exit engine",
+      "type": "bool",
+      "group": "RVX · reversal after a hard stop (build14 item 31)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_322",
+      "name": "Let an RVX stop-out arm another RVX",
+      "type": "bool",
+      "group": "RVX · reversal after a hard stop (build14 item 31)",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_323",
+      "name": "Re-enter on the opposite CZ break that closed the position",
+      "type": "bool",
+      "group": "RVX · reversal after a hard stop (build14 item 31)",
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_324",
+      "name": "One stop for the whole same-direction position (closes every leg together)",
+      "type": "bool",
+      "group": "RVX · reversal after a hard stop (build14 item 31)",
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_325",
+      "name": "Anchor the position stop on",
+      "type": "text",
+      "group": "RVX · reversal after a hard stop (build14 item 31)",
+      "value": "Base leg fill",
+      "default": "Base leg fill",
+      "is_default": true
+    },
+    {
+      "id": "in_328",
+      "name": "Initial Capital",
+      "type": "float",
+      "group": null,
+      "value": 100,
+      "default": 100,
+      "is_default": true
+    },
+    {
+      "id": "in_329",
+      "name": "Default entry/order Qty Type",
+      "type": "text",
+      "group": null,
+      "value": "fixed",
+      "default": "fixed",
+      "is_default": true
+    },
+    {
+      "id": "in_330",
+      "name": "Default entry/order Qty Value",
+      "type": "float",
+      "group": null,
+      "value": 1,
+      "default": 1,
+      "is_default": true
+    },
+    {
+      "id": "in_331",
+      "name": "Commission Type",
+      "type": "text",
+      "group": null,
+      "value": "cash_per_contract",
+      "default": "cash_per_contract",
+      "is_default": true
+    },
+    {
+      "id": "in_332",
+      "name": "Commission Value",
+      "type": "float",
+      "group": null,
+      "value": 0.11,
+      "default": 0.11,
+      "is_default": true
+    },
+    {
+      "id": "in_333",
+      "name": "Backtesting slippage for market orders",
+      "type": "integer",
+      "group": null,
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_334",
+      "name": "Margin Long",
+      "type": "float",
+      "group": null,
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_335",
+      "name": "Margin Short",
+      "type": "float",
+      "group": null,
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_336",
+      "name": "pyramiding",
+      "type": "integer",
+      "group": null,
+      "value": 10,
+      "default": 10,
+      "is_default": true
+    },
+    {
+      "id": "in_337",
+      "name": "Calculate Strategy on every Tick(s)",
+      "type": "bool",
+      "group": null,
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_338",
+      "name": "Process orders on bar Close",
+      "type": "bool",
+      "group": null,
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_339",
+      "name": "Calculate Strategy on Order's Fill(s)",
+      "type": "bool",
+      "group": null,
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_340",
+      "name": "Backtesting Limit Order(s) fill assumption",
+      "type": "integer",
+      "group": null,
+      "value": 0,
+      "default": 0,
+      "is_default": true
+    },
+    {
+      "id": "in_341",
+      "name": "Base Currency",
+      "type": "text",
+      "group": null,
+      "value": "NONE",
+      "default": "NONE",
+      "is_default": true
+    },
+    {
+      "id": "in_342",
+      "name": "Close entries rule",
+      "type": "text",
+      "group": null,
+      "value": "FIFO",
+      "default": "FIFO",
+      "is_default": true
+    },
+    {
+      "id": "in_343",
+      "name": "Risk free rate",
+      "type": "float",
+      "group": null,
+      "value": 2,
+      "default": 2,
+      "is_default": true
+    },
+    {
+      "id": "in_344",
+      "name": "Use Bar Magnifier",
+      "type": "bool",
+      "group": null,
+      "value": true,
+      "default": false,
+      "is_default": false
+    },
+    {
+      "id": "in_345",
+      "name": "Fill orders using standard OHLC",
+      "type": "bool",
+      "group": null,
+      "value": false,
+      "default": false,
+      "is_default": true
+    },
+    {
+      "id": "in_346",
+      "name": "Run mode: 'backtest', 'alert' or something else",
+      "type": "text",
+      "group": null,
+      "value": "BACKTEST",
+      "default": "BACKTEST",
+      "is_default": true
+    },
+    {
+      "id": "in_347",
+      "name": "Alert message template for run mode 'alert'",
+      "type": "text",
+      "group": null,
+      "value": "",
+      "default": "",
+      "is_default": true
+    },
+    {
+      "id": "in_348",
+      "name": "Alert type for run mode 'alert'",
+      "type": "text",
+      "group": null,
+      "value": "order_fills",
+      "default": "order_fills",
+      "is_default": true
+    },
+    {
+      "id": "in_349",
+      "name": "exclude_from_report",
+      "type": "text",
+      "group": null,
+      "value": "",
+      "default": "",
+      "is_default": true
+    },
+    {
+      "id": "in_350",
+      "name": "trim_orders",
+      "type": "bool",
+      "group": null,
+      "value": true,
+      "default": true,
+      "is_default": true
+    },
+    {
+      "id": "in_351",
+      "name": "calc_range",
+      "type": "text",
+      "group": null,
+      "value": "",
+      "default": "",
+      "is_default": true
+    },
+    {
+      "id": "in_352",
+      "name": "Calculate Strategy on every History Tick",
+      "type": "bool",
+      "group": null,
+      "value": false,
+      "default": false,
+      "is_default": true
+    }
+  ],
+  "manifest": {
+    "in_0": 10,
+    "in_1": 5,
+    "in_2": true,
+    "in_3": 1308582441,
+    "in_4": 4282726130,
+    "in_5": 4285982208,
+    "in_6": 20,
+    "in_7": 60,
+    "in_8": true,
+    "in_9": 14,
+    "in_10": 0.3,
+    "in_11": 1.5,
+    "in_12": "Ratchet",
+    "in_13": "Live",
+    "in_14": false,
+    "in_15": "0000-2400",
+    "in_16": "",
+    "in_17": false,
+    "in_18": false,
+    "in_19": "CZ zone active",
+    "in_20": "CZ close to nearest edge (ATR)",
+    "in_21": "CZ count (conscnt)",
+    "in_22": "Large/Huge Only",
+    "in_23": 90,
+    "in_24": true,
+    "in_25": 90,
+    "in_26": false,
+    "in_27": 120,
+    "in_28": 400,
+    "in_29": "Net Delta",
+    "in_30": "Zero-Relative Z-Score",
+    "in_31": 0.35,
+    "in_32": "Candle VWAP",
+    "in_33": false,
+    "in_34": "Compact",
+    "in_35": false,
+    "in_36": 0.25,
+    "in_37": 0.5,
+    "in_38": 1,
+    "in_39": 1.5,
+    "in_40": 2,
+    "in_41": false,
+    "in_42": "2000-2400",
+    "in_43": 10,
+    "in_44": true,
+    "in_45": false,
+    "in_46": "45S",
+    "in_47": "Net Delta",
+    "in_48": "Delta |Z| (zero-relative)",
+    "in_49": 0,
+    "in_50": false,
+    "in_51": 200,
+    "in_52": 0,
+    "in_53": false,
+    "in_54": 50,
+    "in_55": 200,
+    "in_56": "",
+    "in_57": true,
+    "in_58": false,
+    "in_59": "0000-2400",
+    "in_60": "",
+    "in_61": 5,
+    "in_62": false,
+    "in_63": 880908552,
+    "in_64": 876951282,
+    "in_65": false,
+    "in_66": 30,
+    "in_67": false,
+    "in_68": "Top Right",
+    "in_69": "Small",
+    "in_70": 14,
+    "in_71": 100,
+    "in_72": "FVG Nearest Distance (ATR)",
+    "in_73": "FVG Nearest Direction",
+    "in_74": 5,
+    "in_75": 5,
+    "in_76": 500,
+    "in_77": "Extreme Candle",
+    "in_78": 0,
+    "in_79": 100,
+    "in_80": false,
+    "in_81": "Body Close",
+    "in_82": "ATR",
+    "in_83": 3,
+    "in_84": 5,
+    "in_85": 14,
+    "in_86": true,
+    "in_87": 20,
+    "in_88": 2,
+    "in_89": 0.6,
+    "in_90": 1082235144,
+    "in_91": 1078277874,
+    "in_92": 4281719037,
+    "in_93": 0,
+    "in_94": "Newest",
+    "in_95": "Solid",
+    "in_96": 3,
+    "in_97": "Dashed",
+    "in_98": 1,
+    "in_99": true,
+    "in_100": "Strongest",
+    "in_101": true,
+    "in_102": false,
+    "in_103": 4294967295,
+    "in_104": "Normal",
+    "in_105": "Top",
+    "in_106": "Bottom Right",
+    "in_107": false,
+    "in_108": true,
+    "in_109": 5,
+    "in_110": 5,
+    "in_111": "Both",
+    "in_112": false,
+    "in_113": "0800-1700",
+    "in_114": "Etc/UTC",
+    "in_115": 60,
+    "in_116": "Nearest OB strength",
+    "in_117": "Nearest OB distance to edge (ATR)",
+    "in_118": "Active OB count",
+    "in_119": "New OB this bar (+1/-1/0)",
+    "in_120": 5,
+    "in_121": "Only Wicks",
+    "in_122": 4286683400,
+    "in_123": 4282726130,
+    "in_124": 2155976968,
+    "in_125": 2152019698,
+    "in_126": 2000,
+    "in_127": 500,
+    "in_128": true,
+    "in_129": 25,
+    "in_130": 2,
+    "in_131": true,
+    "in_132": true,
+    "in_133": 300,
+    "in_134": 1077270781,
+    "in_135": 1077270781,
+    "in_136": 50,
+    "in_137": false,
+    "in_138": 0.4,
+    "in_139": 0.4,
+    "in_140": 14,
+    "in_141": false,
+    "in_142": "0100-0900",
+    "in_143": false,
+    "in_144": "0700-1100",
+    "in_145": "Etc/UTC",
+    "in_146": false,
+    "in_147": "Last sweep depth (ATR)",
+    "in_148": "Bars since last sweep",
+    "in_149": 10,
+    "in_150": "line",
+    "in_151": 4285982208,
+    "in_152": 4282726130,
+    "in_153": 10,
+    "in_154": 1,
+    "in_155": false,
+    "in_156": 20,
+    "in_157": 100,
+    "in_158": false,
+    "in_159": "0000-2400",
+    "in_160": "",
+    "in_161": 2000,
+    "in_162": false,
+    "in_163": 2000,
+    "in_164": 25,
+    "in_165": false,
+    "in_166": "Top Left",
+    "in_167": 14,
+    "in_168": "SMA",
+    "in_169": 50,
+    "in_170": 2,
+    "in_171": "D",
+    "in_172": "SMA",
+    "in_173": 100,
+    "in_174": 2,
+    "in_175": "D",
+    "in_176": "SMA",
+    "in_177": 20,
+    "in_178": 2,
+    "in_179": "W",
+    "in_180": "Previous High",
+    "in_181": 20,
+    "in_182": 2,
+    "in_183": "W",
+    "in_184": "Previous Low",
+    "in_185": 20,
+    "in_186": 2,
+    "in_187": "W",
+    "in_188": "Upper",
+    "in_189": 20,
+    "in_190": 2,
+    "in_191": "D",
+    "in_192": "Lower",
+    "in_193": 20,
+    "in_194": 2,
+    "in_195": "D",
+    "in_196": "Swings",
+    "in_197": 20,
+    "in_198": 2,
+    "in_199": "D",
+    "in_200": "Fibonacci",
+    "in_201": 20,
+    "in_202": 2,
+    "in_203": "W",
+    "in_204": false,
+    "in_205": 1,
+    "in_206": false,
+    "in_207": 3,
+    "in_208": false,
+    "in_209": 5,
+    "in_210": false,
+    "in_211": 7,
+    "in_212": false,
+    "in_213": 9,
+    "in_214": "E",
+    "in_215": "Above – Distance (ATR)",
+    "in_216": "Below – Distance (ATR)",
+    "in_217": 3,
+    "in_218": 0.5,
+    "in_219": 1,
+    "in_220": 25,
+    "in_221": 25,
+    "in_222": 60,
+    "in_223": 0.25,
+    "in_224": 1.5,
+    "in_225": 0.6,
+    "in_226": 0.75,
+    "in_227": 1,
+    "in_228": 50,
+    "in_229": 1,
+    "in_230": "Strength-thresholded",
+    "in_231": "Max",
+    "in_232": "Hold with stop",
+    "in_233": "Both",
+    "in_234": false,
+    "in_235": true,
+    "in_236": true,
+    "in_237": true,
+    "in_238": false,
+    "in_239": 2,
+    "in_240": 1,
+    "in_241": 100,
+    "in_242": true,
+    "in_243": 2,
+    "in_244": 0.5,
+    "in_245": 500,
+    "in_246": 16,
+    "in_247": true,
+    "in_248": true,
+    "in_249": 30,
+    "in_250": false,
+    "in_251": true,
+    "in_252": false,
+    "in_253": 2,
+    "in_254": 2.5,
+    "in_255": 0.5,
+    "in_256": 20,
+    "in_257": true,
+    "in_258": "Any geometry at all",
+    "in_259": "Large",
+    "in_260": true,
+    "in_261": true,
+    "in_262": "Nearer of the two",
+    "in_263": 1,
+    "in_264": 30,
+    "in_265": true,
+    "in_266": true,
+    "in_267": 2,
+    "in_268": true,
+    "in_269": false,
+    "in_270": true,
+    "in_271": true,
+    "in_272": "2000-1400",
+    "in_273": "Africa/Nairobi",
+    "in_274": false,
+    "in_275": 6,
+    "in_276": 1.5,
+    "in_277": true,
+    "in_278": false,
+    "in_279": 9,
+    "in_280": 5,
+    "in_281": true,
+    "in_282": 0.9,
+    "in_283": -2,
+    "in_284": 70,
+    "in_285": 0,
+    "in_286": 45,
+    "in_287": 0,
+    "in_288": 0,
+    "in_289": 0,
+    "in_290": 0.9,
+    "in_291": 0,
+    "in_292": 0,
+    "in_293": 1.4,
+    "in_294": 0,
+    "in_295": 0.8,
+    "in_296": 0,
+    "in_297": 0,
+    "in_298": 0,
+    "in_299": 30,
+    "in_300": 0,
+    "in_301": 60,
+    "in_302": 3,
+    "in_303": 2,
+    "in_304": 0,
+    "in_305": -1,
+    "in_306": "Fixed base unit",
+    "in_307": 1,
+    "in_308": 0.167,
+    "in_309": 1,
+    "in_310": 1,
+    "in_311": 1,
+    "in_312": 1,
+    "in_313": 1,
+    "in_314": true,
+    "in_315": true,
+    "in_316": 3,
+    "in_317": 3,
+    "in_318": 160,
+    "in_319": false,
+    "in_320": false,
+    "in_321": true,
+    "in_322": false,
+    "in_323": false,
+    "in_324": true,
+    "in_325": "Base leg fill",
+    "in_328": 100,
+    "in_329": "fixed",
+    "in_330": 1,
+    "in_331": "cash_per_contract",
+    "in_332": 0.11,
+    "in_333": 0,
+    "in_334": 0,
+    "in_335": 0,
+    "in_336": 10,
+    "in_337": true,
+    "in_338": false,
+    "in_339": false,
+    "in_340": 0,
+    "in_341": "NONE",
+    "in_342": "FIFO",
+    "in_343": 2,
+    "in_344": true,
+    "in_345": false,
+    "in_346": "BACKTEST",
+    "in_347": "",
+    "in_348": "order_fills",
+    "in_349": "",
+    "in_350": true,
+    "in_351": "",
+    "in_352": false
+  }
+}

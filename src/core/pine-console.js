@@ -14,9 +14,11 @@
  */
 import { evaluate } from '../connection.js';
 import { requireSettled } from '../settle.js';
+import { MAX_RESPONSE_CHARS } from '../tools/_format.js';
 import { resolveEntity } from './pine-inputs.js';
 import {
   LEVELS,
+  decodeCursor,
   encodeCursor,
   levelWord,
   readLogsJs,
@@ -35,6 +37,28 @@ import {
  */
 const DEFAULT_LIMIT = 200;
 const MAX_LIMIT = 2000;
+/**
+ * Characters of rows per page, whatever `limit` asks for: three quarters of the
+ * bridge's response budget, measured the way the budget measures — as the
+ * pretty-printed rows the client receives, not their compact form. Derived
+ * rather than fixed so an operator who lowers TV_MAX_RESPONSE_CHARS cannot
+ * reopen the gap between the two truncation layers. The quarter left over is
+ * for the envelope (a few hundred characters) with room to spare. With
+ * trimming disabled there is no budget to derive from, and pages fall back to
+ * a size just under what a client is known to refuse.
+ */
+const PAGE_CHAR_BUDGET = MAX_RESPONSE_CHARS > 0 ? Math.floor(MAX_RESPONSE_CHARS * 0.75) : 80000;
+
+/** The row exactly as the response emits it, sized as the client will see it. */
+function emittedRow(row) {
+  return { time: row.time, bar_time: row.bar_time, level: levelWord(row.level), line: row.line, message: row.message };
+}
+// Rows sit two levels deep in the final document, so each of a row's seven
+// lines carries four more spaces of indent than a standalone stringify shows.
+const ROW_INDENT_OVERHEAD = 4 * 7;
+function emittedSize(row) {
+  return JSON.stringify(emittedRow(row), null, 2).length + ROW_INDENT_OVERHEAD;
+}
 
 export async function pineConsoleRead({
   entityId = null,
@@ -59,6 +83,12 @@ export async function pineConsoleRead({
     return { ok: false, reason: 'invalid_argument', error: `limit must be a positive number; got "${limit}".` };
   }
   const pageSize = Math.min(Math.floor(n), MAX_LIMIT);
+  // A cursor this tool never issued is refused whatever state the collection
+  // is in. Checked only after the empty-state returns, it slipped through
+  // whenever collection was disabled or absent.
+  if (sinceCursor && decodeCursor(sinceCursor).invalid) {
+    return { ok: false, reason: 'invalid_cursor', error: 'since_cursor is not a cursor this tool issued. Pass next_cursor back unchanged, or omit it to read from the start.' };
+  }
 
   // Resolve first, so a chart carrying two builds refuses rather than reading
   // whichever came first out of dataSources().
@@ -133,8 +163,23 @@ export async function pineConsoleRead({
     return true;
   });
 
-  const page = matched.slice(0, pageSize);
+  // Cap the page by SIZE as well as by count, and do it here. Measured through
+  // the real server 2026-09-11: limit 500 built a 119,651-char page, the
+  // global response budget then dropped 43 rows off its end, and next_cursor —
+  // computed for 500 — skipped those 43. Two truncation layers that disagree
+  // lose rows. The cap sits below both the bridge budget and what an MCP client
+  // will accept, so the global trim never touches a console page.
+  const page = [];
+  let chars = 0;
+  for (const row of matched) {
+    if (page.length >= pageSize) break;
+    const size = emittedSize(row);
+    if (page.length > 0 && chars + size > PAGE_CHAR_BUDGET) break;
+    page.push(row);
+    chars += size;
+  }
   const truncated = matched.length > page.length;
+  const cutBySize = truncated && page.length < pageSize;
 
   // The cursor advances over the UNFILTERED collection, so the next call
   // resumes where this one genuinely stopped reading rather than where the
@@ -158,23 +203,22 @@ export async function pineConsoleRead({
     scanned: after.length,
     ...(wantPrefix && { prefix: wantPrefix }),
     ...(wantLevel && { level: wantLevel }),
-    rows: page.map((row) => ({
-      time: row.time,
-      bar_time: row.bar_time,
-      level: levelWord(row.level),
-      line: row.line,
-      message: row.message,
-    })),
+    rows: page.map(emittedRow),
     next_cursor: nextCursor,
     truncation: truncated
       ? {
           applied: true,
+          reason: cutBySize ? 'size' : 'limit',
           returned: page.length,
           matched: matched.length,
           dropped: matched.length - page.length,
+          ...(cutBySize && { page_char_budget: PAGE_CHAR_BUDGET }),
           note:
-            'Rows were dropped from the END of the matching set to fit limit. Pass next_cursor to continue ' +
-            'from exactly where this page stopped; the cursor indexes the whole collection, not the filtered view.',
+            (cutBySize
+              ? `The page stopped at ${PAGE_CHAR_BUDGET} characters of rows before reaching limit. `
+              : 'Rows were dropped from the END of the matching set to fit limit. ') +
+            'Pass next_cursor to continue from exactly where this page stopped; the cursor indexes the whole ' +
+            'collection, not the filtered view.',
         }
       : { applied: false, note: 'Every matching row from the cursor onward is in this page.' },
     note:

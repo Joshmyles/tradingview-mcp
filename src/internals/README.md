@@ -1072,6 +1072,42 @@ returns the wrong drawings while looking right — the first `loss_autopsy` run
 `joined: false`, until the primitive index space is identified and its
 mapping gets `internals_verify` coverage.
 
+## Input writes live in memory until something else saves the layout
+
+Measured 2026-09-11 on Trial Ground (`R7HDoRZ2`, autosave on), display-only
+input `in_44`:
+
+| step | `in_44` | `_saveChartService.hasChanges()` | `_chartWidgetCollection.hasChanges()` | layout `modified` |
+| --- | --- | --- | --- | --- |
+| before | true | false | false | unchanged |
+| `setInputValues` → false, +40s | false | **false** | **false** | **unchanged** |
+| reload (study object genuinely rebuilt — a marker set on it was gone) | **true** | false | false | — |
+
+So an API input write never marks the layout dirty, autosave never fires for
+it, and a reload restores the server copy. Autosave does run — the stamp moved
+three times that morning — so a write survives exactly when some OTHER change
+(a resolution change marks the layout dirty) happens after it and before the
+next reload. Correcting a study therefore needs an explicit save; the procedure
+is in `manifests/README.md`.
+
+Reloading needs TradingView's own saved-chart entry:
+`loadChartFromServer(entry)` loads `/chart/<entry.url>/`, and handed `{ id }`
+alone it rejects with `Response`. Take the entry from `getSavedCharts`, never
+rebuild it. `loadChart` also raises a blocking "unsaved changes" dialog when
+`_chartWidgetCollection.hasChanges()` is true — check it before a reload.
+
+**What it explains about `in_315`.** G1 wrote `in_278`, `in_315` and `in_323`
+false in ONE call; afterwards only `in_315` was true again, and the saved copy
+now holds exactly that (`in_278` false, `in_315` true, `in_323` false). A reload
+to the saved copy reverts every lever whose saved value differs from memory —
+so the selective revert says the saved copy already had `in_278` and `in_323`
+false and `in_315` true, and that the "all three true" found that morning was
+itself unsaved in-memory state (the 2026-09-09 session wrote these levers
+through `properties().inputs.in_N.setValue`, also without saving). This is
+consistent with every observation but not proved: TradingView keeps no layout
+history this bridge can read, so the saved copy as it stood before 06:46 cannot
+be recovered.
+
 ---
 
 ## Falsification record
@@ -1103,6 +1139,8 @@ being re-argued.
 | drawing x | `mainSeries().bars()` index | **rejected** | 4% of 200, controls 0-0.2% |
 | replay cursor | `currentDate()` in ms | **rejected** | returns epoch seconds (1788849356) |
 | empty log read | "script logged nothing" | **rejected** | collection disabled: mask all false, 0 rows; enabled, 1,266 rows |
+| input persistence | an API input write is saved by autosave | **rejected** | both dirty flags false and `modified` unmoved 40s after the write; a real reload restored the old value |
+| layout reload | `loadChartFromServer({ id })` | **rejected** | rejects with `Response`; needs the saved-chart entry (it loads `/chart/<url>/`) |
 
 Worked example for the `dd` rejection — trade 0, short: entry 4653.54, exit
 4654.53, gross −0.99, `cm` 0.22, net −1.21, `rn` 1.72, `dd` 4.45. The give-back

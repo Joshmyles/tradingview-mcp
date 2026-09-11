@@ -28,7 +28,8 @@ export function registerForensicsTools(server) {
     'loss_autopsy',
     'One trade, one packet, from a pinned context: centres on the entry bar, captures the chart at three timeframes, and pulls the study’s Pine lines, labels and boxes ' +
       'within a time window around the entry. The point is determinism — every autopsy starts from the same context rather than whatever is on screen. ' +
-      'CHANGES the chart (layout if given, resolution, zoom) and restores all of it on every exit path; restored.matches_as_found says whether that held. ' +
+      'CHANGES the chart (layout if given, resolution, zoom) and restores all of it on every exit path; restored.matches_as_found says whether that held, ' +
+      'and restored.as_found lists every field it compared (layout, symbol, resolution, visible range by time) with found and left values. ' +
       'A named layout that does not exist is refused, never substituted. Each resolution change costs a 20-30s recompute on a seconds chart.',
     {
       trade_index: z.coerce.number().describe('Row index in the on-chart strategy report, from 0.'),

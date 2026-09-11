@@ -9,10 +9,14 @@
  * point at anything real. This can, and it is the thing to run after a
  * TradingView update.
  *
- * Run: TV_MCP_ALLOW_DESTRUCTIVE=1 node --test tests/smoke.test.js
+ * Run: TV_MCP_ALLOW_DESTRUCTIVE=1 node --test tests/live/smoke.test.js
  */
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { fileURLToPath } from 'node:url';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { WORKFLOW_TOOL_NAMES, DIAGNOSTIC_TOOL_NAMES } from '../../src/profiles.js';
 import { requireFixtureLayout } from '../_fixture-guard.js';
 import { FIXTURE } from '../fixtures/fixture.config.js';
 import { disconnect, getTargetIdentity } from '../../src/connection.js';
@@ -21,6 +25,40 @@ import { readStrategyReport } from '../../src/strategy-report.js';
 import { setTimeframe } from '../../src/core/chart.js';
 
 let startedAt = null;
+
+/**
+ * The entry points must list every tool through a real client.
+ *
+ * Not the fixture's business, and not destructive, but it is in the smoke
+ * suite because "done" has to include it: for the whole of the manifest work
+ * the server exposed ZERO tools — four `z.record(z.any())` schemas broke
+ * tools/list for every tool at once — while 327 unit tests stayed green and a
+ * hand-kept tool count said 65. tests/tool-listing.test.js catches the schema
+ * class in units; this spawns the actual entry points the way a client does.
+ */
+describe('smoke — the server entry points list every tool', () => {
+  for (const [entry, names] of [
+    ['src/server.js', WORKFLOW_TOOL_NAMES],
+    ['src/server-diag.js', DIAGNOSTIC_TOOL_NAMES],
+  ]) {
+    it(`${entry} lists ${names.length} tools over stdio`, async () => {
+      const transport = new StdioClientTransport({
+        command: process.execPath,
+        args: [fileURLToPath(new URL(`../../${entry}`, import.meta.url))],
+        stderr: 'pipe',
+      });
+      const client = new Client({ name: 'smoke-listing', version: '0' });
+      await client.connect(transport);
+      try {
+        const { tools } = await client.listTools();
+        assert.deepEqual(tools.map((t) => t.name).sort(), [...names].sort());
+        for (const t of tools) assert.equal(t.inputSchema?.type, 'object', t.name);
+      } finally {
+        await client.close();
+      }
+    });
+  }
+});
 
 describe('smoke — live chart', () => {
   before(async () => {

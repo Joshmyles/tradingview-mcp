@@ -108,7 +108,7 @@ export function registerPineTools(server) {
       'This exists because it is otherwise impossible to tell, after the fact, which configuration a recorded result described.',
     {
       manifest: z
-        .record(z.any())
+        .record(z.string(), z.any())
         .describe('Expected configuration: an id-to-value map, a whole pine_inputs_snapshot response, or a committed manifest file (its manifest field is used).'),
       build: z
         .string()
@@ -154,8 +154,11 @@ export function registerPineTools(server) {
       entity_id: z.string().optional().describe('Study to read. Resolved explicitly; refuses when more than one study matches rather than picking the first.'),
       since_cursor: z.string().optional().describe('next_cursor from a previous read. Opaque \u2014 pass it back unchanged; a hand-built cursor asserts a generation it never read.'),
       prefix: z.string().optional().describe('Return only rows whose message starts with this. Build 14 logs in families: "CFG|", "CENSUS|", "TELX|", "TRADE|".'),
-      level: z.enum(['error', 'warning', 'info']).optional().describe('Return only rows at this level.'),
-      limit: z.coerce.number().optional().describe('Rows per page, default 200, max 2000. The full reference log is 1,266 rows (~250KB), twice the response budget.'),
+      // A string, not z.enum: the core validates it and returns the standard
+      // invalid_argument envelope. z.enum made the SDK refuse first with a bare
+      // -32602, so a caller got a different error shape from this one argument.
+      level: z.string().optional().describe('Return only rows at this level: error, warning, or info.'),
+      limit: z.coerce.number().optional().describe('Rows per page, default 200, max 2000. A page is cut to fit the response budget and next_cursor continues it; the full reference log is 1,276 rows (~250KB), several pages at the default budget.'),
       wait: z.coerce.boolean().optional().describe('Default true: gate on the recompute barrier first. Set false to read whatever is there now.'),
     },
     async ({ entity_id, since_cursor, prefix, level, limit, wait }) => {

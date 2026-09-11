@@ -19,7 +19,8 @@ import { stepUntil, stop } from '../src/core/replay.js';
 import { strategyAlertConfigs } from '../src/internals/alert-config.js';
 import { preflight } from '../src/core/preflight.js';
 import { resolutionSeconds } from '../src/core/chart.js';
-import { lossAutopsy } from '../src/core/autopsy.js';
+import { AS_FOUND, compareAsFound, lossAutopsy } from '../src/core/autopsy.js';
+import { MAX_RESPONSE_CHARS } from '../src/tools/_format.js';
 
 /** A page stub that answers resolveEntity's listing and then `rest`. */
 function pageStub(studies, rest = () => null) {
@@ -108,6 +109,39 @@ describe('pine_console_read', () => {
     const bad = await pineConsoleRead({ level: 'verbose', _deps: deps(null) });
     assert.equal(bad.reason, 'invalid_argument');
   });
+
+  it('caps a page by size and resumes at the first row it did not return', async () => {
+    const long = Array.from({ length: 40 }, (_, i) => ({
+      time: 5000 + i, bar_time: 5000 + i, level: 4, line: 1, column: 1, message: `CENSUS|${i}|` + 'x'.repeat(4000),
+    }));
+    const logs = { ok: true, entity_id: 'xVbiv5', title: 'B14', collection: 'present', mask: { info: true }, total: 40, rows: long };
+    const seen = [];
+    let cursor = null;
+    let sizeCut = false;
+    for (let i = 0; i < 20; i++) {
+      const p = await pineConsoleRead({ wait: false, limit: 2000, sinceCursor: cursor, _deps: deps(logs) });
+      assert.equal(p.ok, true);
+      // Measured as the client receives it — pretty-printed — against the
+      // budget the global trim would apply. Under it, the trim never fires.
+      const pretty = JSON.stringify(p, null, 2).length;
+      assert.ok(pretty < MAX_RESPONSE_CHARS, `page of ${pretty} chars would hit the global trim`);
+      if (p.truncation.applied) sizeCut ||= p.truncation.reason === 'size';
+      seen.push(...p.rows.map((r) => r.time));
+      cursor = p.next_cursor;
+      if (!p.truncation.applied) break;
+    }
+    assert.equal(sizeCut, true);
+    assert.deepEqual(seen, long.map((r) => r.time));
+  });
+
+  it('refuses a cursor it never issued even when the collection is disabled', async () => {
+    const r = await pineConsoleRead({
+      wait: false,
+      sinceCursor: 'not-a-cursor',
+      _deps: deps({ ok: true, entity_id: 'xVbiv5', title: 'B14', collection: 'disabled', mask: {}, total: 0, rows: [] }),
+    });
+    assert.equal(r.reason, 'invalid_cursor');
+  });
 });
 
 describe('replay_step_until', () => {
@@ -181,6 +215,9 @@ describe('replay_stop clears the saved replay session', () => {
 describe('resolutionSeconds', () => {
   it('reads S as seconds, not minutes', () => {
     assert.equal(resolutionSeconds('45S'), 45);
+    assert.equal(resolutionSeconds('30S'), 30);
+    assert.equal(resolutionSeconds('5S'), 5);
+    assert.equal(resolutionSeconds('1S'), 1);
     assert.equal(resolutionSeconds('5'), 300);
     assert.equal(resolutionSeconds('D'), 86400);
     assert.equal(resolutionSeconds('bogus'), null);
@@ -205,6 +242,29 @@ describe('loss_autopsy', () => {
   it('rejects bad arguments before touching the chart', async () => {
     assert.equal((await lossAutopsy({ tradeIndex: -1 })).reason, 'invalid_argument');
     assert.equal((await lossAutopsy({ tradeIndex: 0, timeframes: ['7X'] })).reason, 'invalid_argument');
+  });
+
+  it('"as found" is an explicit list, and the view is on it', () => {
+    // The restore once compared everything but the visible range and reported
+    // matches_as_found with the chart two weeks displaced. The list is the fix.
+    assert.deepEqual(AS_FOUND.map((f) => f.what), ['layout', 'symbol', 'resolution', 'visible_range']);
+
+    const before = { layout: 'Trial Ground', symbol: 'ICMARKETS:XAUUSD', resolution: '45S', time_range: { from: 1000, to: 5000 } };
+    const same = compareAsFound(before, { ...before, time_range: { from: 1030, to: 5060 } });
+    assert.equal(same.ok, true, 'within two bars either end is the same view');
+    assert.deepEqual(same.failed, []);
+
+    const displaced = compareAsFound(before, { ...before, time_range: { from: 1000 - 14 * 86400, to: 5000 - 14 * 86400 } });
+    assert.equal(displaced.ok, false);
+    assert.deepEqual(displaced.failed, ['visible_range']);
+
+    const wrongLayout = compareAsFound(before, { ...before, layout: 'Forensics' });
+    assert.deepEqual(wrongLayout.failed, ['layout']);
+
+    // Nothing recorded means nothing to compare — said so, not passed by accident.
+    const noRange = compareAsFound({ ...before, time_range: null }, before);
+    assert.equal(noRange.ok, true);
+    assert.equal(noRange.fields.find((f) => f.what === 'visible_range').compared, false);
   });
 });
 

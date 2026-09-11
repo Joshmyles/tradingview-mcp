@@ -51,7 +51,7 @@ export function registerReplayTools(server) {
     'Replay is left AT the stopping bar deliberately; call replay_stop to return to realtime.',
     {
       predicate: z
-        .record(z.any())
+        .record(z.string(), z.any())
         .describe('One clause { field, op, value }, or { all: [...] } / { any: [...] }. op is gt, gte, lt, lte, eq, ne, or changed (which compares against the value at the first bar and takes no value).'),
       max_bars: z.coerce.number().optional().describe('Upper bound on bars advanced. Default 500. Reaching it is an answer, not a failure.'),
       entity_id: z.string().optional().describe('Study for log_count / trades. Resolved explicitly; refuses when more than one study matches.'),

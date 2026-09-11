@@ -33,7 +33,7 @@ export function registerBacktestTools(server) {
         .optional()
         .describe('Build the manifest describes, e.g. "b14". Checked against the study title for equality; asserting one build against the manifest of another build is an error, not a mismatch report.'),
       manifest: z
-        .record(z.any())
+        .record(z.string(), z.any())
         .optional()
         .describe('Expected study configuration (from pine_inputs_snapshot with include ["manifest"]). Asserted BEFORE the run; a mismatch refuses to run rather than returning a result that describes the wrong build.'),
       stop_levels: z
@@ -82,7 +82,7 @@ export function registerBacktestTools(server) {
         .describe('Windows to run, each { from, to } in epoch milliseconds.'),
       entity_id: z.string().optional().describe('Study entity ID. Omit to resolve the strategy on the chart; refuses if more than one matches.'),
       manifest: z
-        .record(z.any())
+        .record(z.string(), z.any())
         .optional()
         .describe('Expected study configuration. Asserted BEFORE each window; a mismatch refuses to run. Without it the whole walk describes whatever the study happened to be set to.'),
       build: z

@@ -13,10 +13,31 @@
 /**
  * Maximum serialised response size, in characters.
  *
- * Chosen against the failure it prevents — a single pine_get_source or an
- * unsummarised bar pull can return 200KB+, costing more context than the whole
- * task it was serving — and against the payload it must NOT damage. Measured
- * on the reference strategy (105 trades, 198 filled orders), pretty-printed:
+ * Two ceilings matter, and the lower one wins.
+ *
+ * The client's. Claude Code refuses any single tool result over 25,000 tokens
+ * (MAX_MCP_OUTPUT_TOKENS) — refuses, not trims: the whole response is replaced
+ * by an error and a path to a file the model cannot read inline. Measured
+ * 2026-09-11 through the real client, pretty-printed JSON from this bridge:
+ *
+ *   119,651 characters   refused
+ *    86,118 characters   refused
+ *    59,539 characters   refused   (a snapshot already trimmed to a 60,000 default)
+ *    20,633 characters   accepted
+ *
+ * A crude tokeniser (runs of letters, runs of digits, each punctuation mark,
+ * each whitespace run) puts every one of those payloads at 2.27–2.37
+ * characters per token, and calls the 59,539 one 26,195 tokens — over the cap,
+ * as the client said. Pretty-printed JSON is dense in tokens: indentation,
+ * quotes, colons and short numeric fields each cost one. So the ceiling has to
+ * sit well under 25,000 × 2.3 ≈ 57,000: at 40,000 the estimate is about
+ * 17,500 tokens, and it would take a payload under 1.6 characters per token to
+ * be refused. A default above the client's cap is worse than any trim, because
+ * it turns a large answer into no answer — and the first default chosen for
+ * this reason, 60,000, was itself refused through the surface.
+ *
+ * The bridge's own. Measured on the reference strategy (105 trades, 198 filled
+ * orders), pretty-printed:
  *
  *   trade book alone                   76,929
  *   filled orders alone                50,795
@@ -24,13 +45,15 @@
  *   report without orders or equity    86,747
  *   everything at once                164,176
  *
- * The trade book is the deliverable here, not incidental bulk, so the limit
- * has to clear it comfortably. At 60,000 a full report was trimmed to 37 of
- * 105 trades by default, which is the tool quietly failing at its job while
- * reporting that it had. 120,000 passes any single-aspect read whole and trims
- * only a request for the entire book plus every order plus the curve.
+ * The default was 120,000 so a whole trade book passed untrimmed. A whole book
+ * cannot reach the client at ANY setting, so that ceiling served only the
+ * direct harness. At 40,000 the book is trimmed to roughly half its trades and
+ * the trim is reported; a caller that needs the tail narrows the request.
+ * Routing bulk rows to a file instead of inline is the better design and is
+ * parked, not done (PARKED.md).
  *
- * Override per deployment with TV_MAX_RESPONSE_CHARS; 0 disables trimming.
+ * Override per deployment with TV_MAX_RESPONSE_CHARS — the harness sets it to
+ * 120000 to read whole books; 0 disables trimming.
  */
 /**
  * Headroom set aside for the response_budget block, which is appended after
@@ -41,7 +64,7 @@ const REPORT_RESERVE_CHARS = 900;
 export const MAX_RESPONSE_CHARS =
   process.env.TV_MAX_RESPONSE_CHARS !== undefined
     ? Number(process.env.TV_MAX_RESPONSE_CHARS)
-    : 120000;
+    : 40000;
 
 /**
  * Error codes. Stable strings, because a caller branching on prose breaks the

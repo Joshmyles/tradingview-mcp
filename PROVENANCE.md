@@ -478,19 +478,121 @@ Defects found and fixed on the way:
 - The old `pine_get_console` opened the Pine Editor as a side effect;
   `pine_console_read` reads the study's own log collection instead.
 
+Re-verified through the MCP surface after the server restart — the harness
+ran the core modules but never the registration, the zod schemas, or
+`jsonResult`, and that is where every difference below lived:
+
+- **Registration: `tools/list` failed for the WHOLE server.** Four schemas used
+  `z.record(z.any())`; under zod 4 the one-argument form leaves the value type
+  undefined and the SDK's JSON-Schema conversion threw "Cannot read properties
+  of undefined (reading '_zod')". Every tool was invisible to the client, not
+  just the new one — three of the four (`pine_inputs_assert.manifest`,
+  `backtest_run.manifest`, `walk_forward.manifest`) predate this stage, so the
+  listing had been broken since the manifest work. Stub counting never converts
+  a schema; `tests/tool-listing.test.js` now lists both profiles through a real
+  `McpServer`.
+- **Envelope: `pine_console_read.level`** was a `z.enum`, so a bad level came
+  back as a bare SDK `-32602` instead of the standard `invalid_argument`
+  envelope. Now a string, validated by the core.
+- **Budget: two truncation layers disagreed and lost rows.** `limit: 500` built
+  a 119,651-char page; the global response budget dropped 43 rows off its end
+  while `next_cursor` still pointed past them, so paging silently skipped 43
+  rows. Claude Code also rejected that result outright as over its per-result
+  limit. Pages are now capped inside the tool at three quarters of the
+  response budget (`truncation.reason: 'size'`), so the global trim never
+  touches them.
+- Logic, found on the way: an invalid `since_cursor` was accepted whenever the
+  collection was disabled or absent; now refused first.
+- `loss_autopsy` layout pinning: `loadChartFromServer({ id })` rejects —
+  TradingView needs its saved-chart entry — and `switchLayout` returned on the
+  OLD layout's name. Both fixed; the switch itself is not live-verified, because
+  no second saved layout carries B14 (that is what `MCP-FIXTURE` is for).
+
+- `loss_autopsy` did not restore the viewport: run through the surface on trade
+  0 it came back on the right layout and resolution but two weeks in the past,
+  and still reported `matches_as_found: true`, because the check never
+  compared the visible range. It now records the range by time, restores it
+  with the existing `setVisibleRange`, and fails `matches_as_found` if the view
+  is not back within two bars. The chart was put back by hand with
+  `chart_set_visible_range` this time.
+
+Through the surface: `preflight` output identical to the harness;
+`replay_step_until` 7 bars to a time predicate in 2.7s (median step 387ms),
+report-tier predicate refused before stepping, `replay_stop` cleared a saved
+session; `pine_console_read` filters, refusals and envelope as specified.
+
 Found and NOT fixed, by design:
 
 - **`in_315` (RVX) drifted back to `true`** on the live study after G1 set it
-  false and asserted 334/334. Nothing in the bridge wrote it. `preflight`
-  reports it; it was left as found.
+  false and asserted 334/334. Nothing in the bridge wrote it. **Mechanism
+  identified:** an API input write never marks the layout dirty, so it is not
+  saved, and a reload restores the saved copy — which holds `in_315` true and
+  `in_278`/`in_323` false. See `src/internals/README.md`, "Input writes live in
+  memory until something else saves the layout", and the correction procedure
+  in `manifests/README.md`. Left as found.
 - **Live alert `5574059086` still runs the drifted configuration.** Reported,
   not recreated — that is a live-execution change for the account owner.
+
+Three corrections before the freeze, same day:
+
+- **Response budget default lowered from 120,000 to 40,000 characters, in two
+  steps.** The 120,000 sat above the client's cap, and the client does not
+  trim — it refuses: measured through Claude Code, 119,651 and 86,118
+  characters of pretty-printed JSON were both replaced by an error, 20,633
+  accepted. The first correction set 60,000, reasoning from those two points
+  that the cap (25,000 tokens) bites under 3.5 characters a token. **That was
+  wrong, and the surface said so:** after the server restart, a
+  `pine_inputs_snapshot` trimmed to 59,539 characters by the new default was
+  refused as well. A crude tokeniser puts every one of the refused payloads at
+  2.27–2.37 characters a token (the 59,539 one at 26,195 tokens), so the cap
+  bites near 57,000 on this bridge's JSON and 60,000 sat above it. The default
+  is now 40,000 — about 17,500 tokens by the same count — and the module
+  comment carries the table. A ceiling above the client's cap turns a large
+  answer into no answer. A whole trade book cannot reach the client at any
+  setting, so the old ceiling served only the direct harness, which sets
+  `TV_MAX_RESPONSE_CHARS=120000` for itself. The `pine_console_read` page cap
+  is derived from the budget (three quarters of it) and sized on the
+  pretty-printed rows the client receives, so the two truncation layers cannot
+  drift apart again. Writing bulk rows to a file is parked.
+- **"As found" is now an enumerated list.** `loss_autopsy` compares layout,
+  symbol, resolution and the visible range by time — `AS_FOUND` in
+  `src/core/autopsy.js`, asserted by the unit test and printed in every packet
+  as `restored.as_found` with found and left values. The list also says what
+  is deliberately not restored (history depth, bar-index range, replay,
+  visibility, drawings, chart type) and why.
+- **The saved baseline was re-anchored.** The 08:17:22 save persisted whatever
+  was in memory, so `manifests/b14.saved.2026-09-11.json` records the B14
+  configuration the saved layout now holds (hash `d6707b26`, 351 inputs, 16
+  non-default), with its own diffs: against as-found, `in_278` and `in_323`
+  went true → false; against intended, `in_315` alone. Read from memory 29
+  minutes after the save with both dirty flags false and no API write in
+  between; not confirmed by a reload, and the file says so.
+- **Smoke now includes tools/list through the real entry points.** Both
+  `src/server.js` and `src/server-diag.js` are spawned over stdio and must
+  list every tool of their profile. "Smoke is green" therefore includes the
+  surface a client sees, which the unit suite provably cannot.
 
 Still outstanding against the definition of done:
 
 - **Smoke suite against `MCP-FIXTURE`: blocked.** The layout does not exist
   (saved layouts: Josh, Trial Ground, Esemble, Unnamed). It is created by hand
-  by design — `tests/fixtures/README.md` — and was not provisioned here.
+  by design — `tests/fixtures/README.md` — and was not provisioned here. It
+  now blocks three things: smoke, the `loss_autopsy` layout-switch path, and
+  the tag.
+- **Live verification through the surface, after the restart.** The server
+  was restarted onto the 60,000 default and the budget was checked first: a
+  `pine_inputs_snapshot` with `include: ["all","manifest"]` came back trimmed
+  to 59,539 characters (`response_budget.applied: true`, 351 → fewer inputs)
+  and Claude Code refused it anyway. That is the finding that lowered the
+  default to 40,000; the running server does not have 40,000 until it is
+  restarted again, and the check is then the same call, which must arrive
+  inline. Two things could not be verified on Trial Ground: the console page
+  cap, because B14's log collection is switched off there (`log_level_mask`
+  all false) and turning it on is an input write to the live layout; and the
+  autopsy view restore, which changes the chart. Both run on `MCP-FIXTURE`.
+  `data_get_trades` without `max_trades` returns at most 20 rows by its own
+  cap, so it exercises no budget. Read-only calls only; the chart was left as
+  found (Trial Ground, XAUUSD 45S).
 - **`loss_autopsy` drawings.** Needs the primitive index space identified.
 - Commit and version tag await explicit authorisation.
 

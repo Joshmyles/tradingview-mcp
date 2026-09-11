@@ -38,4 +38,42 @@ export function registerReplayTools(server) {
     try { return jsonResult(await core.status()); }
     catch (err) { return jsonResult(fromThrown(err)); }
   });
+
+  server.tool(
+    'replay_step_until',
+    'Advance bar replay until a predicate holds, returning ONLY the stopping state. ' +
+    'The stepping loop runs inside the page, so 500 bars cost one call rather than 500 round trips, ' +
+    'and no per-bar trace comes back \u2014 skipping the bars is the point. ' +
+    'Predicate fields split in two: the SERIES tier (time, open, high, low, close, volume, position, realized_pl, log_count) ' +
+    'moves with the step and is safe per bar; the REPORT tier (trades) lags a full study recompute of 13-21s per bar, ' +
+    'so it is REFUSED unless settle_each_step is set rather than being served stale. ' +
+    'Times are epoch MILLISECONDS, like everywhere else in this bridge \u2014 TradingView\u2019s own replay cursor is in seconds and is converted at the boundary. ' +
+    'Replay is left AT the stopping bar deliberately; call replay_stop to return to realtime.',
+    {
+      predicate: z
+        .record(z.any())
+        .describe('One clause { field, op, value }, or { all: [...] } / { any: [...] }. op is gt, gte, lt, lte, eq, ne, or changed (which compares against the value at the first bar and takes no value).'),
+      max_bars: z.coerce.number().optional().describe('Upper bound on bars advanced. Default 500. Reaching it is an answer, not a failure.'),
+      entity_id: z.string().optional().describe('Study for log_count / trades. Resolved explicitly; refuses when more than one study matches.'),
+      settle_each_step: z.coerce.boolean().optional().describe('Wait for the study to finish recomputing after every bar. Required for report-tier fields. Turns a ~300ms step into a ~20s one.'),
+      step_timeout_ms: z.coerce.number().optional().describe('Per-step ceiling on waiting for the replay cursor to move. Default 30000; measured steps ranged 283-7711ms, so this is deliberately generous.'),
+      deadline_ms: z.coerce.number().optional().describe('Wall-clock budget for the whole run. Default 240000.'),
+    },
+    async ({ predicate, max_bars, entity_id, settle_each_step, step_timeout_ms, deadline_ms }) => {
+      try {
+        return jsonResult(
+          await core.stepUntil({
+            predicate,
+            maxBars: max_bars ?? undefined,
+            entityId: entity_id || null,
+            settleEachStep: settle_each_step === true,
+            stepTimeoutMs: step_timeout_ms ?? undefined,
+            deadlineMs: deadline_ms ?? undefined,
+          }),
+        );
+      } catch (err) {
+        return jsonResult(fromThrown(err));
+      }
+    },
+  );
 }

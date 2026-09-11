@@ -240,6 +240,37 @@ export async function setVisibleRange({ from, to, _deps }) {
   return { success: true, requested: { from, to }, actual: actual || { from: 0, to: 0 } };
 }
 
+/**
+ * Bar length in seconds for a TradingView resolution string.
+ *
+ * The `S` suffix is the reason this exists. `parseInt('45S')` is 45, and the
+ * obvious `mins * 60` then reads a 45-SECOND chart as a 45-MINUTE one — a
+ * 60-fold error that produces a perfectly plausible chart window, just the
+ * wrong one. The reference chart is 45S, so this was wrong on the only
+ * resolution that matters here.
+ *
+ * Returns null for a resolution this does not understand, so a caller can say
+ * so rather than silently defaulting to a minute.
+ */
+export function resolutionSeconds(resolution) {
+  const res = String(resolution ?? '').trim().toUpperCase();
+  if (!res) return null;
+  if (res === 'D' || res === '1D') return 86400;
+  if (res === 'W' || res === '1W') return 604800;
+  if (res === 'M' || res === '1M') return 2592000;
+  let m = res.match(/^(\d+)S$/);
+  if (m) return Number(m[1]);
+  m = res.match(/^(\d+)D$/);
+  if (m) return Number(m[1]) * 86400;
+  m = res.match(/^(\d+)W$/);
+  if (m) return Number(m[1]) * 604800;
+  m = res.match(/^(\d+)M$/);
+  if (m) return Number(m[1]) * 2592000;
+  m = res.match(/^(\d+)$/);
+  if (m) return Number(m[1]) * 60;
+  return null;
+}
+
 export async function scrollToDate({ date, _deps } = {}) {
   const { evaluate } = _resolve(_deps);
   let timestamp;
@@ -248,13 +279,9 @@ export async function scrollToDate({ date, _deps } = {}) {
   if (isNaN(timestamp)) throw new Error(`Could not parse date: ${date}. Use ISO format (2024-01-15) or unix timestamp.`);
 
   const resolution = await evaluate(`${CHART_API}.resolution()`);
-  let secsPerBar = 60;
-  const res = String(resolution);
-  if (res === 'D' || res === '1D') secsPerBar = 86400;
-  else if (res === 'W' || res === '1W') secsPerBar = 604800;
-  else if (res === 'M' || res === '1M') secsPerBar = 2592000;
-  else { const mins = parseInt(res, 10); if (!isNaN(mins)) secsPerBar = mins * 60; }
+  const secsPerBar = resolutionSeconds(resolution);
 
+  if (secsPerBar == null) throw new Error(`Unrecognised resolution "${resolution}"; cannot size a bar window from it.`);
   const halfWindow = 25 * secsPerBar;
   const from = timestamp - halfWindow;
   const to = timestamp + halfWindow;

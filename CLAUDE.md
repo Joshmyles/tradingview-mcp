@@ -2,8 +2,8 @@
 
 Tools for reading and controlling a live TradingView Desktop chart via CDP (port 9222).
 
-Two profiles: `src/server.js` (workflow, 55 tools — the default) and
-`src/server-diag.js` (diagnostic, 85 tools, adds the generic UI-driving
+Two profiles: `src/server.js` (workflow, 65 tools — the default) and
+`src/server-diag.js` (diagnostic, 95 tools, adds the generic UI-driving
 surface). The counts are derived in `src/profiles.js`, not written down here;
 if this line and that file disagree, that file is right.
 

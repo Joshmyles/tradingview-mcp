@@ -985,6 +985,93 @@ one on the chart, the one a backtest describes, and the one live orders come
 from. Read the alert's own map before reasoning about live behaviour, and never
 infer it from the chart.
 
+
+## Pine logs live on the study, not in the DOM
+
+Measured 2026-09-11. Every study data source exposes `logs()`, which returns
+`this._graphics.observableLogs().get("logs")` when the script's metaInfo
+declares `graphics.logs`, and **null** otherwise. Of 13 user studies on the
+reference chart, 12 returned null (they emit no `log.*`) and only `xVbiv5`
+returned a collection. No panel, no Pine Editor, no fiber walk.
+
+Three states, and an empty read is only honest if it says which:
+
+| `collection` | meaning |
+| --- | --- |
+| `absent` | `logs()` is null — the script emits no `log.*` call at all |
+| `disabled` | the collection exists and `logLevelMask()` is all false — rows are discarded as produced |
+| `present` | at least one level on |
+
+The reference chart was found **disabled**: mask all false, size 0. Enabled,
+the same study produced **1,266 rows** (CENSUS 1118, TELX 116, RVX 18, MINX 12,
+CFG 2). Row shape `{ barTime, time, level, source: {start: {line, column}},
+message }`; `source.start.line` is the emitting Pine line.
+
+- `setLogLevelMask` packs `error 1 | warning 2 | info 4` into the INPUT
+  `__log_level` — excluded from the fence allowlist and in no manifest, so it
+  moves nothing any check here can see.
+- **`extract()` empties the collection.** Use `forEach` only. `keys()` throws
+  "Not implemented".
+- The collection is rebuilt on every recompute. `pine_console_read`'s cursor is
+  checked against the log head and the row it resumes after, and refused as
+  `cursor_stale` otherwise.
+
+## Replay
+
+- **`currentDate()` is epoch SECONDS** (`1788849356` on 2026-09-08). Everything
+  else in this bridge is milliseconds; `replay_step_until` converts at the
+  boundary.
+- **Step latency is not sleepable.** Ten consecutive steps: 283, 7711, 599,
+  444, 282, 293, 378, 349, 301, 305 ms. Wait on the `currentDate()` edge.
+- **`doStep()` does not wait for studies.** Right after a replay start
+  `bars().size()` was 0 and `reportData()` null while the cursor was set.
+  Report-derived predicates need a per-step settle or they read the previous
+  bar.
+- **`stopReplay()` saves a session into the layout.** It is
+  `requestCloseReplay(true)` -> `_updateReplaySessionState()`, which, unless
+  replay reached the end of data, writes `{replayTime, replayMode, charts}` via
+  `chartWidgetCollection.updateReplaySessionState()` and marks the layout
+  changed. The next load raises a blocking **"Continue your last replay?"**
+  modal. Every programmatic replay stops mid-history, so every one left that
+  modal on the research layout until `replay_stop` began clearing it with
+  `updateReplaySessionState(null)`.
+
+## Strategy alerts: where the frozen map is
+
+`pricealerts.tradingview.com/list_alerts` -> `type: 'strategy'` ->
+`condition.series[0] = { type: 'study', pine_id, pine_version, inputs }`, with
+`inputs` keyed by the study's positional `in_N` ids plus host keys
+(`__chart_bgcolor`, `__log_level`, ...). Active `5574059086`: 358 keys at
+`0.43`; inactive `5500389832`: 315 at `0.27`. `preflight` compares the `in_N`
+part against the manifest exactly as it compares the chart.
+
+
+## Pine drawing x is in neither known index space
+
+Measured 2026-09-11 while building `loss_autopsy`. The drawing readers
+(`data_get_pine_lines` / `_labels` / `_boxes`) return `x` / `x1` / `x2` straight
+from `s._graphics._primitivesCollection.<kind>.get(...)._primitivesDataById` —
+TradingView's primitive store, the same family of collection that carries
+`replaceIndexesTo` and `_isRematerializationRequiredWithNewIndexes`, i.e. one
+whose indices TradingView remaps itself.
+
+On B14 in one settled state: drawing x **1..867**; trade `entry.bar`
+**48..20463**; `bars()` indices **-20411..302**. Each drawing's price was placed
+on the bar at its x under both readings, with a ±5 tolerance:
+
+| reading of x | located | price on that bar |
+| --- | --- | --- |
+| study bar index (via the book's own bar↔time anchors) | 504 / 538 | **0%** |
+| `mainSeries().bars()` index | 200 / 538 | **4%** |
+| control: study index, x+500 | 538 / 538 | 0.2% |
+| control: bars() index, x+500 | 0 / 538 | — |
+
+Neither is the space. A time-window or bar-window filter on drawings therefore
+returns the wrong drawings while looking right — the first `loss_autopsy` run
+"kept" 35 lines and 52 boxes that way. Drawings are reported as totals, marked
+`joined: false`, until the primitive index space is identified and its
+mapping gets `internals_verify` coverage.
+
 ---
 
 ## Falsification record
@@ -1012,6 +1099,10 @@ being re-argued.
 | series events | `dataEvents()` never fires | **rejected** | fires `loading`/`cleared`/`completed` once per change; the null result came from a hidden preview context |
 | chart target | URL match identifies the chart | **rejected** | 4 chart pages, 3 of them hidden preview renderers with complete APIs |
 | input hash | hash all of `getInputValues()` | **rejected** | 3 different hashes across 2 recomputes; viewport fields move |
+| drawing x | study bar index | **rejected** | 0% of 504 drawings priced on the bar at their x |
+| drawing x | `mainSeries().bars()` index | **rejected** | 4% of 200, controls 0-0.2% |
+| replay cursor | `currentDate()` in ms | **rejected** | returns epoch seconds (1788849356) |
+| empty log read | "script logged nothing" | **rejected** | collection disabled: mask all false, 0 rows; enabled, 1,266 rows |
 
 Worked example for the `dd` rejection — trade 0, short: entry 4653.54, exit
 4654.53, gross −0.99, `cm` 0.22, net −1.21, `rn` 1.72, `dd` 4.45. The give-back

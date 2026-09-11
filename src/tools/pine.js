@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { jsonResult, fromThrown } from './_format.js';
 import * as core from '../core/pine.js';
 import { pineInputsAssert, pineInputsSnapshot } from '../core/pine-inputs.js';
+import { pineConsoleRead } from '../core/pine-console.js';
 
 export function registerPineTools(server) {
   server.tool('pine_get_source', 'Get current Pine Script source code from the editor', {}, async () => {
@@ -131,6 +132,42 @@ export function registerPineTools(server) {
             pineId: pine_id,
             pineVersion: pine_version,
             requireComplete: require_complete === true,
+          }),
+        );
+      } catch (err) {
+        return jsonResult(fromThrown(err));
+      }
+    },
+  );
+
+  server.tool(
+    'pine_console_read',
+    'Read a study\u2019s Pine log output (log.info / log.warning / log.error), cursor-based and filterable. ' +
+    'The DEBUG channel only \u2014 reportData is the data bus, and anything a measurement depends on belongs there, not here. ' +
+    'Reads the study\u2019s own log collection: no DOM scraping, and it does NOT open the Pine Editor. ' +
+    'An empty result is never bare: collection reports whether the script emits no log.* call at all (absent), ' +
+    'whether collection is switched off (disabled \u2014 log_level_mask all false, which is how the reference chart was found), ' +
+    'or whether the log is genuinely empty (present). Those three are not interchangeable. ' +
+    'The collection is rebuilt on every recompute, so a cursor is checked against the log head and the row it resumes after, ' +
+    'and refused as cursor_stale rather than silently returning a different slice.',
+    {
+      entity_id: z.string().optional().describe('Study to read. Resolved explicitly; refuses when more than one study matches rather than picking the first.'),
+      since_cursor: z.string().optional().describe('next_cursor from a previous read. Opaque \u2014 pass it back unchanged; a hand-built cursor asserts a generation it never read.'),
+      prefix: z.string().optional().describe('Return only rows whose message starts with this. Build 14 logs in families: "CFG|", "CENSUS|", "TELX|", "TRADE|".'),
+      level: z.enum(['error', 'warning', 'info']).optional().describe('Return only rows at this level.'),
+      limit: z.coerce.number().optional().describe('Rows per page, default 200, max 2000. The full reference log is 1,266 rows (~250KB), twice the response budget.'),
+      wait: z.coerce.boolean().optional().describe('Default true: gate on the recompute barrier first. Set false to read whatever is there now.'),
+    },
+    async ({ entity_id, since_cursor, prefix, level, limit, wait }) => {
+      try {
+        return jsonResult(
+          await pineConsoleRead({
+            entityId: entity_id || null,
+            sinceCursor: since_cursor || null,
+            prefix: prefix ?? null,
+            level: level || null,
+            limit: limit ?? undefined,
+            wait: wait === undefined ? true : wait,
           }),
         );
       } catch (err) {

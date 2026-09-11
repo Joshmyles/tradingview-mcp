@@ -1,0 +1,185 @@
+/**
+ * pine_console_read — the Pine debug channel.
+ *
+ * A cursor-based, filterable read of a study's `log.*` output, taken from the
+ * study's own log collection rather than from the DOM. See
+ * internals/pine-logs.js for the mechanism and for the three states an empty
+ * read can mean.
+ *
+ * This is a READ. It gates on settle, resolves the entity explicitly, and
+ * writes nothing — in particular it does not open the Pine Editor (the reader
+ * it replaces did, as a side effect of scraping the console panel) and it does
+ * not enable log collection. Enabling collection is an input write with a
+ * recompute attached, and `indicator_set_inputs` is already the tool for that.
+ */
+import { evaluate } from '../connection.js';
+import { requireSettled } from '../settle.js';
+import { resolveEntity } from './pine-inputs.js';
+import {
+  LEVELS,
+  encodeCursor,
+  levelWord,
+  readLogsJs,
+  resolveCursor,
+  rowFingerprint,
+} from '../internals/pine-logs.js';
+
+/**
+ * Default page size.
+ *
+ * Measured on the reference chart: 1,266 rows at ~200 characters each is about
+ * 250KB, which is twice the whole response budget. The budget would trim it
+ * and say so, but a trimmed debug trace is a worse answer than a paged one —
+ * the trim drops the tail, and the tail is the part a debugger wants. So the
+ * tool pages by default and hands back a cursor.
+ */
+const DEFAULT_LIMIT = 200;
+const MAX_LIMIT = 2000;
+
+export async function pineConsoleRead({
+  entityId = null,
+  sinceCursor = null,
+  prefix = null,
+  level = null,
+  limit = DEFAULT_LIMIT,
+  wait = true,
+  _deps,
+} = {}) {
+  const ev = _deps?.evaluate || evaluate;
+
+  if (level != null && !LEVELS.includes(String(level))) {
+    return {
+      ok: false,
+      reason: 'invalid_argument',
+      error: `level must be one of ${LEVELS.join(', ')}; got "${level}".`,
+    };
+  }
+  const n = Number(limit);
+  if (!Number.isFinite(n) || n < 1) {
+    return { ok: false, reason: 'invalid_argument', error: `limit must be a positive number; got "${limit}".` };
+  }
+  const pageSize = Math.min(Math.floor(n), MAX_LIMIT);
+
+  // Resolve first, so a chart carrying two builds refuses rather than reading
+  // whichever came first out of dataSources().
+  const r = await resolveEntity({ hint: entityId, _deps });
+  if (!r.ok) {
+    return {
+      ok: false,
+      reason: r.reason === 'ambiguous' ? 'ambiguous_entity' : r.reason,
+      error: r.error,
+      candidates: r.candidates,
+    };
+  }
+  const target = r.resolved;
+
+  if (wait) {
+    const gate = await requireSettled({ entityId: target.entity_id, scope: 'target' });
+    if (!gate.ok) return gate;
+  }
+
+  const raw = await ev(readLogsJs(JSON.stringify(target.entity_id)));
+  if (!raw?.ok) return raw || { ok: false, reason: 'no_result', error: 'The page returned nothing.' };
+
+  const base = {
+    ok: true,
+    entity_id: raw.entity_id,
+    title: raw.title,
+    pine_version: raw.pine_version,
+    collection: raw.collection,
+    log_level_mask: raw.mask,
+    total: raw.total,
+  };
+
+  // An empty read has three causes and they are not interchangeable. Saying
+  // which one it is IS the result; returning [] and letting the caller assume
+  // the script is quiet is the wrong answer this tool exists to avoid.
+  if (raw.collection === 'absent') {
+    return {
+      ...base,
+      rows: [],
+      note:
+        'This script emits no log.* calls at all — TradingView does not even create a log collection for it ' +
+        '(metaInfo carries no graphics.logs). This is not "logging is off" and not "nothing logged yet".',
+    };
+  }
+  if (raw.collection === 'disabled') {
+    return {
+      ...base,
+      rows: [],
+      note:
+        'Log collection is OFF for this study: every level in log_level_mask is false, so TradingView discards ' +
+        'the rows as they are produced and the collection sits at 0. An empty result here says nothing about ' +
+        'whether the script logged. Turn collection on by writing the __log_level input ' +
+        '(error 1 | warning 2 | info 4, so 7 is all three) with indicator_set_inputs, which forces a recompute. ' +
+        '__log_level is excluded from the fence allowlist and is in no build manifest, so changing it neither ' +
+        'trips inputs_drifted nor moves manifest_hash — and equally, nothing in this bridge will notice it later.',
+    };
+  }
+
+  const all = raw.rows;
+  const cur = resolveCursor(sinceCursor, all);
+  if (!cur.ok) return { ...base, ...cur, ok: false };
+
+  // Filter AFTER the cursor resolves. The cursor indexes the unfiltered
+  // collection, because a filter is the caller's question and the position has
+  // to mean the same thing to the next call with a different one.
+  const after = all.slice(cur.from);
+  const wantLevel = level == null ? null : String(level);
+  const wantPrefix = prefix == null ? null : String(prefix);
+  const matched = after.filter((row) => {
+    if (wantLevel && levelWord(row.level) !== wantLevel) return false;
+    if (wantPrefix && !String(row.message).startsWith(wantPrefix)) return false;
+    return true;
+  });
+
+  const page = matched.slice(0, pageSize);
+  const truncated = matched.length > page.length;
+
+  // The cursor advances over the UNFILTERED collection, so the next call
+  // resumes where this one genuinely stopped reading rather than where the
+  // filter happened to stop matching.
+  let consumed = all.length;
+  if (truncated) {
+    const lastKept = page[page.length - 1];
+    consumed = cur.from + after.indexOf(lastKept) + 1;
+  }
+  const nextCursor = encodeCursor({
+    n: consumed,
+    head: rowFingerprint(all[0]),
+    prev: rowFingerprint(all[consumed - 1]),
+  });
+
+  return {
+    ...base,
+    ...(cur.fresh ? {} : { resumed_from: cur.from }),
+    returned: page.length,
+    matched: matched.length,
+    scanned: after.length,
+    ...(wantPrefix && { prefix: wantPrefix }),
+    ...(wantLevel && { level: wantLevel }),
+    rows: page.map((row) => ({
+      time: row.time,
+      bar_time: row.bar_time,
+      level: levelWord(row.level),
+      line: row.line,
+      message: row.message,
+    })),
+    next_cursor: nextCursor,
+    truncation: truncated
+      ? {
+          applied: true,
+          returned: page.length,
+          matched: matched.length,
+          dropped: matched.length - page.length,
+          note:
+            'Rows were dropped from the END of the matching set to fit limit. Pass next_cursor to continue ' +
+            'from exactly where this page stopped; the cursor indexes the whole collection, not the filtered view.',
+        }
+      : { applied: false, note: 'Every matching row from the cursor onward is in this page.' },
+    note:
+      'line is the Pine source line that emitted the row. The collection is REBUILT on every recompute, and on a ' +
+      'live seconds chart that is every bar — a cursor is validated against the log head and the row it resumes ' +
+      'after, and is refused as cursor_stale rather than silently returning a different slice.',
+  };
+}

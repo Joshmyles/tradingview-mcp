@@ -146,8 +146,9 @@ export const isHousekeepingStudy = (id) =>
  * There is NO usable instantaneous readiness predicate for the series.
  * Measured 2026-09-10 across a 45S->30S change, sampling in-page at 20ms:
  *
- *      0-525ms   isLoading() false, status() 3, bars().size() 310  <- ALL STALE
- *    525ms       dataEvents().loading fires
+ *      0-380ms   isLoading() false, status() 3, bars().size() 316  <- ALL STALE
+ *    380ms       first level moves (isLoading true, status 2)
+ *    694ms       dataEvents().loading fires
  *    527ms       dataEvents().cleared fires, bars().size() -> 0
  *    546ms       dataEvents().completed fires, bars().size() -> 300
  *

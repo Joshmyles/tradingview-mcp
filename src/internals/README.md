@@ -26,39 +26,121 @@ scraping path — but it will not survive a runtime refactor.
 
 ## More than one page context per chart
 
-`/json/list` reports several TradingView pages, and only one of them is the
-chart. Measured 2026-09-10 on a two-layout session:
+`/json/list` reports several TradingView pages, and **more than one of them can
+look like the chart at the same time.** Measured 2026-09-10 on a two-layout
+session:
 
-| target | layout | visibility | viewport | symbol | resolution |
-| --- | --- | --- | --- | --- | --- |
-| `09EBFD9A` | R7HDoRZ2 | **visible** | 1920x1046 | ICMARKETS:XAUUSD | 45S |
-| `962BE3C0` | R7HDoRZ2 | hidden | 500x318 | ICMARKETS:XAUUSD | 45S |
-| `67BD8A45` | bzMBAknq | hidden | 500x318 | OANDA:XAGUSD | 2 |
-| `8AF118B4` | bzMBAknq | hidden | 500x318 | ICMARKETS:XAUUSD | 5 |
+| target | layout | visibility | inner | outer | screenXY | focus |
+| --- | --- | --- | --- | --- | --- | --- |
+| `09EBFD9A` | Trial Ground | visible | 1920x1044 | **1920x1080** | -1920, 0 | **true** |
+| `962BE3C0` | Trial Ground | visible | 1920x1044 | 1920x1044 | 0, 0 | false |
+| `67BD8A45` | Esemble | hidden | 500x318 | 0x0 | 0, 0 | false |
+| `8AF118B4` | Esemble | hidden | 500x318 | 0x0 | 0, 0 | false |
 
-The hidden three are the desktop app's layout preview renderers. They are not
-stubs. Each carries a complete `window.TradingViewApi`, its own chart model,
-its own symbol and resolution, its own `dataSources()`, and — for the duplicate
-of the working layout — the same study ids. **Every path in this document
-resolves on them and returns a plausible, wrong answer.**
+None of the three extras are stubs. Each carries a complete
+`window.TradingViewApi`, its own chart model, its own symbol and resolution, its
+own `dataSources()`, and -- for the same-layout duplicate -- the same study ids.
+**Every path in this document resolves on them and returns a plausible, wrong
+answer.**
 
-`/json/list` carries no visibility field and its ordering is not guaranteed, so
-a target chosen by URL match alone is chosen at random from that table. A
-mutation applied to a preview and a read taken from the real chart is
-indistinguishable from exactly the staleness this whole barrier exists to
-catch.
+They are also not the same chart. Sampled in the same second, the two
+Trial Ground contexts held **different loaded histories**: 329 bars over index
+`[-16, 312]` against 381 bars over `[0, 380]`, with different visible ranges.
+On a 45S chart the backtest window follows the loaded bar count, so two contexts
+that agree on the report today can disagree after any recompute. Attaching to
+the wrong one is a correctness hazard, not an inconvenience.
 
-The discriminator is in-page and unambiguous: exactly one context reports
-`document.visibilityState === 'visible'`. `connection.js` probes candidates and
-refuses to attach to anything else, then pins the choice so a reconnect cannot
-re-roll it. The pinned id is carried on the state fence, and a read whose
-context differs from the fence's is refused as `target_changed`.
+### `visibilityState` does not separate them
+
+This corrects the rule first written here on 2026-09-10 and replaced the same
+day, after the duplicate was caught reporting `visible`:
+
+- **The same-layout duplicate reports `visible`.** It reported `hidden` at
+  500x318 an hour earlier. It is re-used as the layout preview renderer and
+  returns to full size afterwards, so its visibility *and* its viewport change
+  under you while nobody touches the chart. Any rule built on either is
+  measuring the app's preview scheduler.
+- **Minimising the real window does not make it hidden.** Driven through
+  user32 `ShowWindow(SW_MINIMIZE)`, `09EBFD9A` reported
+  `visibilityState: 'visible'` throughout; only its OS geometry moved, to outer
+  `[199, 34]` at `[-32000, -32000]`. Electron keeps the compositor alive.
+  So the feared failure mode -- every read refused against a minimised
+  TradingView -- **does not occur on this build**, and no fallback is needed
+  for it.
+
+### What does separate them
+
+Two signals, both stable across a minimise cycle and a foreground cycle:
+
+1. **`document.hasFocus()`** is true for the real window and false for every
+   other context, whenever TradingView is the foreground application.
+   Definitive when true; false for all when the user is in another app.
+2. **OS window chrome** -- non-zero `outerWidth`/`outerHeight` that *differ*
+   from the inner viewport (36px of title bar here). The duplicate's outer size
+   is permanently equal to its inner size; the preview renderers report outer
+   `[0, 0]`. The real window keeps this property even while minimised.
+
+Neither is sufficient alone: (1) needs TradingView in the foreground, and (2)
+would fail for a true-fullscreen window. `selectTarget()` in `targets.js` tries
+them in order -- `focused`, `os_window`, `visible_largest`, `largest_viewport`
+-- and **names the rule that decided** on `selected_by`. When no rule leaves a
+unique winner it **refuses**, listing the tied candidates, rather than picking
+one; two contexts on one layout are not interchangeable, so "the first one" is
+a coin toss with a wrong side. `TV_CDP_TARGET` pins a context outright and
+`TV_CDP_LAYOUT` narrows the pool by layout name.
+
+The chosen id is pinned so a reconnect cannot re-roll it, carried on the state
+fence, and a read whose context differs from the fence's is refused as
+`target_changed`.
 
 This one is worth internalising before trusting any other measurement here.
 While it was unknown, a chart reading `bars().size() === 0` with no error on
 any channel looked exactly like a wedged chart, and an entire probe of the
 series event bus recorded zero fires and was very nearly written up as "the
 events do not fire".
+
+---
+
+## Rule: no level predicate survives a mutation boundary
+
+Every readiness bug found in this codebase has had one shape. A predicate reads
+a **level** -- a current value -- and the level is indistinguishable between
+"settled on the new state" and "not yet started on the old state".
+
+Three independent instances, none of which looked like the others at the time:
+
+| signal | how it lied |
+| --- | --- |
+| `mainSeries().isLoading()` / `status()` / `bars().size()` | all three read exactly as settled, on the previous resolution's bars, for the first 139-380ms after `setResolution` returns |
+| `bars().size()` as a fingerprint | 300 bars before a rebuild, 300 bars after |
+| `reportChanged()` | fires with byte-identical report content |
+
+A stabilisation check does not rescue a level. Measured, the series steps
+stale -> 0 -> final in about 7ms, so any hold-still window wide enough to be
+useful latches the stale value first.
+
+**The rule: no level predicate on this API is trustworthy across a mutation
+boundary. Only edge evidence from an event bus is.** The next signal anyone
+adds will present the same trap, and the obvious implementation will be a level
+check -- because a level check is one line and always available, while the edge
+requires installing a counter *before* the mutation and carrying it on the
+fence.
+
+Two corollaries worth stating, because both were nearly missed:
+
+- **An edge is only evidence if it was counted from before the mutation.**
+  Hence `captureFence` and the `since` argument. A counter installed after the
+  fact proves nothing.
+- **One `completed` edge is not the end of a rebuild.** Measured across two
+  resolution changes, `dataEvents()` fires *two* load cycles: `loading` +
+  `cleared` + `completed` for the initial window, then a second `loading` and a
+  second `completed` 6-8s later for the deeper history. Bar counts differ
+  between them (300 at the first `completed`, 316 at the second). `seriesRebuilt`
+  therefore requires `completed` to have advanced **and** `isLoading() === false`
+  at the moment of the check; dropping that second conjunct as redundant
+  reintroduces the bug with an 8-second window.
+
+---
 
 ## Two objects per study, and they disagree
 
@@ -158,8 +240,9 @@ settled chart.
 Measured 2026-09-10 across a 45S->30S change, sampled in-page at 20ms:
 
 ```
-   0-525ms   isLoading() false   status() 3   bars().size() 310   <- ALL STALE
-     525ms   dataEvents().loading fires
+   0-380ms   isLoading() false   status() 3   bars().size() 316   <- ALL STALE
+     380ms   first level moves: isLoading true, status 2
+     694ms   dataEvents().loading fires
      527ms   dataEvents().cleared fires        bars().size() -> 0
      546ms   dataEvents().completed fires      bars().size() -> 300
 ```
@@ -464,6 +547,217 @@ unstable.
 
 ---
 
+## The price series is not the backtest window
+
+`mainSeries().bars()` is a rolling cache sized to the viewport, not to the
+range the strategy was computed over. Measured 2026-09-10 on the live 45S
+chart, in one instant:
+
+| | value |
+|---|---|
+| bars loaded | **372**, indices `-66..305` |
+| book span | **21,518 bars**, study indices `156..21673` |
+| `dateRange.backtest.from` | 1787695320000 — 15.9 days back |
+
+Two consequences, both silent.
+
+**The index spaces are different.** `trades[].e.b` / `.x.b` count from the
+first bar of the study's history and are always non-negative.
+`bars().firstIndex()` is negative and rebases whenever loaded history changes.
+The same instant is index 305 in one space and 21673 in the other. **Join by
+time, never by bar index.** Derive the offset afterwards if you want it as a
+check; do not use it to perform the join.
+
+**History has to be pulled in before any per-bar work.**
+`mainSeries().requestMoreData(n)` extends the cache and `requestMoreDataAvailable()`
+says whether more exists. Measured: 372 → 5,373 bars in 1.4s, and 372 → 21,675
+bars covering the whole book in **3.8s across two rounds**. It is the same
+operation as scrolling back — it does not touch symbol, resolution or inputs.
+
+It does move `dateRange.backtest.from`, because the backtest range follows the
+loaded bars. **Any report read before extending history describes a different
+book than the bars now loaded**, and pairing the two produces a reconstruction
+in which every number looks plausible. Re-read the report afterwards.
+
+---
+
+## `dd` and `rn` are leg EQUITY excursions, not price excursions
+
+Established by reconstructing all 106 rows of the live book from the same bars
+TradingView reads. The first attempt — bar extremes from entry bar to exit bar
+— matched **zero** of 106. Three corrections take it to **106 of 106 on both
+MAE and MFE**:
+
+| # | correction | evidence |
+|---|---|---|
+| 1 | Add the entry-side commission to MAE, subtract it from MFE | a dead-constant 0.11 on every row against a 0.22 round trip |
+| 2 | The exit bar contributes its **exit price**, not its high and low | without it 39 of 106 overstated MAE, one by 2.58 — every one a hard-stop exit whose bar ran on after the stop |
+| 3 | Floor both at zero | 3 rows never moved far enough in their favour to cover the entry commission; TradingView reports `rn = 0`, not a small negative |
+
+The entry bar contributes its **full** range. A fill inside a bar cannot be
+located more precisely than the bar, and the full match says TradingView does
+the same.
+
+**This changes what a stop counterfactual means.** A price stop triggers on the
+price excursion. The reported MAE is that excursion **plus 0.11**, so a
+counterfactual comparing `mae >= L` triggers on a move 0.11 smaller than `L`.
+`excursionPaths` therefore emits `mae_price_only` alongside `mae_recomputed`,
+and the two must not be substituted for one another.
+
+---
+
+## Sharpe: TradingView reports a NON-ANNUALISED DAILY ratio
+
+`reportData` has no per-bar equity, and `performance.sharpeRatio` comes from a
+curve TradingView does not expose. `src/internals/equity.js` reconstructs the
+curve and computes the ratios by a stated method. The gap between the two was
+open until 2026-09-11, when it was closed by testing candidate methods against
+the reconstruction instead of reporting the difference as unexplained.
+
+Un-annualised, on the reconstructed curve, against a reported **0.3701**:
+
+| interval, un-annualised | ratio |
+|---|---|
+| per bar (45s) | 0.0064 |
+| hourly | 0.0572 |
+| per closed trade | 0.1229 |
+| **daily, UTC days, sample sd** | **0.3507** |
+| **daily, UTC days, population sd** | **0.3640** |
+| daily, across every other day boundary tried | 0.25 – 0.37 |
+
+No other interval is within an order of magnitude; the daily row brackets the
+reported figure. The residual few percent is the day boundary and whether the
+sd is sample or population, neither of which TradingView exposes.
+
+**Reproduced on a second, differently-configured book** (2026-09-11, 54 legs,
+after OPPX/RVX/PYRX were switched off): reported **0.3803** against daily
+0.3551 sample / 0.3685 population, with per-bar 0.0080 and per-trade 0.1672.
+Same order, same bracketing, same small positive residual. The identification
+was made on one book and held on another it was not fitted to.
+
+**The consequence is the point.** A Sharpe threshold read against the
+TradingView display is a threshold on a *daily* ratio. The conversion is
+`sqrt(252)` ≈ 15.9, so a displayed 0.3701 is about **5.9 annualised**, against
+**4.45** for the same curve sampled per bar — the same order, as it must be.
+Read the other way, a "Sharpe ≥ 2.3" bar asserted against the display demands
+roughly **36 annualised**, which nothing real reaches. State the method.
+
+Annualising here uses bars *observed*, not the nominal bar length: gold is shut
+at weekends, so a nominal 45-second period implies 700,800 bars a year and
+overstates the annualisation by the fraction of the week the market is closed.
+
+### Drawdown: TradingView's is not reconcilable with TradingView's own run-up
+
+Same book, same instant:
+
+Measured on TWO books — the drifted 101-leg book of 2026-09-10, and the
+54-leg book after the configuration was corrected on 2026-09-11. The second is
+the stronger evidence: the identification was not refitted to it.
+
+| basis | drifted: DD / run-up | intended: DD / run-up |
+|---|---|---|
+| closed-trade curve (`trades[].cp.v`) | 57.95 / 213.65 | 65.89 / 134.49 |
+| daily-sampled | — | 62.91 / 137.13 |
+| per-bar, marked at bar closes | 115.97 / 270.23 | 91.88 / 159.98 |
+| per-bar, marked at bar extremes | **121.96** / **275.82** | **94.37** / **162.44** |
+| **TradingView reported** | **60.68** / **275.04** | **67.25** / **161.72** |
+
+Run-up identifies the curve on both: the envelope matches to 0.28% and then to
+0.45%, and the closed-trade curve is 22% and 17% short — it cannot reach the
+reported figure at all. On that same envelope the drawdown is 2.01x and then
+1.40x the reported one.
+
+**Daily sampling was tested as the explanation and refuted**: 62.91 against a
+reported 67.25 is further off (-6.5%) than the closed-trade curve's 65.89
+(-2.0%). No candidate equals it. `tradingviewComparison` now ranks all four by
+distance from the reported pair on every run, rather than asserting the
+identification in prose.
+
+The run-up identifies the curve: 275.04 cannot come from a closed-trade curve
+that tops out at 213.65, and it matches the intrabar envelope to 0.3%. So
+TradingView marks **per bar, intrabar, including open positions**. On that
+curve the drawdown is 121.96, and TradingView reports 60.68 — a factor of
+**2.01**. The closed-trade curve gives 57.95, close but not equal, so a
+closed-trade basis does not explain it either.
+
+Treat the envelope as what the position experienced and the reported drawdown
+as an understatement of roughly half. On this book the drawdown is traceable to
+one leg that held **+108.74 unrealised and realised +47.49** — a 61.25 give-back
+on a single trade, which is the give-back defect showing up in the curve rather
+than in a per-trade statistic.
+
+---
+
+## Excursions from bar extremes are RESOLUTION-INVARIANT
+
+Reported MAE is not understated by low detalization. It cannot be.
+
+The excursion scanner reproduces `dd`/`rn` on 101 of 101 rows at 45S. Re-running
+the identical scan against finer bars over the same holding periods, 2026-09-11:
+
+| finer series | span | legs covered | MAE delta | MFE delta |
+|---|---|---|---|---|
+| 5S (21,074 bars) | 30.5h | 15 | **exactly 0** | exactly 0 |
+| 1S (20,902 bars) | 6.5h | 6 | **exactly 0** | exactly 0 |
+
+Zero, not "small" — the deltas are `0.00e+0`. This is an identity, not a
+measurement. A coarse bar's high **is** the maximum of the fine bars' highs
+inside it, and every entry and exit in the book lands on a 45S bar boundary
+(101 of 101), so there is no partial-bar effect at the ends either. It is also
+why Deep Backtesting gave 99 of 100 identical MAE figures: the same identity,
+not a failure of that route.
+
+So a stop level fitted against these excursions needs **no detalization
+correction**. What resolution genuinely governs is fill *sequencing* within a
+bar — whether a stop or a target filled first — which is an execution question,
+not a measurement one, and `tighteningBenefit` brackets it rather than assuming
+it.
+
+What finer bars *do* buy is the **path**. `mae_at`/`mfe_at` are quantised by the
+leg's bar count, and a 7-bar leg can only place its extreme at sevenths; at 5S
+the same leg has 63 points. Anything conditioning on *when* a leg took its heat
+belongs on the finer series.
+
+### Seconds history is capped by BAR COUNT, not by span
+
+Measured the same day, each stopping on `endOfData`:
+
+| resolution | bars reached | span |
+|---|---|---|
+| 45S | 20,511 | 366.5h (15.3 days) |
+| 5S | 21,068 | 30.5h |
+| 1S | 20,902 | 6.5h |
+
+Roughly 21,000 bars at every resolution. Finer resolution buys detail by
+spending span, so a finer-resolution analysis can only ever cover the most
+recent legs — `refineExcursions` reports which, and does not drop the rest
+silently.
+
+---
+
+## MAE becomes CENSORED once a stop exists
+
+Correction #2 in the excursion model — the exit bar contributes its exit price,
+not its range — is this effect visible in TradingView's own numbers. For a
+hard-stop exit the bar frequently runs on past the stop, and the reported MAE
+is truncated at the stop by construction. Without that correction 39 of 106
+rows overstated MAE, one by 2.58, and every one of them was a stop exit.
+
+**Standing rule.** Any build carrying a stop reports a censored MAE
+distribution, so:
+
+- the no-stop dataset is the reference distribution and is preserved;
+- **any re-fit of a stop parameter goes back to a no-stop run**, never to the
+  output of a stopped build.
+
+Without this the second iteration fits to its predecessor's censoring and every
+one after that compounds it. The current 45S book is *already* stopped — 31 of
+101 exits are `HS` and 29 are `RT` — so it is a valid dataset for measuring what
+an *additional* rule would have cost, and an invalid one for fitting a stop
+level on.
+
+---
+
 ## Report readiness — a separate condition from study readiness
 
 A settled study does **not** mean a regenerated report.
@@ -597,6 +891,102 @@ and the current one describes the old settings. Measured 33ms against 90s.
 > template literal where an unknown escape silently loses its backslash — the
 > first version emitted `/^in_d+$/` into the page and matched 2 entries of 361.
 
+## Input ids: where the script ends and TradingView begins
+
+`in_<N>` is a POSITION, not a name. TradingView numbers inputs by the order
+their `input.*` calls appear in the source, from zero, and nothing in the
+source says `in_0`. Deleting one input renumbers every input after it — it has
+already happened once in this lineage, when five dead inputs left build 13 and
+shifted the whole tail.
+
+Measured on B14, 2026-09-11, by parsing the source and joining against
+`metaInfo().inputs`:
+
+| ids | count | what they are |
+|---|---|---|
+| `in_0 .. in_325` | 326 | the script's own `input.*` declarations, in source order |
+| `in_326`, `in_327` | 2 | **do not exist.** A gap TradingView leaves |
+| `in_328 .. in_352` | 25 | **TradingView's strategy properties** — not in the Pine source at all |
+
+`getInputValues()` returns 351 entries: 326 + 25. **Its array index is NOT the
+id.** Position 326 carries `in_328`. Joining a source parse to it by array
+position reads two ids early from the properties onward and looks entirely
+plausible — it reported "Use Bar Magnifier" as `in_342`, which is a real input
+with a real value that happens to be the wrong one. Join by id.
+
+### The strategy properties decide what a backtest means
+
+They are settable, hashable, and invisible to any source-derived manifest, so a
+manifest that omits them pins the strategy and not the experiment. On B14:
+
+| id | property | value |
+|---|---|---|
+| `in_328` | Initial Capital | 100 |
+| `in_330` | Order size | 1 contract — which is why every row has `q = 1` |
+| `in_331` / `in_332` | Commission | `cash_per_contract`, **0.11** per side |
+| `in_333` | Slippage | **0** — every net figure is optimistic by the spread |
+| `in_336` | pyramiding | 10 |
+| `in_342` | Close entries rule | **FIFO** |
+| `in_343` | **Risk free rate** | **2** |
+| `in_344` | **Use Bar Magnifier** | **true** (the only non-default) |
+
+> **Correction.** An earlier note here said no risk-free-rate setting was
+> exposed. That was true of `reportData().settings`, which carries only
+> `dateRange` — but the setting exists, as `in_343`, defaulting to 2. Whether
+> TradingView applies it to the displayed Sharpe is a separate question; note
+> that applying a positive rate would LOWER the ratio, and the reported figure
+> sits slightly ABOVE the reconstruction on both books measured, so it does not
+> explain the residual.
+
+### A manifest is derived from source, never from a chart
+
+The chart is the thing a manifest CHECKS. Deriving the reference from a
+snapshot of the chart makes the check vacuous, and that is exactly how an
+unintended configuration became the baseline.
+
+`internals/pine-source.js` parses the declarations; `scripts/make-manifest.mjs`
+combines them with an explicit override list and writes the manifest, carrying
+the source file's SHA-256 — because ids are positional, a manifest only means
+anything against the revision it was derived from.
+
+Verified before use, on B14: **326 of 326 titles matched** `metaInfo().inputs`
+and **309 of 309 literal defaults were identical**. The 17 that cannot be
+derived are colour constructors — `color.new(color.blue, 70)` has no value
+until the script compiles — and are left UNPINNED rather than guessed.
+
+### One manifest per build
+
+Build 14's study is titled "B14" and build 15's will be "B15". Both can be
+loaded on one chart, and a prefix matches both.
+
+- `resolve_entity` **refuses** when more than one study matches, naming the
+  candidates. Matching runs id → exact title → substring, so ambiguity is
+  always escapable by being specific.
+- The manifest's title is part of the assertion and is compared for EQUALITY.
+- Asserting one build against another build's manifest returns `wrong_build`
+  and **does not compare the inputs**. It is a different script, not a
+  different configuration; enumerating three hundred differences would bury
+  that.
+
+The inactive alert `5500389832` on this account is the hazard made visible: it
+carries a frozen input map from `pine_version 0.27`, and read against the
+current build's names its values land a position or two out — `in_274` holds
+`2000-1400` against a name reading "Tint the live window".
+
+## A strategy alert carries its OWN frozen configuration
+
+Measured 2026-09-11. The active alert on B14 (`5574059086`) embeds a complete
+351-entry input map and `pine_version 0.43`, while the chart study is `0.46`.
+
+**Changing the study on the chart does not change what a live alert executes.**
+The alert runs the configuration it was created with, until it is recreated.
+So there are three configurations in play at once and they can all differ: the
+one on the chart, the one a backtest describes, and the one live orders come
+from. Read the alert's own map before reasoning about live behaviour, and never
+infer it from the chart.
+
+---
+
 ## Falsification record
 
 The disproved models, kept beside the proved ones. A conclusion without its
@@ -615,7 +1005,7 @@ being re-argued.
 | `_seriesId` readiness | `symbolSameAsResolved()` | **rejected** | `false` on a fully settled chart |
 | regeneration | generation bump alone | **rejected** | gen 179 → 182 with byte-identical content |
 | entity ids | churn across an app restart | **rejected** | `xVbiv5` / "B14" survived a full restart unchanged |
-| series readiness | `isLoading() === false && bars().size() > 0` | **rejected** | holds, on stale bars, for the first 525ms after a mutation |
+| series readiness | `isLoading() === false && bars().size() > 0` | **rejected** | holds, on stale bars, for the first 139-380ms after a mutation |
 | series readiness | `seriesLoaded()` | **rejected** | `false` on a fully settled chart |
 | series rebuild | bar count as a fingerprint | **rejected** | 300 -> 300 across a genuine rebuild |
 | series rebuild | bars climb progressively during load | **rejected** | steps stale -> 0 -> final in ~7ms; no ramp to stabilise on |

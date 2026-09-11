@@ -65,6 +65,7 @@ export function readReportJs(entityIdExpr = 'null') {
       /* Read in the SAME expression as the report, so the fence check cannot
          be defeated by the inputs changing between two round-trips. */
       inputs_hash: __inputsHash(api),
+      inputs_digest: __inputsDigest(api),
       report: picked.rd || null
     };
   })()`;
@@ -144,12 +145,50 @@ const round8 = (v) => Math.round(v * 1e8) / 1e8;
  *   (four q=3, four q=2): TradingView splits one position-level close into one
  *   trade row per open leg. 4*(3-1) + 4*(2-1) = 12. Exactly.
  */
+/**
+ * Flag the rows that describe a position that is still OPEN.
+ *
+ * TradingView does not omit the exit for an open position — it synthesises
+ * one. Measured 2026-09-10 at the live edge, the trailing row carried a full
+ * `x` object with an empty comment, a price that MOVED between two reads
+ * seconds apart (4335.39 -> 4332.97, net 16.78 -> 19.20), and `cm` charging
+ * ONE side while `tp.v` was computed net of the round trip. So:
+ *
+ *   - `t.exit === null` never fires, and the reconciler counted 0 open rows;
+ *   - the fill identity was short by exactly one row (106 explained of 107);
+ *   - the P&L identity was off by exactly one commission side (0.11).
+ *
+ * Both symptoms had one cause, and the reconciler correctly refused the book
+ * while misattributing why.
+ *
+ * The authoritative marker is `performance.all.totalOpenTrades`, with
+ * `totalTrades` counting only CLOSED rows. Open rows are the trailing ones.
+ * An empty exit comment corroborates but is not relied on — a Pine strategy
+ * may legitimately close without one.
+ *
+ * An open row's net, MAE and MFE are mark-to-market and will differ on the
+ * next tick. They are excluded from the identities and marked `is_open` so a
+ * caller does not put a moving number into a distribution.
+ */
+export function markOpenTrades(report, trades) {
+  const all = report?.performance?.all || {};
+  const openCount = Number(all.totalOpenTrades) || 0;
+  if (openCount > 0) {
+    for (let i = Math.max(0, trades.length - openCount); i < trades.length; i++) {
+      trades[i].is_open = true;
+    }
+  }
+  return { open_count: openCount, closed_reported: all.totalTrades ?? null };
+}
+
 export function reconcile(report, trades) {
   const orders = report.filledOrders || [];
   const entryOrders = orders.filter((o) => o.e === true);
   const exitOrders = orders.filter((o) => o.e === false);
   const excessFromMultiQty = exitOrders.reduce((a, o) => a + Math.max(0, (o.q || 1) - 1), 0);
-  const openRows = trades.filter((t) => t.exit === null).length;
+  // An open position has an entry fill and no exit fill, whether or not
+  // TradingView synthesised an exit object for it.
+  const openRows = trades.filter((t) => t.exit === null || t.is_open === true).length;
 
   const expected = exitOrders.length + excessFromMultiQty + openRows;
   const rowsExplained = expected === trades.length;
@@ -159,19 +198,24 @@ export function reconcile(report, trades) {
   let checked = 0;
   for (const t of trades) {
     if (t.gross_profit == null || t.net_profit == null) continue;
+    // An open row's exit price is mark-to-market and its commission is
+    // one-sided; the identity does not apply and asserting it anyway reports a
+    // 0.11 error that means nothing.
+    if (t.is_open) continue;
     checked++;
     maxPnlErr = Math.max(maxPnlErr, Math.abs(t.gross_profit - t.commission - t.net_profit));
   }
 
   // MAE/MFE identity: both are measured from entry, so they must bound the
   // realised gross move. A violation means dd/rn are no longer excursions.
-  const maeViolations = trades.filter(
+  const closed = trades.filter((t) => !t.is_open);
+  const maeViolations = closed.filter(
     (t) => t.mae != null && t.gross_profit != null && t.mae < Math.max(0, -t.gross_profit) - 1e-6,
   ).length;
-  const mfeViolations = trades.filter(
+  const mfeViolations = closed.filter(
     (t) => t.mfe != null && t.gross_profit != null && t.mfe < Math.max(0, t.gross_profit) - 1e-6,
   ).length;
-  const signViolations = trades.filter((t) => t.mae < 0 || t.mfe < 0).length;
+  const signViolations = closed.filter((t) => t.mae < 0 || t.mfe < 0).length;
 
   // Quantity > 1 on a TRADE row is not covered by the verification described in
   // README.md — every row in the verified dataset was q=1, because multi-leg
@@ -186,6 +230,12 @@ export function reconcile(report, trades) {
     exit_orders: exitOrders.length,
     multi_qty_exit_excess: excessFromMultiQty,
     open_rows: openRows,
+    ...(openRows
+      ? {
+          open_rows_note:
+            'A position is still open. Its row carries a synthesised mark-to-market exit whose price, net, MAE and MFE change on every tick, and a one-sided commission. It is marked is_open and excluded from the identities; exclude it from any distribution too.',
+        }
+      : {}),
     rows_explained: rowsExplained,
     ...(rowsExplained
       ? {}

@@ -78,24 +78,61 @@ export const HELPERS_JS = `
        entries instead of 353. */
     return /^in_[0-9]+$/.test(x.id) || x.id === 'pineId' || x.id === 'pineVersion';
   }
-  function __inputsHash(api) {
-    if (!api || typeof api.getInputValues !== 'function') return null;
-    var json;
-    try {
-      var vals = api.getInputValues();
-      var settings = [];
-      for (var i = 0; i < vals.length; i++) {
-        if (__isSettingInput(vals[i])) settings.push(vals[i]);
-      }
-      json = JSON.stringify(settings);
-    } catch (e) { return null; }
-    if (json == null) return null;
+  function __fnv(str) {
     var h = 2166136261;
-    for (var i = 0; i < json.length; i++) {
-      h ^= json.charCodeAt(i);
+    for (var i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
       h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
     }
     return ('0000000' + h.toString(16)).slice(-8);
+  }
+  /* Per-key digest, and the hash derived FROM it so the two cannot disagree.
+
+     A single hash can only ever say "something moved". The allowlist above will
+     go stale the next time TradingView injects a volatile field into the in_N
+     range, and a bare hash would report that as configuration drift for the
+     rest of the build's life with no way to see why. The digest makes the
+     failure self-describing: checkFence diffs two digests and names the keys.
+
+     Read TWICE and compare. A key that differs between two reads taken
+     microseconds apart is volatile by construction, not drifting, and it is
+     reported as volatile_keys rather than silently poisoning the hash. This
+     catches a field on a timer; it does not catch one that moves only on
+     scroll or on a new bar, which is what the key diff is for. */
+  function __inputsRead(api) {
+    var vals = api.getInputValues();
+    var kept = [], skipped = 0, pairs = [];
+    for (var i = 0; i < vals.length; i++) {
+      if (!__isSettingInput(vals[i])) { skipped++; continue; }
+      kept.push(vals[i]);
+      pairs.push(vals[i].id + ':' + __fnv(JSON.stringify(vals[i].value)));
+    }
+    return { total: vals.length, kept: kept.length, skipped: skipped,
+             pairs: pairs, hash: __fnv(JSON.stringify(kept)) };
+  }
+  function __inputsHash(api) {
+    if (!api || typeof api.getInputValues !== 'function') return null;
+    try { return __inputsRead(api).hash; } catch (e) { return null; }
+  }
+  function __inputsDigest(api) {
+    if (!api || typeof api.getInputValues !== 'function') return null;
+    var a, b;
+    try { a = __inputsRead(api); b = __inputsRead(api); } catch (e) { return null; }
+    var volatileKeys = [];
+    if (a.pairs.length === b.pairs.length) {
+      for (var i = 0; i < a.pairs.length; i++) {
+        if (a.pairs[i] !== b.pairs[i]) volatileKeys.push(a.pairs[i].split(':')[0]);
+      }
+    } else {
+      volatileKeys.push('__length:' + a.pairs.length + '->' + b.pairs.length);
+    }
+    return {
+      hash: a.hash,
+      stable: a.hash === b.hash,
+      volatile_keys: volatileKeys.slice(0, 20),
+      total: a.total, kept: a.kept, skipped: a.skipped,
+      pairs: a.pairs,
+    };
   }
   function __fingerprint(rd) {
     if (!rd) return null;
@@ -116,7 +153,7 @@ export const HELPERS_JS = `
  * data_length, has_error, loading_since_ms, is_strategy, report_present,
  * report_fingerprint, report_gen }] }.
  */
-export function studyStateJs(entityIdExpr = 'null') {
+export function studyStateJs(entityIdExpr = 'null', { withDigest = false } = {}) {
   return `
   (function() {
     ${HELPERS_JS}
@@ -160,6 +197,7 @@ export function studyStateJs(entityIdExpr = 'null') {
         report_fingerprint: __fingerprint(rd),
         report_gen: (window.__tvmcp_gen && window.__tvmcp_gen[id] != null) ? window.__tvmcp_gen[id] : null,
         inputs_hash: __inputsHash(api),
+        inputs_digest: ${withDigest ? '__inputsDigest(api)' : 'null'},
         backtest_from: (function () { try { return rd.settings.dateRange.backtest.from; } catch (e) { return null; } })()
       });
     }
@@ -264,7 +302,7 @@ export const INSTALL_GEN_COUNTER_JS = `
 
     /* The price series needs the same treatment for the same reason, and it
        is not optional: measured 2026-09-10, every instantaneous series signal
-       reads exactly as it does when settled for the first ~525ms after a
+       reads exactly as it does when settled for 139-380ms after a
        mutation, while still holding the previous resolution's bars. Counting
        dataEvents() fires is what closes that window.
 

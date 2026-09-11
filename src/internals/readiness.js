@@ -26,7 +26,7 @@ import { __STATUS_ENUMS_INTERNAL_ONLY } from './paths.js';
 const { STUDY_STATUS } = __STATUS_ENUMS_INTERNAL_ONLY;
 
 /** Row kinds. Every snapshot row carries one. */
-export const KIND = { STUDY: 'study', SERIES: 'series' };
+export const KIND = { STUDY: 'study', SERIES: 'series', DEEPBT: 'deepbt' };
 
 function requireKind(row, kind, fn) {
   if (!row || typeof row !== 'object') {
@@ -133,7 +133,7 @@ export function seriesErrorReason(row) {
  *
  * There is deliberately no instantaneous isSeriesReady(). Measured 2026-09-10,
  * every instantaneous signal — isLoading(), status(), bars().size() — reads
- * exactly as it does when settled for the first ~525ms after a mutation, while
+ * exactly as it does when settled for the first 139-380ms after a mutation, while
  * still holding the previous resolution's bars. A predicate over those values
  * cannot distinguish "not started" from "finished".
  *
@@ -181,3 +181,61 @@ export function studyStateLabel(row) {
   if (row.status_type === STUDY_STATUS.NO_DATA) return 'no_data';
   return 'unknown';
 }
+
+/* ------------------------------------------------------------------------ *
+ * Deep backtesting — a THIRD status vocabulary
+ * ------------------------------------------------------------------------ */
+
+/* 1 running, 2 done, 3 error. Unrelated to the study enum (2 ready, 3 error)
+   and the series enum (2 loading, 3 ready), and reachable from the same page,
+   so it gets the same kind check rather than a comment asking for care. */
+const DEEPBT_RUNNING = 1;
+const DEEPBT_DONE = 2;
+const DEEPBT_ERROR = 3;
+
+export function isDeepBtRunning(row) {
+  requireKind(row, KIND.DEEPBT, 'isDeepBtRunning');
+  return row.status_type === DEEPBT_RUNNING;
+}
+
+export function isDeepBtErrored(row) {
+  requireKind(row, KIND.DEEPBT, 'isDeepBtErrored');
+  return row.status_type === DEEPBT_ERROR;
+}
+
+/**
+ * Is there a report for THIS request?
+ *
+ * Status 2 alone is not evidence: the deep report is cached across runs and
+ * keeps reporting done for the PREVIOUS window. Proof requires a `done` edge
+ * counted since the request was issued — the level-predicate rule from the
+ * internals README, in the place it bites hardest, because here the stale
+ * answer is a complete, plausible book for the wrong dates.
+ *
+ * @param {object} row     a DEEPBT_POLL_JS result
+ * @param {object} [since] edge counts captured at request time
+ */
+export function deepBtCompleted(row, since = null) {
+  requireKind(row, KIND.DEEPBT, 'deepBtCompleted');
+  if (row.status_type !== DEEPBT_DONE || !row.report_present) return false;
+  if (!since || !row.edges) return false;
+  return (row.edges.done || 0) > (since.done || 0);
+}
+
+/**
+ * Does the engine's window overlap what was asked for?
+ *
+ * TradingView SNAPS a requested window to available data — 1787695320000..
+ * 1788300000000 came back as 1787616030000..1788220785000 — so equality is the
+ * wrong test and would reject every valid run. What must be rejected is a
+ * report for a DIFFERENT request, which is what the cache hands back.
+ */
+export function deepBtWindowPlausible(actual, requested, tolerance = 0.5) {
+  if (!actual || actual.from == null || actual.to == null) return false;
+  if (!requested) return true;
+  const want = Math.max(1, requested.to - requested.from);
+  const lo = Math.max(actual.from, requested.from);
+  const hi = Math.min(actual.to, requested.to);
+  return hi - lo >= want * tolerance;
+}
+

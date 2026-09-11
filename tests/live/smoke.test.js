@@ -13,12 +13,12 @@
  */
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { requireFixtureLayout } from './_fixture-guard.js';
-import { FIXTURE } from './fixtures/fixture.config.js';
-import { disconnect, getTargetIdentity } from '../src/connection.js';
-import { awaitSettled, captureFence, checkFence, requireSettled, SETTLE } from '../src/settle.js';
-import { readStrategyReport } from '../src/strategy-report.js';
-import { setTimeframe } from '../src/core/chart.js';
+import { requireFixtureLayout } from '../_fixture-guard.js';
+import { FIXTURE } from '../fixtures/fixture.config.js';
+import { disconnect, getTargetIdentity } from '../../src/connection.js';
+import { awaitSettled, captureFence, checkFence, requireSettled, SETTLE } from '../../src/settle.js';
+import { readStrategyReport } from '../../src/strategy-report.js';
+import { setTimeframe } from '../../src/core/chart.js';
 
 let startedAt = null;
 

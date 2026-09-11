@@ -28,7 +28,7 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import CDP from 'chrome-remote-interface';
-import { requireFixtureLayout } from './_fixture-guard.js';
+import { requireFixtureLayout } from '../_fixture-guard.js';
 
 /**
  * The visible chart context, not just a URL match.

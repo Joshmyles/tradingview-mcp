@@ -9,6 +9,7 @@ import { join } from 'node:path';
 import { safeString, requireFinite } from '../src/connection.js';
 import { setSymbol, setTimeframe, setType, manageIndicator, setVisibleRange } from '../src/core/chart.js';
 import { drawShape } from '../src/core/drawing.js';
+import { fileURLToPath } from 'node:url';
 
 // ── Mock helpers ─────────────────────────────────────────────────────────
 
@@ -288,7 +289,10 @@ describe('drawing.js — sanitized evaluate calls', () => {
 // ── Source-level audit ───────────────────────────────────────────────────
 
 describe('source audit — no unsafe interpolation patterns', () => {
-  const CORE_DIR = new URL('../src/core/', import.meta.url).pathname;
+  // fileURLToPath, not .pathname: on Windows .pathname yields '/C:/...',
+  // which readdirSync resolves against the current drive as 'C:\C:\...'.
+  // The audit then passed or failed depending on the cwd it was run from.
+  const CORE_DIR = fileURLToPath(new URL('../src/core/', import.meta.url));
   const coreFiles = readdirSync(CORE_DIR).filter(f => f.endsWith('.js'));
 
   for (const file of coreFiles) {

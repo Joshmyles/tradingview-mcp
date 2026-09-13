@@ -1,0 +1,1 @@
+{"at":"2026-09-12T19:01:30.403Z","replay_api_present":true,"is_replay_started":true,"is_replay_finished":"ERR:rp.isReplayFinished is not a function","current_date":1788220799,"is_playing":"n/a","replay_status":"ERR:cw._chartWidget.replayStatus is not a function","symbol":"ICMARKETS:XAUUSD","interval":"45S","bar_count":300,"is_in_replay":true,"current_broker":"REPLAYBROKER"}

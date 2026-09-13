@@ -1,0 +1,66 @@
+{
+  "at": "2026-09-12T19:12:12.733Z",
+  "steps": [
+    {
+      "i": 0,
+      "ok": true,
+      "success": true,
+      "action": "step",
+      "current_date": 1788220829,
+      "advanced_ms": 496,
+      "wall_ms": 694
+    },
+    {
+      "i": 1,
+      "ok": true,
+      "success": true,
+      "action": "step",
+      "current_date": 1788220874,
+      "advanced_ms": 548,
+      "wall_ms": 679
+    },
+    {
+      "i": 2,
+      "ok": true,
+      "success": true,
+      "action": "step",
+      "current_date": 1788220919,
+      "advanced_ms": 589,
+      "wall_ms": 607
+    }
+  ],
+  "start": {
+    "success": true,
+    "replay_started": true,
+    "date": "2026-09-01",
+    "current_date": 1788220799
+  },
+  "autoplay": {
+    "before": 1788220919,
+    "after": 1788221144,
+    "advanced": true,
+    "delta_sec": 225,
+    "toggle_on": {
+      "success": true,
+      "autoplay_active": true,
+      "delay_ms": 1000
+    },
+    "toggle_off": {
+      "success": true,
+      "autoplay_active": false,
+      "delay_ms": 1000
+    }
+  },
+  "status": {
+    "success": true,
+    "is_replay_available": true,
+    "is_replay_started": true,
+    "is_autoplay_started": false,
+    "replay_mode": "AllCharts",
+    "current_date": 1788221144,
+    "autoplay_delay": 1000,
+    "position": null,
+    "realized_pnl": null
+  },
+  "ok": true
+}

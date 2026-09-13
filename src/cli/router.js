@@ -3,6 +3,7 @@
  * Zero dependencies — uses only Node.js built-ins.
  */
 import { parseArgs } from 'node:util';
+import { failed } from '../internals/verdict.js';
 
 /** @type {Map<string, { description: string, options?: object, handler: Function, subcommands?: Map<string, object> }>} */
 const commands = new Map();
@@ -142,9 +143,9 @@ function handleError(err) {
   const message = err.message || String(err);
   // Connection failures get exit code 2
   if (/CDP|connection|ECONNREFUSED|not running/i.test(message)) {
-    console.error(JSON.stringify({ success: false, error: message }, null, 2));
+    console.error(JSON.stringify(failed('unavailable', { error: message }), null, 2));
     process.exit(2);
   }
-  console.error(JSON.stringify({ success: false, error: message }, null, 2));
+  console.error(JSON.stringify(failed('internal', { error: message }), null, 2));
   process.exit(1);
 }

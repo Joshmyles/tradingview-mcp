@@ -7,6 +7,7 @@
  * the endpoint rejects. The create/delete bodies must be wrapped in a `payload` object.
  */
 import { evaluate, evaluateAsync, safeString, requireFinite } from '../connection.js';
+import { answered, failed, observed, refused, unobservable } from '../internals/verdict.js';
 
 // Map the tool's friendly condition names to TradingView's alert condition types.
 const CONDITION_TYPE_MAP = {
@@ -19,7 +20,7 @@ export async function create({ condition, price, message }) {
   const p = requireFinite(price, 'price');
   const condType = CONDITION_TYPE_MAP[String(condition || 'crossing').trim().toLowerCase()] || 'cross';
 
-  return evaluate(`
+  const result = await evaluate(`
     (function() {
       try {
         var ms = window.TradingViewApi._activeChartWidgetWV.value()._chartWidget.model().mainSeries();
@@ -61,6 +62,35 @@ export async function create({ condition, price, message }) {
       }
     })()
   `);
+
+  if (!result?.success) {
+    const error = result?.error || 'the page returned nothing';
+    return refused(`create_alert was not accepted: ${error}`, {
+      source: result?.source || 'internal_api',
+      error,
+      ...(result?.response !== undefined && { response: result.response }),
+    });
+  }
+  const created = {
+    source: result.source, symbol: result.symbol, price: result.price,
+    condition: result.condition, message: result.message, alert_id: result.alert_id,
+  };
+  // The server's "s: ok" is an acknowledgement, not the alert. Look for it.
+  if (created.alert_id == null) {
+    return unobservable('create_alert was acknowledged without an alert_id, so the new alert cannot be looked up', created);
+  }
+  const listed = await list();
+  if (!listed.ok) {
+    return unobservable(`create_alert was acknowledged but list_alerts could not be read back: ${listed.error}`, created);
+  }
+  const found = listed.alerts.find((a) => String(a.alert_id) === String(created.alert_id));
+  if (!found) {
+    return refused(
+      `alert ${created.alert_id} is not in list_alerts after create_alert acknowledged it`,
+      { ...created, alert_count: listed.alert_count },
+    );
+  }
+  return observed({ alert_id: found.alert_id, listed_active: found.active ?? null }, created);
 }
 
 export async function list() {
@@ -91,7 +121,10 @@ export async function list() {
       })
       .catch(function(e) { return { alerts: [], error: e.message }; })
   `);
-  return { success: true, alert_count: result?.alerts?.length || 0, source: 'internal_api', alerts: result?.alerts || [], error: result?.error };
+  const detail = { alert_count: result?.alerts?.length || 0, source: 'internal_api', alerts: result?.alerts || [] };
+  // An empty list with an error is not "no alerts"; it is no answer.
+  if (result?.error) return failed('unavailable', { ...detail, error: result.error });
+  return answered(detail);
 }
 
 export async function deleteAlerts({ delete_all, alert_ids, alert_id } = {}) {
@@ -101,11 +134,16 @@ export async function deleteAlerts({ delete_all, alert_ids, alert_id } = {}) {
   if (alert_id != null) ids.push(alert_id);
   if (delete_all) {
     const listed = await list();
+    if (!listed.ok) {
+      return failed(listed.reason, { source: 'internal_api', error: `Could not list alerts to delete: ${listed.error}` });
+    }
     ids = (listed.alerts || []).map((a) => a.alert_id);
   }
   ids = ids.filter((x) => x != null);
   if (!ids.length) {
-    return { success: false, source: 'internal_api', error: delete_all ? 'No alerts to delete.' : 'Provide delete_all: true or an alert_id to delete.' };
+    return delete_all
+      ? failed('not_found', { source: 'internal_api', error: 'No alerts to delete.' })
+      : failed('invalid_argument', { source: 'internal_api', error: 'Provide delete_all: true or an alert_id to delete.' });
   }
 
   const result = await evaluate(`
@@ -121,8 +159,22 @@ export async function deleteAlerts({ delete_all, alert_ids, alert_id } = {}) {
       } catch (e) { return { ok: false, error: e.message }; }
     })()
   `);
-  if (result && result.ok) {
-    return { success: true, source: 'internal_api', deleted_count: ids.length, alert_ids: ids };
+  if (!(result && result.ok)) {
+    const error = (result && (result.error || result.response)) || 'delete failed';
+    return refused(`delete_alerts was not accepted: ${error}`, { source: 'internal_api', alert_ids: ids, error });
   }
-  return { success: false, source: 'internal_api', alert_ids: ids, error: (result && (result.error || result.response)) || 'delete failed' };
+  // The server's acknowledgement is not the deletion. List again and look.
+  const detail = { source: 'internal_api', deleted_count: ids.length, alert_ids: ids };
+  const after = await list();
+  if (!after.ok) {
+    return unobservable(`delete_alerts was acknowledged but list_alerts could not be read back: ${after.error}`, detail);
+  }
+  const stillListed = ids.filter((id) => after.alerts.some((a) => String(a.alert_id) === String(id)));
+  if (stillListed.length) {
+    return refused(
+      `${stillListed.length} alert(s) still listed after delete_alerts: ${stillListed.join(', ')}`,
+      { ...detail, still_listed: stillListed },
+    );
+  }
+  return observed({ still_listed: [], alerts_remaining: after.alert_count }, detail);
 }

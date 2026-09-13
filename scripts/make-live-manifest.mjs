@@ -61,7 +61,9 @@ if (!spec) {
 
 // The environment check first: a manifest taken from an ambiguous chart would
 // record whichever study won a coin toss.
-const env = await assertReplayEnvironment({ expectStrategyTitle: spec.description });
+// Workflow profile: a manifest is research tooling, where hidden extra studies
+// are reported rather than refused (decided Phase 0.7).
+const env = await assertReplayEnvironment({ expectStrategyTitle: spec.description, profile: 'workflow' });
 console.error(`env ok: ${env.layout} | ${env.symbol} ${env.resolution} | strategy ${env.strategy.entity_id}`);
 
 const snap = await pineInputsSnapshot({ entityId: env.strategy.entity_id, include: ['all', 'manifest'] });

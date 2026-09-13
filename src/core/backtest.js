@@ -38,6 +38,7 @@ import {
 import { aggregateTrades } from '../internals/aggregate.js';
 import { pineInputsAssert, resolveEntity } from './pine-inputs.js';
 import { captureFence } from '../settle.js';
+import { adopt, answered, failed } from '../internals/verdict.js';
 
 const DEFAULT_DEEP_TIMEOUT_MS = Number(process.env.TV_DEEPBT_TIMEOUT_MS) || 300000;
 const POLL_MS = 2000;
@@ -58,34 +59,30 @@ export async function runDeepWindow({
 } = {}) {
   const ev = _deps?.evaluate || evaluate;
   if (!Number.isFinite(Number(from)) || !Number.isFinite(Number(to))) {
-    return { ok: false, reason: 'invalid_argument', error: 'from and to must be epoch milliseconds' };
+    return failed('invalid_argument', { error: 'from and to must be epoch milliseconds' });
   }
   if (Number(to) <= Number(from)) {
-    return { ok: false, reason: 'invalid_argument', error: `to (${to}) must be after from (${from})` };
+    return failed('invalid_argument', { error: `to (${to}) must be after from (${from})` });
   }
 
   const hook = await ev(DEEPBT_HOOK_JS);
   if (!hook?.installed) {
-    return {
-      ok: false,
-      reason: 'unavailable',
+    return failed('unavailable', {
       error:
         hook?.reason ||
         'Deep Backtesting context not reachable. The Strategy Tester panel must be open.',
-    };
+    });
   }
   // Without the edge counter there is no way to tell this run's report from the
   // cached previous one, and the failure is silent: the poll loop would run to
   // its full timeout and report that a finished run "never started". Refuse up
   // front instead.
   if (!hook.edges?.subscribed) {
-    return {
-      ok: false,
-      reason: 'unavailable',
+    return failed('unavailable', {
       error:
         'Could not subscribe to the deep-backtest status, so a completed run could not be ' +
         `distinguished from the cached previous one. ${hook.edges?.error || ''}`.trim(),
-    };
+    });
   }
 
   const requested = { from: Number(from), to: Number(to) };
@@ -97,7 +94,7 @@ export async function runDeepWindow({
   }
   if (!started?.ok) {
     await ev(DEEPBT_RESTORE_JS).catch(() => {});
-    return { ok: false, reason: 'internal', error: started?.error || 'deep backtest request failed' };
+    return failed('internal', { error: started?.error || 'deep backtest request failed' });
   }
   const since = started.edges_before || { running: 0, done: 0 };
 
@@ -108,47 +105,40 @@ export async function runDeepWindow({
       await sleep(POLL_MS);
       last = await ev(DEEPBT_POLL_JS);
       if (isDeepBtErrored(last)) {
-        return {
-          ok: false,
-          reason: 'errored',
+        return failed('errored', {
           error: 'Deep backtest reported an error status.',
           poll: last,
-        };
+        });
       }
       if (deepBtCompleted(last, since)) break;
       if (Date.now() - t0 > timeoutMs) {
-        return {
-          ok: false,
-          reason: 'timed_out',
+        return failed('timed_out', {
           error:
             `Deep backtest did not complete within ${timeoutMs}ms. ` +
             (isDeepBtRunning(last) ? 'It is still running; raise TV_DEEPBT_TIMEOUT_MS.' : 'It never started.'),
           poll: last,
-        };
+        });
       }
     }
 
     const raw = await ev(DEEPBT_READ_JS);
     if (!raw?.ok) {
-      return { ok: false, reason: 'internal', error: raw?.error || 'deep report unreadable' };
+      return failed('internal', { error: raw?.error || 'deep report unreadable' });
     }
 
     const actual = raw.window?.backtest ?? null;
     if (!deepBtWindowPlausible(actual, requested)) {
-      return {
-        ok: false,
-        reason: 'window_mismatch',
+      return failed('window_mismatch', {
         error:
           'The deep report describes a window that does not overlap the one requested. ' +
           'The cached report from a previous run is the usual cause.',
         requested,
         actual,
-      };
+      });
     }
 
     const trades = (raw.trades || []).map(normaliseDeepTrade);
-    return {
-      ok: true,
+    return answered({
       source: 'deep_backtest',
       requested,
       // TradingView snaps a requested window to available data. This is the
@@ -166,7 +156,7 @@ export async function runDeepWindow({
       trades,
       orders: (raw.filled_orders || []).map(normaliseDeepOrder),
       equity_present: raw.equity_present === true,
-    };
+    });
   } finally {
     await ev(DEEPBT_RESTORE_JS).catch(() => {});
   }
@@ -176,12 +166,11 @@ export async function runDeepWindow({
 async function runOnChart({ entityId, timeoutMs, fence = null }) {
   const settled = await awaitSettled({ entityId, scope: entityId ? 'target' : 'strategies', timeoutMs });
   if (settled.outcome !== SETTLE.SETTLED) {
-    return { ok: false, reason: settled.outcome, error: settled.error, settle: settled };
+    return failed(settled.outcome, { error: settled.error, settle: settled });
   }
   const r = await readStrategyReport({ entityId, fence, timeoutMs });
-  if (!r.ok) return r;
-  return {
-    ok: true,
+  if (!r.ok) return adopt(r);
+  return answered({
     source: 'on_chart',
     window: r.window,
     performance: r.performance,
@@ -190,7 +179,7 @@ async function runOnChart({ entityId, timeoutMs, fence = null }) {
     reconciliation: r.reconciliation,
     entity_id: r.entity_id,
     inputs_hash: r.inputs_hash,
-  };
+  });
 }
 
 /**
@@ -221,13 +210,10 @@ export async function backtestRun({
   // it described.
   const target = await (_deps?.resolveOne || resolveEntity)({ hint: entityId, _deps });
   if (!target.ok) {
-    return {
-      ok: false,
-      success: false,
-      reason: target.reason === 'ambiguous' ? 'ambiguous_entity' : target.reason,
+    return failed(target.reason === 'ambiguous' ? 'ambiguous_entity' : target.reason || 'not_found', {
       error: target.error,
       candidates: target.candidates,
-    };
+    });
   }
   const resolved = target.resolved;
 
@@ -240,14 +226,19 @@ export async function backtestRun({
       manifest, build, entityId: resolved.entity_id, _deps,
     });
     if (!asserted.ok) {
-      return {
-        ...asserted,
-        ok: false,
-        reason: asserted.reason || 'inputs_mismatch',
+      // The assertion's own verdict keys are left behind rather than spread: the
+      // verdict here is the refusal to run, and its reason is passed explicitly.
+      const {
+        ok: _ok, success: _success, observed: _observed, observation: _observation, evidence: _evidence,
+        reason: assertReason,
+        ...assertDetail
+      } = asserted;
+      return failed(assertReason || 'inputs_mismatch', {
+        ...assertDetail,
         error:
           (asserted.error || 'The chart is not carrying the asserted configuration.') +
           ' No backtest was run, because its result would not describe the configuration you asked for.',
-      };
+      });
     }
   }
 
@@ -262,8 +253,6 @@ export async function backtestRun({
   if (!base.ok) return base;
 
   const out = {
-    ok: true,
-    success: true,
     source: base.source,
     entity_id: base.entity_id ?? resolved.entity_id,
     entity_title: resolved.title ?? null,
@@ -294,7 +283,7 @@ export async function backtestRun({
   }
   if (include.includes('trades')) out.trades = base.trades;
   if (include.includes('orders')) out.orders = base.orders;
-  return out;
+  return answered(out);
 }
 
 /**
@@ -317,7 +306,7 @@ export async function walkForward({
   _deps,
 } = {}) {
   if (!Array.isArray(windows) || !windows.length) {
-    return { ok: false, reason: 'invalid_argument', error: 'windows must be a non-empty array of { from, to }' };
+    return failed('invalid_argument', { error: 'windows must be a non-empty array of { from, to }' });
   }
   const rows = [];
   for (const w of windows) {
@@ -326,23 +315,20 @@ export async function walkForward({
     });
     rows.push(
       r.ok
-        ? {
-            ok: true,
+        ? answered({
             requested: r.requested_window,
             window: r.window,
             trades: r.trade_count,
             performance: r.performance,
             aggregate: r.aggregate,
             elapsed_ms: r.elapsed_ms,
-          }
-        : { ok: false, requested: w, reason: r.reason, error: r.error },
+          })
+        : failed(r.reason || 'failed', { requested: w, error: r.error }),
     );
   }
   const good = rows.filter((r) => r.ok);
   const ind = independence(good);
-  return {
-    ok: true,
-    success: true,
+  return answered({
     windows_requested: windows.length,
     windows_completed: good.length,
     windows_failed: rows.length - good.length,
@@ -359,7 +345,7 @@ export async function walkForward({
           per_window_net: ind.distinct.map((r) => round2(r.performance?.net_profit ?? 0)),
         }
       : null,
-  };
+  });
 }
 
 /**

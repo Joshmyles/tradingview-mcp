@@ -17,6 +17,7 @@ import {
   normaliseWindow,
   reconcile,
 } from './internals/report.js';
+import { answered, failed, withDetail } from './internals/verdict.js';
 
 /**
  * How many times to re-read when the report regenerates between the settle
@@ -87,14 +88,12 @@ export async function readStrategyReport({
     const probe = await evaluate(readReportJs(entityId ? JSON.stringify(entityId) : 'null'));
     const prior = fence.strategies?.[probe?.entity_id]?.inputs_hash ?? null;
     if (probe?.found && prior != null && probe.inputs_hash === prior) {
-      return {
-        ok: false,
-        reason: 'fence_violation',
+      return failed('fence_violation', {
         error:
           'The strategy inputs are unchanged from before the write, so no new report is coming and the current one describes the OLD settings. The input write did not land.',
         violation: { code: 'inputs_not_applied', inputs_hash: probe.inputs_hash },
         entity_id: probe.entity_id,
-      };
+      });
     }
   }
 
@@ -111,12 +110,10 @@ export async function readStrategyReport({
       ...(timeoutMs && { timeoutMs }),
     });
     if (settle.outcome !== SETTLE.SETTLED) {
-      return {
-        ok: false,
-        reason: settle.outcome,
+      return failed(settle.outcome, {
         error: settle.error,
         settle,
-      };
+      });
     }
     latchedAt = Date.now();
     const latched = (settle.studies || []).find(
@@ -158,22 +155,18 @@ export async function readStrategyReport({
   }
 
   if (!raw?.found) {
-    return {
-      ok: false,
-      reason: 'no_strategy',
+    return failed('no_strategy', {
       error:
         'No strategy on the chart. Add one, or check the entity id — ids are per-session and do not survive a study being re-added.',
       strategy_count: raw?.strategy_count ?? 0,
-    };
+    });
   }
   if (!raw.report || !raw.report.performance) {
-    return {
-      ok: false,
-      reason: 'report_not_computed',
+    return failed('report_not_computed', {
       error:
         'The strategy exists but TradingView has not computed a report for it. It is hidden on the chart, or the Strategy Tester has never been opened for it.',
       entity_id: raw.entity_id,
-    };
+    });
   }
 
   const report = raw.report;
@@ -199,14 +192,12 @@ export async function readStrategyReport({
     inputs_digest: raw.inputs_digest ?? null,
   });
   if (fenceViolation) {
-    return {
-      ok: false,
-      reason: 'fence_violation',
+    return failed('fence_violation', {
       error: fenceViolation.message,
       violation: fenceViolation,
       entity_id: raw.entity_id,
       window,
-    };
+    });
   }
 
   // --- Assert the window, not just the generation.
@@ -218,19 +209,16 @@ export async function readStrategyReport({
   // happens to be sitting there. Comparing the window the report actually covers
   // against the window the caller set does not have that failure mode.
   if (expectWindow?.from != null && window.backtest_from !== expectWindow.from) {
-    return {
-      ok: false,
-      reason: 'window_mismatch',
+    return failed('window_mismatch', {
       error: `Report covers a backtest window starting ${window.backtest_from}, but ${expectWindow.from} was requested. The report has not been regenerated for the window that was set.`,
       entity_id: raw.entity_id,
       expected_from: expectWindow.from,
       actual_from: window.backtest_from,
       window,
-    };
+    });
   }
 
-  return {
-    ok: true,
+  return answered({
     entity_id: raw.entity_id,
     title: raw.title,
     report_gen: raw.report_gen,
@@ -281,7 +269,7 @@ export async function readStrategyReport({
       orders: (report.filledOrders || []).map(normaliseOrder),
     }),
     ...(includeEquity && { equity: normaliseEquity(report, trades) }),
-  };
+  });
 }
 
 /**
@@ -302,5 +290,5 @@ export async function mutateThenRead(mutate, readOpts = {}, fenceOpts = {}) {
   const fence = await captureFence({ reportAffecting: true, ...fenceOpts });
   const mutation = await mutate();
   const result = await readStrategyReport({ ...readOpts, fence });
-  return { mutation, ...result };
+  return withDetail(result, { mutation });
 }

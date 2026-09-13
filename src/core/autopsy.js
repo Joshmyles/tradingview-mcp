@@ -44,6 +44,7 @@ import { readStrategyReport } from '../strategy-report.js';
 import { captureScreenshot } from './capture.js';
 import { getPineLines, getPineLabels, getPineBoxes } from './data.js';
 import { ensureHistoryJs } from '../internals/equity.js';
+import { answered, failed } from '../internals/verdict.js';
 
 /** Three resolutions: the trading one, and one either side of it. */
 export const DEFAULT_TIMEFRAMES = ['45S', '5', '60'];
@@ -101,11 +102,14 @@ export function compareAsFound(before, final) {
     const want = f.read(before);
     const got = f.read(final);
     const recorded = want != null && (f.what !== 'visible_range' || (Number.isFinite(want.from) && Number.isFinite(want.to)));
-    if (!recorded) return { what: f.what, want, got, compared: false, ok: true };
-    return { what: f.what, want, got, compared: true, ok: f.same(want, got, tol) };
+    if (!recorded) return answered({ what: f.what, want, got, compared: false });
+    const detail = { what: f.what, want, got, compared: true };
+    return f.same(want, got, tol) ? answered(detail) : failed('not_as_found', detail);
   });
-  const failed = fields.filter((f) => !f.ok).map((f) => f.what);
-  return { ok: failed.length === 0, fields, failed };
+  const mismatched = fields.filter((f) => !f.ok).map((f) => f.what);
+  return mismatched.length === 0
+    ? answered({ fields, failed: mismatched })
+    : failed('not_as_found', { fields, failed: mismatched });
 }
 
 /** Read the chart identity that has to be put back. */
@@ -179,7 +183,7 @@ async function centreOn(ev, timeMs, barsEitherSide) {
   const resolution = await ev(`${PATHS.chartApi}.resolution()`);
   const secs = resolutionSeconds(resolution);
   if (secs == null) {
-    return { ok: false, error: `Unrecognised resolution "${resolution}"; cannot size a bar window from it.` };
+    return failed('invalid_argument', { error: `Unrecognised resolution "${resolution}"; cannot size a bar window from it.` });
   }
   const centre = Math.floor(timeMs / 1000);
   const half = barsEitherSide * secs;
@@ -190,13 +194,11 @@ async function centreOn(ev, timeMs, barsEitherSide) {
   // cannot reach.
   const hist = await ev(ensureHistoryJs(centre - half), { awaitPromise: true });
   if (hist && hist.covered === false) {
-    return {
-      ok: false,
-      reason: 'history_not_reached',
+    return failed('history_not_reached', {
       resolution,
       seconds_per_bar: secs,
       history: { reason: hist.reason, rounds: hist.rounds, first_bar_sec: hist.final?.t0 ?? null },
-    };
+    });
   }
   const applied = await ev(`
     (function() {
@@ -217,7 +219,11 @@ async function centreOn(ev, timeMs, barsEitherSide) {
       m.timeScale().zoomToBarsRange(fromIdx, toIdx);
       return { ok: true, from_index: fromIdx, to_index: toIdx, bars: toIdx - fromIdx + 1 };
     })()`);
-  return { ok: applied?.ok !== false, resolution, seconds_per_bar: secs, ...applied };
+  // The page object carries its own ok/reason; they decide the verdict here
+  // instead of being spread over it.
+  const { ok: appliedOk, success: _appliedSuccess, reason: appliedReason, ...appliedDetail } = applied || {};
+  const centred = { resolution, seconds_per_bar: secs, ...appliedDetail };
+  return appliedOk !== false ? answered(centred) : failed(appliedReason || 'not_centred', centred);
 }
 
 export async function lossAutopsy({
@@ -234,22 +240,20 @@ export async function lossAutopsy({
 
   const idx = Number(tradeIndex);
   if (!Number.isInteger(idx) || idx < 0) {
-    return { ok: false, reason: 'invalid_argument', error: `trade_index must be a non-negative integer; got "${tradeIndex}".` };
+    return failed('invalid_argument', { error: `trade_index must be a non-negative integer; got "${tradeIndex}".` });
   }
   const frames = Array.isArray(timeframes) && timeframes.length ? timeframes : DEFAULT_TIMEFRAMES;
   const badFrame = frames.find((f) => resolutionSeconds(f) == null);
   if (badFrame) {
-    return { ok: false, reason: 'invalid_argument', error: `Unrecognised timeframe "${badFrame}". Use e.g. 45S, 5, 60, D.` };
+    return failed('invalid_argument', { error: `Unrecognised timeframe "${badFrame}". Use e.g. 45S, 5, 60, D.` });
   }
 
   const resolved = await resolveEntity({ hint: entityId, _deps });
   if (!resolved.ok) {
-    return {
-      ok: false,
-      reason: resolved.reason === 'ambiguous' ? 'ambiguous_entity' : resolved.reason,
+    return failed(resolved.reason === 'ambiguous' ? 'ambiguous_entity' : resolved.reason || 'not_found', {
       error: resolved.error,
       candidates: resolved.candidates,
-    };
+    });
   }
   const entity = resolved.resolved;
   // The drawing readers name a study by its script description ("Build 14"),
@@ -267,20 +271,17 @@ export async function lossAutopsy({
     const saved = await listLayouts(ev);
     const match = saved.filter((l) => l.name === layout);
     if (match.length !== 1) {
-      return {
-        ok: false,
-        reason: match.length ? 'ambiguous_layout' : 'layout_not_found',
+      return failed(match.length ? 'ambiguous_layout' : 'layout_not_found', {
         error: match.length
           ? `${match.length} saved layouts are named "${layout}". Names are the only handle this has; rename one.`
           : `No saved layout named "${layout}". An autopsy pinned to a layout that does not exist would describe whatever happened to be on screen, which is the thing this tool exists to prevent.`,
         available_layouts: saved.map((l) => l.name),
-      };
+      });
     }
     layoutTarget = match[0];
   }
 
   const packet = {
-    ok: true,
     trade_index: idx,
     entity_id: entity.entity_id,
     entity_title: entity.title,
@@ -290,18 +291,19 @@ export async function lossAutopsy({
   };
   const restored = { attempted: false };
   const errors = [];
+  // Set when the packet is to be issued as a failure; the verdict itself is
+  // written once, at the end, so a half-built packet is never a result.
+  let failure = null;
 
   try {
     if (layoutTarget && layoutTarget.name !== before.layout) {
       restored.attempted = true;
       const now = await switchLayout(ev, layoutTarget.id, layoutTarget.name);
       if (now !== layoutTarget.name) {
-        return {
-          ok: false,
-          reason: 'layout_switch_failed',
+        return failed('layout_switch_failed', {
           error: `Asked for layout "${layoutTarget.name}" and the chart reports "${now}". Nothing was captured.`,
           context_as_found: before,
-        };
+        });
       }
       const gate = await requireSettled({ scope: 'strategies', requireSeries: true });
       if (!gate.ok) errors.push({ stage: 'layout_settle', ...gate });
@@ -310,25 +312,23 @@ export async function lossAutopsy({
     // --- The trade. Read through the barrier, on the resolved entity.
     const report = await readStrategyReport({ entityId: entity.entity_id });
     if (!report?.ok && report?.success !== true) {
-      return { ...packet, ok: false, reason: report?.reason || 'report_unavailable', error: report?.error || 'Could not read the strategy report.' };
+      return failed(report?.reason || 'report_unavailable', { ...packet, error: report?.error || 'Could not read the strategy report.' });
     }
     const trades = report.trades || report.book || [];
     if (!trades.length) {
-      return { ...packet, ok: false, reason: 'not_found', error: 'The strategy report holds no trades on this chart.' };
+      return failed('not_found', { ...packet, error: 'The strategy report holds no trades on this chart.' });
     }
     if (idx >= trades.length) {
-      return {
+      return failed('not_found', {
         ...packet,
-        ok: false,
-        reason: 'not_found',
         error: `trade_index ${idx} is out of range: the book holds ${trades.length} rows (0..${trades.length - 1}).`,
         trade_count: trades.length,
-      };
+      });
     }
     const trade = trades[idx];
     const entryMs = trade.entry_time ?? trade.entry?.time ?? null;
     if (entryMs == null) {
-      return { ...packet, ok: false, reason: 'internal', error: 'The trade row carries no entry time, so there is nothing to centre on.', trade };
+      return failed('internal', { ...packet, error: 'The trade row carries no entry time, so there is nothing to centre on.', trade });
     }
     packet.trade = trade;
     packet.trade_count = trades.length;
@@ -429,8 +429,7 @@ export async function lossAutopsy({
     }
   } catch (err) {
     errors.push({ stage: 'autopsy', error: err.message });
-    packet.ok = false;
-    packet.reason = 'internal';
+    failure = 'internal';
     packet.error = err.message;
   } finally {
     // --- RESTORE. Every path, including the failures above.
@@ -494,5 +493,5 @@ export async function lossAutopsy({
     'One packet per trade, from a pinned context. layout_pinned says whether the layout was pinned or the packet ' +
     'simply describes whatever was on screen. restored.matches_as_found is the one field to check before trusting ' +
     'that the chart was put back.';
-  return packet;
+  return failure ? failed(failure, packet) : answered(packet);
 }

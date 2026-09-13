@@ -28,6 +28,7 @@
 import { evaluate, getTargetIdentity } from './connection.js';
 import { studyStateJs, INSTALL_GEN_COUNTER_JS } from './internals/study-state.js';
 import { PATHS } from './internals/paths.js';
+import { answered, failed } from './internals/verdict.js';
 import {
   isStudyReady,
   isStudyLoading,
@@ -663,11 +664,8 @@ export async function requireSettled(opts = {}) {
         }
       : rest,
   );
-  if (settle.outcome === SETTLE.SETTLED) return { ok: true, settle };
-  return {
-    ok: false,
-    success: false,
-    reason: settle.outcome,
+  if (settle.outcome === SETTLE.SETTLED) return answered({ settle });
+  return failed(settle.outcome, {
     error: settle.error,
     settle: {
       outcome: settle.outcome,
@@ -677,5 +675,5 @@ export async function requireSettled(opts = {}) {
       ...(settle.stuck_studies && { stuck_studies: settle.stuck_studies }),
       ...(settle.series_not_ready && { series_not_ready: settle.series_not_ready }),
     },
-  };
+  });
 }

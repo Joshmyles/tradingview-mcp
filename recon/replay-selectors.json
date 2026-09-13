@@ -334,7 +334,7 @@
           "limitPrice",
           "stopPrice"
         ],
-        "order_id": "GENERATED INSIDE placeOrder as order_${guid()}; returns { orderId, label }. Third independent confirmation that there is no client order id.",
+        "order_id": "GENERATED INSIDE placeOrder as order_${guid()}. Third independent confirmation that there is no client order id. CORRECTED Phase 0.6/0.7: placeOrder is a PROMISE resolving { orderId, result } (no label), so the id does not exist until the submit completes and cannot key, dedup or precede it; see _phase0_6_measured.",
         "bracket_routing": "MARKET orders get POSITION brackets; every other type gets ORDER brackets keyed to the parent order id. replay_brackets_set must model both.",
         "wire_format": "{ id, action: \"place\", params: { b: <isBuy>, q: <qty>, tp: <typeString>, c: <comment> } }",
         "capability_path": "currentAccountApi().placeOrderCapability.placeOrder(order, ...)"

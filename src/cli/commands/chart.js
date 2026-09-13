@@ -1,6 +1,7 @@
 import { register } from '../router.js';
 import * as core from '../../core/chart.js';
 import * as healthCore from '../../core/health.js';
+import { answered } from '../../internals/verdict.js';
 
 register('state', {
   description: 'Get current chart state (symbol, TF, studies)',
@@ -13,7 +14,7 @@ register('symbol', {
     const sym = positionals[0];
     if (sym) return core.setSymbol({ symbol: sym });
     const state = await core.getState();
-    return { success: true, symbol: state.symbol, resolution: state.resolution };
+    return answered({ symbol: state.symbol, resolution: state.resolution });
   },
 });
 
@@ -23,7 +24,7 @@ register('timeframe', {
     const tf = positionals[0];
     if (tf) return core.setTimeframe({ timeframe: tf });
     const state = await core.getState();
-    return { success: true, resolution: state.resolution, symbol: state.symbol };
+    return answered({ resolution: state.resolution, symbol: state.symbol });
   },
 });
 
@@ -34,7 +35,7 @@ register('type', {
     if (ct) return core.setType({ chart_type: ct });
     const state = await core.getState();
     const typeNames = ['Bars', 'Candles', 'Line', 'Area', 'Renko', 'Kagi', 'PointAndFigure', 'LineBreak', 'HeikinAshi', 'HollowCandles'];
-    return { success: true, chart_type: typeNames[state.chartType] || state.chartType, type_num: state.chartType };
+    return answered({ chart_type: typeNames[state.chartType] || state.chartType, type_num: state.chartType });
   },
 });
 

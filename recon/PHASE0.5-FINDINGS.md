@@ -257,9 +257,12 @@ async placeOrder(t, r) {
 
 - `takeProfit` and `stopLoss` are **confirmed** field names.
 - `type` is **confirmed**, carrying the `OrderType` enum.
-- **The order id is generated inside** as `order_<guid>` and returned as `{orderId, label}`. This is
-  the third independent confirmation that there is no client order id (§7 amendment stands), and it
-  also gives the harness its reconciliation handle.
+- **The order id is generated inside** as `order_<guid>`. This is the third independent confirmation
+  that there is no client order id (§7 amendment stands), and it gives the harness an after-the-fact
+  reconciliation handle.
+  *Corrected in Phase 0.6/0.7:* the call is a promise resolving `{orderId, result}` — no `label` — so
+  the id exists only once the submit has completed. It cannot key or precede the submit; an order
+  whose response is lost has no id to look up, which is why single-flight plus reconcile stands.
 - **Market orders get POSITION brackets; everything else gets ORDER brackets keyed to the parent.**
   That is a real behavioural difference `replay_brackets_set` must model, not paper over.
 - Wire format, from `closePosition`'s command: `{id, action:"place", params:{b:<isBuy>, q:<qty>,

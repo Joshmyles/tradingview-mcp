@@ -1,0 +1,21 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1044
+    ],
+    "outer": [
+      199,
+      34
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": "{\"activeChartId\":0,\"chartIdsWithReplay\":[0],\"replaySymbol\":\"ICMARKETS:XAUUSD\",\"selectedBarDate\":1788739274,\"isReplayFinished\":false,\"marketPrice\":null,\"symbolInfoT\":null,\"userInputSettings\":{\"currency\":\"NONE\",\"initialCapital\":1000000},\"userInputSettingsKeys\":[\"currency\",\"initialCapital\"],\"getUserInputSettingsSrc\":\"async e=>{const t=await window.TradingViewApi.chart(e).replayStudyStrategyProperties();return{currency:t.childs().currency.value(),initialCapital:t.childs().initial_capital.value()}}\",\"getSelectedBarDateSrc\":\"()=>u.getReplaySelectedDate().value()\",\"isReplayFinishedSrc\":\"e=>window.TradingViewApi.chart(e).replayStatus().value()===Tn.ReplayStatus.Finish\",\"getActiveChartTradingDataSrc\":\"()=>{try{return u.replayStrategyFacade().reportData()}catch{return c.logWarn(\\\"Tried to get trading data for a chart that doesn't have a replay strategy\\\"),null}}\",\"sendTradingDataSrc\":\"e=>u.replayStrategyFacade().notifyStudy(e)\",\"equity\":1000000,\"pl\":null}"
+}

@@ -1,0 +1,553 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1044
+    ],
+    "outer": [
+      199,
+      34
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": {
+    "n": 56,
+    "sources": [
+      {
+        "id": "P5U7Ib",
+        "title": "Crosshair",
+        "ctor": "cd",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": "?"
+      },
+      {
+        "id": "_seriesId",
+        "title": "XAUUSD · IC Markets, 45s",
+        "ctor": "xs",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "PublishedChartsTimeline",
+        "title": "Ideas on chart",
+        "ctor": "O",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "kmlMEk",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "HmYhvL",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "pFmrzz",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "Vl2NlL",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "BVwGJq",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "HAEY4e",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "hSTAG8",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "JGJ8ei",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "fXXu3s",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "IkpTip",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "Pd3hWo",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "03z9d8",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "rNGNeX",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "HTGJQj",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "iWdrnp",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "l3IEVU",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "DZZQgZ",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "6m2adM",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "MflMh4",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "krYKdD",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "AGqLDL",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "XwC5rD",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "TVJZ2f",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "gmLC21",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "xmAEAu",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "e5KWh1",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "JFIMiB",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "8L7kwi",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "gJjUIW",
+        "title": "XAUUSD",
+        "ctor": "Ae",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "8uE6BI",
+        "title": "Adaptive Trend Finder",
+        "ctor": "ji",
+        "isStudy": true,
+        "isStrategy": false,
+        "visible": false,
+        "desc": "Adaptive Trend Finder (log)",
+        "shortDesc": "Adaptive Trend Finder",
+        "pineId": "tv-scripting",
+        "isPine": true,
+        "inputCount": 24
+      },
+      {
+        "id": "3qODoG",
+        "title": "Consolidation Zones - Live",
+        "ctor": "ji",
+        "isStudy": true,
+        "isStrategy": false,
+        "visible": false,
+        "desc": "Consolidation Zones - Live",
+        "shortDesc": "Consolidation Zones - Live",
+        "pineId": "tv-scripting",
+        "isPine": true,
+        "inputCount": 7
+      },
+      {
+        "id": "fLgsEX",
+        "title": "LuxAlgo - Liquidity Sweeps",
+        "ctor": "ji",
+        "isStudy": true,
+        "isStrategy": false,
+        "visible": false,
+        "desc": "Liquidity Sweeps [LuxAlgo]",
+        "shortDesc": "LuxAlgo - Liquidity Sweeps",
+        "pineId": "tv-scripting",
+        "isPine": true,
+        "inputCount": 16
+      },
+      {
+        "id": "m19xew",
+        "title": "LuxAlgo - Fair Value Gap",
+        "ctor": "ji",
+        "isStudy": true,
+        "isStrategy": false,
+        "visible": false,
+        "desc": "Fair Value Gap [LuxAlgo]",
+        "shortDesc": "LuxAlgo - Fair Value Gap",
+        "pineId": "tv-scripting",
+        "isPine": true,
+        "inputCount": 18
+      },
+      {
+        "id": "Tbo1Da",
+        "title": "LuxAlgo - Support Resistance Classification (VR)",
+        "ctor": "ji",
+        "isStudy": true,
+        "isStrategy": false,
+        "visible": false,
+        "desc": "Support Resistance Classification (VR) [LuxAlgo]",
+        "shortDesc": "LuxAlgo - Support Resistance Classification (VR)",
+        "pineId": "tv-scripting",
+        "isPine": true,
+        "inputCount": 61
+      },
+      {
+        "id": "Aou1T7",
+        "title": "Delta Volume Bubbles",
+        "ctor": "ji",
+        "isStudy": true,
+        "isStrategy": false,
+        "visible": false,
+        "desc": "Delta Volume Bubbles",
+        "shortDesc": "Delta Volume Bubbles",
+        "pineId": "tv-scripting",
+        "isPine": true,
+        "inputCount": 32
+      },
+      {
+        "id": "yOAmH5",
+        "title": "LuxAlgo - Fair Value Gap",
+        "ctor": "ji",
+        "isStudy": true,
+        "isStrategy": false,
+        "visible": false,
+        "desc": "Fair Value Gap [LuxAlgo]",
+        "shortDesc": "LuxAlgo - Fair Value Gap",
+        "pineId": "tv-scripting",
+        "isPine": true,
+        "inputCount": 27
+      },
+      {
+        "id": "SVIL5Q",
+        "title": "Delta Volume Bubbles",
+        "ctor": "ji",
+        "isStudy": true,
+        "isStrategy": false,
+        "visible": false,
+        "desc": "Delta Volume Bubbles",
+        "shortDesc": "Delta Volume Bubbles",
+        "pineId": "tv-scripting",
+        "isPine": true,
+        "inputCount": 18
+      },
+      {
+        "id": "OMDJUm",
+        "title": "LuxAlgo - Institutional Order Flow Strength Classifier",
+        "ctor": "ji",
+        "isStudy": true,
+        "isStrategy": false,
+        "visible": false,
+        "desc": "Institutional Order Flow Strength Classifier [LuxAlgo]",
+        "shortDesc": "LuxAlgo - Institutional Order Flow Strength Classifier",
+        "pineId": "tv-scripting",
+        "isPine": true,
+        "inputCount": 15
+      },
+      {
+        "id": "3qBoRm",
+        "title": "Multi-Session ORB",
+        "ctor": "ji",
+        "isStudy": true,
+        "isStrategy": false,
+        "visible": false,
+        "desc": "Multi-Session ORB",
+        "shortDesc": "Multi-Session ORB",
+        "pineId": "tv-scripting",
+        "isPine": true,
+        "inputCount": 15
+      },
+      {
+        "id": "ESD$TV_DIVIDENDS",
+        "title": "Dividends",
+        "ctor": "oe",
+        "isStudy": true,
+        "isStrategy": false,
+        "visible": true,
+        "desc": "Dividends",
+        "shortDesc": "Dividends",
+        "pineId": "tv-basicstudies",
+        "isPine": false,
+        "inputCount": 0
+      },
+      {
+        "id": "ESD$TV_SPLITS",
+        "title": "Splits",
+        "ctor": "ae",
+        "isStudy": true,
+        "isStrategy": false,
+        "visible": true,
+        "desc": "Splits",
+        "shortDesc": "Splits",
+        "pineId": "tv-basicstudies",
+        "isPine": false,
+        "inputCount": 0
+      },
+      {
+        "id": "ESD$TV_EARNINGS",
+        "title": "Earnings",
+        "ctor": "le",
+        "isStudy": true,
+        "isStrategy": false,
+        "visible": true,
+        "desc": "Earnings",
+        "shortDesc": "Earnings",
+        "pineId": "tv-basicstudies",
+        "isPine": false,
+        "inputCount": 0
+      },
+      {
+        "id": "ESD$TV_ROLLDATES",
+        "title": "RollDatesCalculator",
+        "ctor": "B",
+        "isStudy": true,
+        "isStrategy": false,
+        "visible": true,
+        "desc": "Dates calculator for continuous",
+        "shortDesc": "RollDatesCalculator",
+        "pineId": "tv-corestudies",
+        "isPine": false,
+        "inputCount": 1
+      },
+      {
+        "id": "futures_contract_expiration",
+        "title": "FuturesContractExpiration",
+        "ctor": "H",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "latestUpdates",
+        "title": "LatestUpdatesSource",
+        "ctor": "X",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "ChartEventsSource",
+        "title": "Chart Events",
+        "ctor": "te",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "2lqWVk",
+        "title": "short position",
+        "ctor": "h",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "T8RhFl",
+        "title": "trendline",
+        "ctor": "R",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "dGqwx8",
+        "title": "long position",
+        "ctor": "h",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "IrSM1W",
+        "title": "callout",
+        "ctor": "Z",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "aGPTR4",
+        "title": "callout",
+        "ctor": "Z",
+        "isStudy": false,
+        "isStrategy": false,
+        "visible": true
+      },
+      {
+        "id": "xVbiv5",
+        "title": "B15",
+        "ctor": "N",
+        "isStudy": true,
+        "isStrategy": true,
+        "visible": true,
+        "desc": "Build 15",
+        "shortDesc": "B15",
+        "pineId": "tv-scripting",
+        "isPine": true,
+        "inputCount": 363
+      },
+      {
+        "id": "hj5b3t",
+        "title": "ADX and DI for v4",
+        "ctor": "ji",
+        "isStudy": true,
+        "isStrategy": false,
+        "visible": false,
+        "desc": "ADX and DI for v4",
+        "shortDesc": "ADX and DI for v4",
+        "pineId": "tv-scripting",
+        "isPine": true,
+        "inputCount": 5
+      }
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1044
+    ],
+    "outer": [
+      199,
+      34
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": "{\"capabilityKeys\":[\"cancelOrderCapability\",\"closePositionCapability\",\"editPositionBracketsCapability\",\"equityCapability\",\"executionsCapability\",\"isTradableCapability\",\"modifyOrderCapability\",\"ordersCapability\",\"placeOrderCapability\",\"positionsCapability\",\"profitLossCapability\",\"realtimeCapability\",\"reversePositionCapability\",\"summaryRowCapability\",\"symbolInfoCapability\"],\"apiMembers\":{\"placeOrderCapability\":\"object\",\"modifyOrderCapability\":\"object\",\"cancelOrderCapability\":\"object\",\"realtimeCapability\":\"object\",\"ordersCapability\":\"object\",\"positionsCapability\":\"object\",\"executionsCapability\":\"object\",\"isTradableCapability\":\"object\",\"symbolInfoCapability\":\"object\",\"summaryRowCapability\":\"object\",\"equityCapability\":\"object\",\"profitLossCapability\":\"object\",\"closePositionCapability\":\"object\",\"reversePositionCapability\":\"object\",\"editPositionBracketsCapability\":\"object\",\"constructor\":\"function\",\"__defineGetter__\":\"function\",\"__defineSetter__\":\"function\",\"hasOwnProperty\":\"function\",\"__lookupGetter__\":\"function\",\"__lookupSetter__\":\"function\",\"isPrototypeOf\":\"function\",\"propertyIsEnumerable\":\"function\",\"toString\":\"function\",\"valueOf\":\"function\",\"toLocaleString\":\"function\"},\"placeOrderCapSrc\":\"async placeOrder(t,r){const e=`order_${(0,n.guid)()}`;await this._transport.sendTradingData({orderCmd:w(t,e)});const a=t.type===s.OrderType.Market;return void 0!==t.takeProfit&&await this._transport.sendTradingData({bracketCmd:a?this._buildPositionBracketCommand(\\\"tp\\\",t.takeProfit):this._buildOrderBracketCommand(e,\\\"tp\\\",t.takeProfit)}),void 0!==t.stopLoss&&await this._transport.sendTradingData({ bracketCmd:a?this._buildPositionBracketCommand(\\\"sl\\\",t.stopLoss):this._buildOrderBracketCommand(e,\\\"sl\\\",t.stopLoss)}),{orderId:e,result:T.OrderResult.OrderPlaced}}\",\"placeOrderCapKeys\":[\"_transport\"],\"modifyCapSrc\":\"async modifyOrder(t,r){if((0,_.isBracketOrder)(t)&&t.parentType===s.ParentType.Order)return await this._modifyOrderBracket(t),{result:T.OrderResult.OrderModified};await this._transport.sendTradingData({orderCmd:w(t,t.id)});const e=this._getExistingOrderBrackets(t.id);return await Promise.all([this._syncBracket(t.id,\\\"tp\\\",t.takeProfit,e.takeProfit),this._syncBracket(t.id,\\\"sl\\\",t.stopLoss,e.stopLoss)]),{result:T.OrderResult.OrderModified}}\",\"closeCapSrc\":\"async closePosition(t,r){const e=this._transport.getActiveChartTradingData();if(!e?.position)return;const s=Math.abs(e.position.qty),a=void 0!==r?Math.min(r,s):s;if(0===a)return;const i=e.position.qty<0,o=a<s;await this._transport.sendTradingData({orderCmd:{id:`order_${(0,n.guid)()}`,action:\\\"place\\\",params:{b:i,q:a,tp:\\\"MARKET\\\",c:o?\\\"Close position (partial)\\\":\\\"Close position\\\"}}})}\",\"executionsCapSrc\":\"undefined\",\"summaryRowFieldsSize\":0,\"text\":{\"Initial capital\":null,\"initial capital\":null,\"Commission\":null,\"commission\":null,\"Balance\":null,\"Equity\":null,\"Currency\":null,\"Leverage\":null,\"Reset account\":null,\"Account settings\":null,\"Replay Trading\":\"or v4 | 1D | 5D | 1M | 3M | 6M | YTD | 1Y | 5Y | All | 19:49:07 UTC+3 | RTH | 6 | B15 | Replay Trading | No data here, yet | Choose a bar or date in Bar Replay and place at least one\"},\"inputs\":[]}"
+}

@@ -1,0 +1,21 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1044
+    ],
+    "outer": [
+      199,
+      34
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": "{\"replay\":{\"available\":true,\"started\":true,\"autoplay\":false,\"mode\":\"AllCharts\",\"currentDate_sec\":1788739274,\"currency\":null,\"position\":null,\"realizedPL\":null},\"uiErr\":\"Converting circular structure to JSON\\n    --> starting at object with constructor 's'\\n    |     property '_listeners' -> object with constructor 'Array'\\n    |     index 0 -> object with constructor 'Object'\\n    --- property 'owner' closes the circle\",\"webpack\":true,\"trading\":{\"isInReplay\":true,\"broker\":null,\"hasActiveBroker\":true,\"currentBroker\":\"REPLAYBROKER\",\"connectionStatus\":1,\"summaryLen\":0,\"accountId\":\"undefined\",\"accountSettings\":\"THROWS: Account settings are not supported\",\"metainfoKeys\":[\"id\",\"title\",\"description\",\"isBeta\",\"logoMiniUrl\",\"logoMiniWebpUrl\",\"configFlags\",\"concurrentSessionsAllowance\"],\"methods\":[],\"brokersListLen\":137},\"dom\":{\"replayTradingBtn\":{\"text\":\"Replay Trading\",\"aria\":\"Open Replay Trading\",\"pressed\":null,\"cls\":\"container-hvcu2Y0t button-_yKxzjvM apply-common-tooltip isInteractive-_yKxzjvM accessible-_yKxzjvM\"},\"toolbarPresent\":true,\"bottomTabs\":[\"light-tabs-buttons:\",\"light-tab-0:\",\"light-tab-1:\",\"equity-chart-scale-settings:\",\"round-tabs-buttons:BreakdownPeriodicalBenchm\",\"round-tabs-buttons:DistributionStreaksTime p\",\"0_0:\",\"0_1:\",\"0_2:\"]}}"
+}

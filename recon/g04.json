@@ -1,0 +1,21 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1044
+    ],
+    "outer": [
+      199,
+      34
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": "{\"accountsMetainfo\":{},\"accountMetainfo\":{},\"currentAccount\":\"primary\",\"currentAccountType\":\"demo\",\"leverageInfo\":\"function\",\"hasResetAccount\":\"function\",\"hasChangeAccountSettings\":\"function\",\"changeAccountSettingsArity\":1,\"resetAccountSrc\":\"e=>{if(this.config.supportResetAccount&&this._brokerConnection.resetAccount)return this._brokerConnection.resetAccount(e);throw new Error(\\\"Method resetAccount is not implemented\\\")}\",\"changeAccountSettingsSrc\":\"e=>{if(this.config.supportChangeAccountSettings&&this._brokerConnection.changeAccountSettings)return this._brokerConnection.changeAccountSettings(e);throw new Error(\\\"Method changeAccountSettings is not implemented\\\")}\",\"accountSettingsInfoSrc\":\"e=>{if(!this.config.supportCreateAccount&&!this.config.supportResetAccount&&!this.config.supportChangeAccountSettings)throw new Error(\\\"Account settings are not supported\\\");if(!this._brokerConnection.accountSettingsInfo)throw new Error(\\\"Method accountSettingsInfo is not implemented\\\");return this._brokerConnection.accountSettingsInfo(e)}\",\"symbolInfo\":{\"qty\":{\"min\":1,\"max\":1000000000000,\"step\":1,\"uiStep\":1,\"default\":1},\"minTick\":0.01,\"pipValue\":0.01,\"pipSize\":0.01,\"description\":\"Gold vs US Dollar\",\"type\":\"commodity\",\"hasQuotes\":true},\"validationRules\":{},\"initialPreOrder\":{\"symbol\":\"ICMARKETS:XAUUSD\"},\"panel\":{\"found\":true,\"text\":\"Select bar\\n0.5x\\n45s\",\"controls\":[],\"currencyLabel\":{\"txt\":\"USD\",\"aria\":null,\"html\":\"<div class=\\\"price-axis-currency-label-wrapper-lOV7ozYu\\\" data-name=\\\"currency-unit-label-wrapper\\\"><div class=\\\"price-axis-currency-label-lOV7ozYu\\\"><div class=\\\"row-lOV7ozYu apply-common-tooltip\\\" data-name=\\\"currency-label-selector\\\" style=\\\"font-size: 12px;\\\"><div class=\\\"price-axis-currency-label-text-lOV7ozYu\\\">USD</div><div class=\\\"price-axis-currency-label-arrow-down-lOV7ozYu\\\"><svg xmlns=\\\"http://www.w3.o\"}}}"
+}

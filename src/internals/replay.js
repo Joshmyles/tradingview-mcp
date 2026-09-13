@@ -56,6 +56,7 @@
  * stated rather than hidden: it turns a ~300ms step into a ~20s one. Without
  * the flag the field is REFUSED, not silently served stale.
  */
+import { answered, failed } from './verdict.js';
 
 /** Fields whose value moves with the step itself. */
 export const SERIES_FIELDS = [
@@ -87,40 +88,39 @@ export const OPS = ['gt', 'gte', 'lt', 'lte', 'eq', 'ne', 'changed'];
  * Accepts one clause, `{ all: [...] }`, or `{ any: [...] }`.
  */
 export function validatePredicate(pred, { settleEachStep = false } = {}) {
+  const invalid = (error) => failed('invalid_argument', { error });
   if (!pred || typeof pred !== 'object') {
-    return { ok: false, error: 'predicate is required and must be an object.' };
+    return invalid('predicate is required and must be an object.');
   }
   const combinator = pred.all ? 'all' : pred.any ? 'any' : null;
   const clauses = combinator ? pred[combinator] : [pred];
   if (!Array.isArray(clauses) || clauses.length === 0) {
-    return { ok: false, error: `predicate.${combinator || 'all'} must be a non-empty array of clauses.` };
+    return invalid(`predicate.${combinator || 'all'} must be a non-empty array of clauses.`);
   }
   for (const c of clauses) {
-    if (!c || typeof c !== 'object') return { ok: false, error: 'Every clause must be an object { field, op, value }.' };
+    if (!c || typeof c !== 'object') return invalid('Every clause must be an object { field, op, value }.');
     if (!FIELDS.includes(c.field)) {
-      return { ok: false, error: `Unknown predicate field "${c.field}". Available: ${FIELDS.join(', ')}.` };
+      return invalid(`Unknown predicate field "${c.field}". Available: ${FIELDS.join(', ')}.`);
     }
     if (!OPS.includes(c.op)) {
-      return { ok: false, error: `Unknown operator "${c.op}" on field "${c.field}". Available: ${OPS.join(', ')}.` };
+      return invalid(`Unknown operator "${c.op}" on field "${c.field}". Available: ${OPS.join(', ')}.`);
     }
     if (c.op !== 'changed' && (c.value === undefined || c.value === null)) {
-      return { ok: false, error: `Clause on "${c.field}" with op "${c.op}" needs a value. Only "changed" takes none.` };
+      return invalid(`Clause on "${c.field}" with op "${c.op}" needs a value. Only "changed" takes none.`);
     }
     if (c.op !== 'changed' && typeof c.value !== 'number') {
-      return { ok: false, error: `value on "${c.field}" must be a number; got ${typeof c.value}. Times are epoch MILLISECONDS.` };
+      return invalid(`value on "${c.field}" must be a number; got ${typeof c.value}. Times are epoch MILLISECONDS.`);
     }
     if (REPORT_FIELDS.includes(c.field) && !settleEachStep) {
-      return {
-        ok: false,
-        error:
+      return invalid(
           `"${c.field}" comes from the strategy report, which lags a replay step by a full recompute ` +
           '(13-21s per bar on a 45S chart). Read without waiting it describes the PREVIOUS bar. ' +
           'Pass settle_each_step to wait per bar and accept the cost, or predicate on a series field instead: ' +
           `${SERIES_FIELDS.join(', ')}.`,
-      };
+      );
     }
   }
-  return { ok: true, combinator: combinator || 'all', clauses };
+  return answered({ combinator: combinator || 'all', clauses });
 }
 
 /**

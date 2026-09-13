@@ -2,7 +2,7 @@
  * Core drawing logic.
  */
 import { evaluate as _evaluate, getChartApi as _getChartApi, safeString, requireFinite } from '../connection.js';
-import { observed, refused } from '../internals/verdict.js';
+import { answered, observed, refused } from '../internals/verdict.js';
 
 function _resolve(deps) {
   return { evaluate: deps?.evaluate || _evaluate, getChartApi: deps?.getChartApi || _getChartApi };
@@ -63,7 +63,7 @@ export async function listDrawings() {
       return all.map(function(s) { return { id: s.id, name: s.name }; });
     })()
   `);
-  return { success: true, count: shapes?.length || 0, shapes: shapes || [] };
+  return answered({ count: shapes?.length || 0, shapes: shapes || [] });
 }
 
 export async function getProperties({ entity_id }) {
@@ -92,7 +92,9 @@ export async function getProperties({ entity_id }) {
     })()
   `);
   if (result?.error) throw new Error(result.error);
-  return { success: true, ...result };
+  // The page object carries only the property fields named above, none of
+  // which is a verdict key.
+  return answered({ ...result });
 }
 
 export async function removeOne({ entity_id }) {

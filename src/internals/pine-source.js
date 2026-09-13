@@ -32,6 +32,7 @@
  * unpinned rather than guessing. Every input that decides a trade carries a
  * literal default; the unevaluable ones are colours.
  */
+import { answered, failed } from './verdict.js';
 
 /** Input constructors. Longest alternatives first so `int` cannot win inside `integer`-like names. */
 const INPUT_CALL =
@@ -220,8 +221,7 @@ export function verifyAgainstMeta(decls, chartInputs) {
   }
   const declared = new Set(decls.map((d) => d.id));
   const undeclared = chartInputs.filter((i) => !declared.has(i.id)).map((i) => ({ id: i.id, name: i.name ?? null }));
-  return {
-    ok: mismatches.length === 0 && missing.length === 0,
+  const detail = {
     source_count: decls.length,
     chart_count: chartInputs.length,
     comparable,
@@ -234,6 +234,10 @@ export function verifyAgainstMeta(decls, chartInputs) {
     mismatches: mismatches.slice(0, 12),
     mismatch_count: mismatches.length,
   };
+  if (mismatches.length === 0 && missing.length === 0) return answered(detail);
+  // A shifted title is the positional-mapping failure; a missing id is a
+  // different script. Named apart so a caller can branch without re-deriving.
+  return failed(mismatches.length ? 'title_mismatch' : 'missing_from_chart', detail);
 }
 
 /**

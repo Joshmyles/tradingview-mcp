@@ -2,7 +2,7 @@
  * Core UI automation logic.
  */
 import { evaluate, evaluateAsync, getClient } from '../connection.js';
-import { observed, refused, unobservable } from '../internals/verdict.js';
+import { answered, failed, observed, refused, unobservable } from '../internals/verdict.js';
 
 export async function click({ by, value }) {
   const escaped = JSON.stringify(value);
@@ -171,7 +171,12 @@ export async function layoutList() {
       } catch(e) { resolve({layouts: [], source: 'internal_api', error: e.message}); }
     })
   `);
-  return { success: true, layout_count: layouts?.layouts?.length || 0, source: layouts?.source, layouts: layouts?.layouts || [], error: layouts?.error };
+  const detail = { layout_count: layouts?.layouts?.length || 0, source: layouts?.source, layouts: layouts?.layouts || [] };
+  // An empty list with an error is not "no layouts"; it is no answer.
+  if (layouts?.error) {
+    return failed(/timed out/i.test(layouts.error) ? 'timed_out' : 'unavailable', { ...detail, error: layouts.error });
+  }
+  return answered(detail);
 }
 
 export async function layoutSwitch({ name }) {
@@ -390,7 +395,7 @@ export async function findElement({ query, strategy }) {
       return results;
     })()
   `);
-  return { success: true, query, strategy: strat, count: results?.length || 0, elements: results || [] };
+  return answered({ query, strategy: strat, count: results?.length || 0, elements: results || [] });
 }
 
 export async function uiEvaluate({ expression }) {
@@ -399,5 +404,5 @@ export async function uiEvaluate({ expression }) {
   // reported success with an empty result and no error. Awaiting it means a
   // rejection surfaces as a thrown error rather than as a silent blank.
   const result = await evaluateAsync(expression);
-  return { success: true, result };
+  return answered({ result });
 }

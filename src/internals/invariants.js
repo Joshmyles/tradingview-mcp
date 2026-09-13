@@ -54,14 +54,24 @@
  *         silently dropped — but they are not fatal, because they create
  *         neither of the ambiguities the invariants exist to prevent, and the
  *         strict reading would refuse on the chart as it stands today.
- *   Check (c) is the loosening, and it is the one judgement call in this file.
- *   Set TVMCP_REPLAY_STRICT_STUDIES=1 to promote it to fatal and get the
- *   brief's literal reading.
+ *   Check (c) was the one judgement call in this file. DECIDED Phase 0.7: it is
+ *   FATAL on the replay profile and not on workflow or diagnostic, because the
+ *   single-study invariant is load-bearing only for the harness. See
+ *   resolveStrictStudies().
+ *
+ *   Strict counting rests on a CROSS-CHECKED enumeration, never one source.
+ *   Phase 0.5 counted 29 drawings off dataSources() when the real number was 5
+ *   (the rest were AlertLabel sources rendered from the alert service), so a
+ *   count taken from a single surface is not trusted to refuse on. Three
+ *   independent enumerations must agree — dataSources(), the chart API's
+ *   getAllStudies(), and the saved-layout serialization — and a disagreement
+ *   is itself a refusal that names which surface saw what.
  *
  * NOTHING HERE MUTATES. Every expression below is a read.
  */
 import CDP from 'chrome-remote-interface';
 import { CDP_HOST, CDP_PORT } from '../connection.js';
+import { answered } from './verdict.js';
 
 /** A refusal carrying the inventory, so the message can name what it found. */
 export class EnvironmentInvariantError extends Error {
@@ -101,6 +111,21 @@ export const ENVIRONMENT_INVENTORY_JS = `
   try { srcs = cw._chartWidget.model().model().dataSources(); }
   catch (e) { o.error = String(e && e.message || e); return o; }
   o.source_count = srcs.length;
+  // Two further enumerations, read independently so they can be cross-checked
+  // (see crossCheckStudyEnumerations). Unavailable is recorded, never defaulted.
+  try { o.api_studies = cw.getAllStudies().map(function (x) { return x.id; }); }
+  catch (e) { o.api_studies_error = String(e && e.message || e); }
+  try {
+    var st = cw._chartWidget.model().model().state(true);
+    o.serialized_studies = [];
+    (st.panes || []).forEach(function (p) {
+      (p.sources || []).forEach(function (src) {
+        if (!/^Study/.test(String(src.type))) return;
+        var smi = src.metaInfo || {};
+        o.serialized_studies.push({ id: src.id, type: src.type, is_pine: (smi.pineId || smi.productId) === 'tv-scripting' });
+      });
+    });
+  } catch (e) { o.serialized_studies_error = String(e && e.message || e); }
   o.studies = [];
   o.non_studies = 0;
   for (var i = 0; i < srcs.length; i++) {
@@ -124,6 +149,82 @@ export const ENVIRONMENT_INVENTORY_JS = `
   }
   return o;
 })()`;
+
+export const PROFILES = Object.freeze(['workflow', 'diagnostic', 'replay']);
+
+/**
+ * Whether extra hidden Pine studies are fatal, decided by profile.
+ *
+ *   replay               ON, always. TVMCP_REPLAY_STRICT_STUDIES=0 is refused
+ *                        rather than honoured: an env var that silently
+ *                        switches off the harness's own precondition is the
+ *                        kind of control this project has stopped trusting.
+ *   workflow, diagnostic OFF, unless TVMCP_REPLAY_STRICT_STUDIES=1 opts in.
+ *
+ * `profile` is required. A missing profile defaulting to lenient would hand
+ * the replay harness the workflow behaviour by omission.
+ */
+export function resolveStrictStudies({ profile, env = process.env.TVMCP_REPLAY_STRICT_STUDIES } = {}) {
+  if (!PROFILES.includes(profile)) {
+    throw new Error(
+      `assertReplayEnvironment requires profile to be one of ${PROFILES.join(', ')}; got ${JSON.stringify(profile)}. `
+      + 'It is required, not defaulted, because the strict-studies decision depends on it.',
+    );
+  }
+  if (profile === 'replay') {
+    if (env === '0') {
+      throw new Error(
+        'TVMCP_REPLAY_STRICT_STUDIES=0 cannot disable strict studies on the replay profile: the single-study '
+        + 'invariant is the harness precondition. Remove the extra studies from the chart, or unset the variable.',
+      );
+    }
+    return true;
+  }
+  return env === '1';
+}
+
+const EVENT_SOURCE = /^ESD\$/; // built-in dividends/splits/earnings/roll dates: dataSources() only
+
+const diffIds = (a, b) => ({ only_in_first: a.filter((x) => !b.includes(x)), only_in_second: b.filter((x) => !a.includes(x)) });
+
+/**
+ * Cross-check the study enumerations the inventory read. Pure.
+ *
+ * Compares, by entity id:
+ *   studies       dataSources() (event sources excluded) vs getAllStudies() vs serialization
+ *   pine studies  dataSources() metaInfo vs serialization metaInfo
+ *
+ * @returns {{ agreed: boolean, unavailable: string[], disagreements: object[], pine_ids: string[] }}
+ */
+export function crossCheckStudyEnumerations(page) {
+  const unavailable = [];
+  const ds = (page?.studies || []).filter((s) => !EVENT_SOURCE.test(String(s.entity_id)));
+  const sets = { data_sources: ds.map((s) => s.entity_id).sort() };
+  if (Array.isArray(page?.api_studies)) sets.chart_api = [...page.api_studies].sort();
+  else unavailable.push(`chart_api (getAllStudies): ${page?.api_studies_error || 'not read'}`);
+  if (Array.isArray(page?.serialized_studies)) sets.serialized_layout = page.serialized_studies.map((s) => s.id).sort();
+  else unavailable.push(`serialized_layout (state(true)): ${page?.serialized_studies_error || 'not read'}`);
+
+  const disagreements = [];
+  const names = Object.keys(sets);
+  for (let i = 0; i < names.length; i++) {
+    for (let j = i + 1; j < names.length; j++) {
+      const d = diffIds(sets[names[i]], sets[names[j]]);
+      if (d.only_in_first.length || d.only_in_second.length) {
+        disagreements.push({ over: 'studies', first: names[i], second: names[j], ...d });
+      }
+    }
+  }
+  const pineDs = ds.filter((s) => s.is_pine).map((s) => s.entity_id).sort();
+  if (Array.isArray(page?.serialized_studies)) {
+    const pineSer = page.serialized_studies.filter((s) => s.is_pine).map((s) => s.id).sort();
+    const d = diffIds(pineDs, pineSer);
+    if (d.only_in_first.length || d.only_in_second.length) {
+      disagreements.push({ over: 'pine_studies', first: 'data_sources', second: 'serialized_layout', ...d });
+    }
+  }
+  return { agreed: unavailable.length === 0 && disagreements.length === 0, unavailable, disagreements, pine_ids: pineDs, sets };
+}
 
 /** Evaluate one expression against one target over a short-lived connection. */
 async function evaluateOn(targetId, expression, timeoutMs = 8000) {
@@ -158,14 +259,17 @@ async function evaluateOn(targetId, expression, timeoutMs = 8000) {
  *   description matches exactly. Identity by TITLE is weak and is not trusted
  *   here — see manifests/b15.manifest.json and core/replay-manifest.js for the
  *   content hash, which is the real identity check. This is a cheap early-out.
- * @param {boolean} [opts.strictStudies]        promote extra INVISIBLE Pine
- *   studies to a refusal. Defaults to the TVMCP_REPLAY_STRICT_STUDIES env var.
+ * @param {string}  opts.profile               REQUIRED: 'workflow' | 'diagnostic' |
+ *   'replay'. Decides whether extra hidden Pine studies are fatal; see
+ *   resolveStrictStudies().
  */
 export async function assertReplayEnvironment({
   expectStrategyTitle = null,
-  strictStudies = process.env.TVMCP_REPLAY_STRICT_STUDIES === '1',
+  profile,
   _deps = null,
 } = {}) {
+  // Resolved before any I/O, so a misconfiguration refuses without touching CDP.
+  const strictStudies = resolveStrictStudies({ profile, env: _deps?.env ?? process.env.TVMCP_REPLAY_STRICT_STUDIES });
   const listTargets = _deps?.listTargets
     || (async () => (await fetch(`http://${CDP_HOST}:${CDP_PORT}/json/list`)).json());
   const evaluateTarget = _deps?.evaluateOn || evaluateOn;
@@ -262,11 +366,30 @@ export async function assertReplayEnvironment({
   }
 
   const hiddenOtherPine = pineStudies.filter((s) => !s.is_strategy);
+  const cross = crossCheckStudyEnumerations(page);
+  inventory.enumeration_cross_check = cross;
+
+  if (strictStudies && !cross.agreed) {
+    const parts = [
+      ...cross.unavailable.map((u) => `unavailable: ${u}`),
+      ...cross.disagreements.map((d) => `${d.over}: ${d.first} alone has [${d.only_in_first.join(', ')}], `
+        + `${d.second} alone has [${d.only_in_second.join(', ')}]`),
+    ];
+    throw new EnvironmentInvariantError(
+      `Study enumerations do not agree, so the study count cannot be trusted to refuse on (${profile} profile, strict): `
+      + `${parts.join('; ')}. Refusing rather than believing one surface — a single-surface count was once `
+      + 'six times too high.',
+      inventory,
+    );
+  }
+
   if (hiddenOtherPine.length && strictStudies) {
     throw new EnvironmentInvariantError(
       `${hiddenOtherPine.length} extra Pine study/studies loaded (all hidden): `
       + `${hiddenOtherPine.map(describe).join(', ')}. `
-      + 'TVMCP_REPLAY_STRICT_STUDIES=1 makes this fatal. Unset it to allow hidden extras.',
+      + (profile === 'replay'
+        ? 'The replay profile requires the strategy to be the only Pine study on the chart. Remove them.'
+        : 'TVMCP_REPLAY_STRICT_STUDIES=1 makes this fatal. Unset it to allow hidden extras.'),
       inventory,
     );
   }
@@ -280,8 +403,7 @@ export async function assertReplayEnvironment({
     );
   }
 
-  return {
-    ok: true,
+  return answered({
     target_id: target.id,
     url: target.url,
     layout: page.layout,
@@ -293,9 +415,14 @@ export async function assertReplayEnvironment({
       description: strategy.description,
       input_count: strategy.input_count,
     },
+    profile,
+    strict_studies: strictStudies,
     // Surfaced on the SUCCESS path too: the operator should see the hidden
     // extras exist without having to trip a refusal to learn about them.
     extra_hidden_pine_studies: hiddenOtherPine.map(describe),
+    // Non-strict profiles do not refuse on a disagreement, but they report it.
+    enumerations_agree: cross.agreed,
+    ...(cross.agreed ? {} : { enumeration_disagreement: { unavailable: cross.unavailable, disagreements: cross.disagreements } }),
     inventory,
-  };
+  });
 }

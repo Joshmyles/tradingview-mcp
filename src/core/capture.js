@@ -4,7 +4,7 @@
 import { getClient, evaluate, getChartCollection } from '../connection.js';
 import { waitForChartRender } from '../wait.js';
 import { requireSettled } from '../settle.js';
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { observed, refused, unobservable } from '../internals/verdict.js';
@@ -91,8 +91,8 @@ export async function captureScreenshot({ region, filename, method, waitForRende
   const { data } = await client.Page.captureScreenshot(params);
   writeFileSync(filePath, Buffer.from(data, 'base64'));
 
-  return {
-    success: true, method: 'cdp', file_path: filePath, region,
+  const detail = {
+    method: 'cdp', file_path: filePath, region,
     waited_for_render: !!waitForRender,
     settled: wait !== false,
     ...(settle && { settle_ms: settle.elapsed_ms }),
@@ -101,4 +101,11 @@ export async function captureScreenshot({ region, filename, method, waitForRende
     }),
     size_bytes: Buffer.from(data, 'base64').length,
   };
+  // The file is the claim, so read it back off the disk.
+  let bytesOnDisk = null;
+  try { bytesOnDisk = statSync(filePath).size; } catch { bytesOnDisk = null; }
+  if (!bytesOnDisk) {
+    return refused(`no non-empty screenshot file is on disk at ${filePath} after writing it`, { ...detail, bytes_on_disk: bytesOnDisk });
+  }
+  return observed({ file_path: filePath, bytes_on_disk: bytesOnDisk }, detail);
 }

@@ -3,7 +3,7 @@
  * Controls multi-chart layouts (split panes) in TradingView.
  */
 import { evaluate, evaluateAsync, getClient, safeString } from '../connection.js';
-import { observed, refused, unobservable } from '../internals/verdict.js';
+import { answered, observed, refused, unobservable } from '../internals/verdict.js';
 
 const CWC = 'window.TradingViewApi._chartWidgetCollection';
 
@@ -82,14 +82,13 @@ export async function list() {
     })()
   `);
 
-  return {
-    success: true,
+  return answered({
     layout: result.layout,
     layout_name: LAYOUT_NAMES[result.layout] || result.layout,
     chart_count: result.chart_count,
     active_index: result.active_index,
     panes: result.panes,
-  };
+  });
 }
 
 /**

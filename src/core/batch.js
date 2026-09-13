@@ -3,6 +3,8 @@
  */
 import { evaluate, evaluateAsync, getClient, getChartApi, getChartCollection, safeString } from '../connection.js';
 import { waitForChartReady } from '../wait.js';
+import { answered, failed, unobservable } from '../internals/verdict.js';
+import { classifyError } from '../tools/_format.js';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -74,13 +76,25 @@ export async function batchRun({ symbols, timeframes, action, delay_ms, ohlcv_co
         } else {
           actionResult = { error: 'Unknown action or API not available: ' + action };
         }
-        results.push({ ...combo, success: true, result: actionResult });
+        // An action that answered with an error is not a successful iteration.
+        if (actionResult && actionResult.error) {
+          const code = action === 'get_strategy_results' ? 'not_found'
+            : action === 'get_ohlcv' ? 'unavailable'
+              : 'invalid_argument';
+          results.push(failed(code, { ...combo, result: actionResult, error: actionResult.error }));
+        } else {
+          results.push(answered({ ...combo, result: actionResult }));
+        }
       } catch (err) {
-        results.push({ ...combo, success: false, error: err.message });
+        results.push(failed(classifyError(err), { ...combo, error: err.message }));
       }
     }
   }
 
   const successCount = results.filter(r => r.success).length;
-  return { success: true, total_iterations: results.length, successful: successCount, failed: results.length - successCount, results };
+  return unobservable(
+    'each symbol/timeframe change is issued and waited on, but the chart symbol and resolution '
+    + 'are not read back and compared per iteration; each row reports its own action result.',
+    { total_iterations: results.length, successful: successCount, failed: results.length - successCount, results },
+  );
 }

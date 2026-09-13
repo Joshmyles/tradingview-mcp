@@ -88,6 +88,7 @@
  * the statement that wrote it is a string. `level` carries the same bit values
  * the mask packs, so 4 is info.
  */
+import { answered, failed } from './verdict.js';
 
 /** Pine log level bits — the same values setLogLevelMask packs. */
 const LEVEL_BITS = { error: 1, warning: 2, info: 4 };
@@ -249,40 +250,34 @@ export function decodeCursor(cursor) {
  */
 export function resolveCursor(cursor, rows) {
   const c = decodeCursor(cursor);
-  if (!c) return { ok: true, from: 0, fresh: true };
+  if (!c) return answered({ from: 0, fresh: true });
   if (c.invalid) {
-    return { ok: false, reason: 'invalid_cursor', error: 'since_cursor is not a cursor this tool issued. Cursors are opaque; pass back the next_cursor from a previous read.' };
+    return failed('invalid_cursor', { error: 'since_cursor is not a cursor this tool issued. Cursors are opaque; pass back the next_cursor from a previous read.' });
   }
   const head = rowFingerprint(rows[0]);
   if (c.n > rows.length) {
-    return {
-      ok: false,
-      reason: 'cursor_stale',
+    return failed('cursor_stale', {
       error: `The cursor is at row ${c.n} and the log now holds ${rows.length}. The collection was rebuilt and is shorter than it was, so the position means nothing. Re-read without a cursor.`,
       cursor_n: c.n,
       total: rows.length,
-    };
+    });
   }
   if (c.head && head && c.head !== head) {
-    return {
-      ok: false,
-      reason: 'cursor_stale',
+    return failed('cursor_stale', {
       error: 'The log no longer starts where it did when this cursor was issued — history has rolled or the study was recomputed from a different first bar. Re-read without a cursor.',
       cursor_head: c.head,
       observed_head: head,
-    };
+    });
   }
   if (c.prev && c.n > 0) {
     const prev = rowFingerprint(rows[c.n - 1]);
     if (prev && prev !== c.prev) {
-      return {
-        ok: false,
-        reason: 'cursor_stale',
+      return failed('cursor_stale', {
         error: 'The row this cursor was resuming after has changed, so the rows in between are not the ones already seen. The script was recomputed under a different configuration. Re-read without a cursor.',
         cursor_prev: c.prev,
         observed_prev: prev,
-      };
+      });
     }
   }
-  return { ok: true, from: c.n, fresh: false };
+  return answered({ from: c.n, fresh: false });
 }

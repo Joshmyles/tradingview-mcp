@@ -11,6 +11,7 @@ import {
 import { existsSync, cpSync, rmSync, readdirSync } from 'fs';
 import { execSync, spawn } from 'child_process';
 import { dirname, basename, join } from 'path';
+import { answered, observed, refused } from '../internals/verdict.js';
 
 // Best-effort git-pull update check: compare local HEAD to origin's default
 // branch on GitHub. Never throws — returns null on any failure (offline,
@@ -105,8 +106,7 @@ export async function healthCheck() {
 
   const update = await checkForUpdate();
 
-  return {
-    success: true,
+  return answered({
     cdp_connected: true,
     target_id: target.id,
     target_url: target.url,
@@ -116,7 +116,7 @@ export async function healthCheck() {
     chart_type: state?.chartType ?? null,
     api_available: state?.apiAvailable ?? false,
     ...(update && { update }),
-  };
+  });
 }
 
 export async function discover() {
@@ -162,12 +162,11 @@ export async function discover() {
   const available = Object.values(paths).filter((v) => v.available).length;
   const total = Object.keys(paths).length;
 
-  return {
-    success: true,
+  return answered({
     apis_available: available,
     apis_total: total,
     apis: paths,
-  };
+  });
 }
 
 export async function uiState() {
@@ -238,7 +237,7 @@ export async function uiState() {
     })()
   `);
 
-  return { success: true, ...state };
+  return answered({ ...state });
 }
 
 const WINDOWS_APPS_RE = /\\WindowsApps\\/i;
@@ -488,8 +487,8 @@ export async function launch({ port, kill_existing, _deps } = {}) {
   }
 
   if (info) {
-    return {
-      success: true,
+    // /json/version answering on the port IS the read-back of the launch.
+    return observed({ cdp_version_endpoint: `http://${CDP_HOST}:${cdpPort}/json/version`, browser: info.Browser ?? null }, {
       platform,
       binary: tvPath,
       pid: child.pid,
@@ -498,14 +497,13 @@ export async function launch({ port, kill_existing, _deps } = {}) {
       browser: info.Browser,
       user_agent: info['User-Agent'],
       ...(usedLocalCopy && { msix_local_copy: true }),
-    };
+    });
   }
 
   // cdp_ready:false means the debugging port never bound, i.e. the one thing
   // this tool exists to deliver did not happen. It used to report success:true
   // beside that flag, so a caller reading `.success` was told the launch worked.
-  return {
-    success: false,
+  return refused(`the CDP debugging port ${cdpPort} did not answer /json/version after launch`, {
     platform,
     binary: tvPath,
     pid: child.pid,
@@ -514,5 +512,5 @@ export async function launch({ port, kill_existing, _deps } = {}) {
     ...(usedLocalCopy && { msix_local_copy: true }),
     warning:
       'TradingView launched but CDP not responding yet. It may still be loading. Try tv_health_check in a few seconds.',
-  };
+  });
 }

@@ -25,6 +25,7 @@ import {
   resolveCursor,
   rowFingerprint,
 } from '../internals/pine-logs.js';
+import { adopt, answered, failed } from '../internals/verdict.js';
 
 /**
  * Default page size.
@@ -72,34 +73,30 @@ export async function pineConsoleRead({
   const ev = _deps?.evaluate || evaluate;
 
   if (level != null && !LEVELS.includes(String(level))) {
-    return {
-      ok: false,
-      reason: 'invalid_argument',
+    return failed('invalid_argument', {
       error: `level must be one of ${LEVELS.join(', ')}; got "${level}".`,
-    };
+    });
   }
   const n = Number(limit);
   if (!Number.isFinite(n) || n < 1) {
-    return { ok: false, reason: 'invalid_argument', error: `limit must be a positive number; got "${limit}".` };
+    return failed('invalid_argument', { error: `limit must be a positive number; got "${limit}".` });
   }
   const pageSize = Math.min(Math.floor(n), MAX_LIMIT);
   // A cursor this tool never issued is refused whatever state the collection
   // is in. Checked only after the empty-state returns, it slipped through
   // whenever collection was disabled or absent.
   if (sinceCursor && decodeCursor(sinceCursor).invalid) {
-    return { ok: false, reason: 'invalid_cursor', error: 'since_cursor is not a cursor this tool issued. Pass next_cursor back unchanged, or omit it to read from the start.' };
+    return failed('invalid_cursor', { error: 'since_cursor is not a cursor this tool issued. Pass next_cursor back unchanged, or omit it to read from the start.' });
   }
 
   // Resolve first, so a chart carrying two builds refuses rather than reading
   // whichever came first out of dataSources().
   const r = await resolveEntity({ hint: entityId, _deps });
   if (!r.ok) {
-    return {
-      ok: false,
-      reason: r.reason === 'ambiguous' ? 'ambiguous_entity' : r.reason,
+    return failed(r.reason === 'ambiguous' ? 'ambiguous_entity' : r.reason || 'resolve_failed', {
       error: r.error,
       candidates: r.candidates,
-    };
+    });
   }
   const target = r.resolved;
 
@@ -109,10 +106,15 @@ export async function pineConsoleRead({
   }
 
   const raw = await ev(readLogsJs(JSON.stringify(target.entity_id)));
-  if (!raw?.ok) return raw || { ok: false, reason: 'no_result', error: 'The page returned nothing.' };
+  if (!raw) return failed('no_result', { error: 'The page returned nothing.' });
+  // The page script sets ok on every path; an object without one is not a
+  // result, and adopt() refuses to invent a verdict for it.
+  if (typeof raw.ok !== 'boolean' && typeof raw.success !== 'boolean') {
+    return failed('internal', { error: 'The page returned a result without a verdict.' });
+  }
+  if (!raw.ok) return adopt(raw, { defaultReason: 'internal' });
 
   const base = {
-    ok: true,
     entity_id: raw.entity_id,
     title: raw.title,
     pine_version: raw.pine_version,
@@ -125,16 +127,16 @@ export async function pineConsoleRead({
   // which one it is IS the result; returning [] and letting the caller assume
   // the script is quiet is the wrong answer this tool exists to avoid.
   if (raw.collection === 'absent') {
-    return {
+    return answered({
       ...base,
       rows: [],
       note:
         'This script emits no log.* calls at all — TradingView does not even create a log collection for it ' +
         '(metaInfo carries no graphics.logs). This is not "logging is off" and not "nothing logged yet".',
-    };
+    });
   }
   if (raw.collection === 'disabled') {
-    return {
+    return answered({
       ...base,
       rows: [],
       note:
@@ -144,12 +146,15 @@ export async function pineConsoleRead({
         '(error 1 | warning 2 | info 4, so 7 is all three) with indicator_set_inputs, which forces a recompute. ' +
         '__log_level is excluded from the fence allowlist and is in no build manifest, so changing it neither ' +
         'trips inputs_drifted nor moves manifest_hash — and equally, nothing in this bridge will notice it later.',
-    };
+    });
   }
 
   const all = raw.rows;
   const cur = resolveCursor(sinceCursor, all);
-  if (!cur.ok) return { ...base, ...cur, ok: false };
+  if (!cur.ok) {
+    const { ok: _ok, success: _success, reason: curReason, ...curDetail } = cur;
+    return failed(curReason, { ...base, ...curDetail });
+  }
 
   // Filter AFTER the cursor resolves. The cursor indexes the unfiltered
   // collection, because a filter is the caller's question and the position has
@@ -195,7 +200,7 @@ export async function pineConsoleRead({
     prev: rowFingerprint(all[consumed - 1]),
   });
 
-  return {
+  return answered({
     ...base,
     ...(cur.fresh ? {} : { resumed_from: cur.from }),
     returned: page.length,
@@ -225,5 +230,5 @@ export async function pineConsoleRead({
       'line is the Pine source line that emitted the row. The collection is REBUILT on every recompute, and on a ' +
       'live seconds chart that is every bar — a cursor is validated against the log head and the row it resumes ' +
       'after, and is refused as cursor_stale rather than silently returning a different slice.',
-  };
+  });
 }

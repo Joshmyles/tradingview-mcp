@@ -4,7 +4,7 @@
  * They throw on error (callers catch and format).
  */
 import { evaluate, evaluateAsync, getClient } from '../connection.js';
-import { observed, refused, unobservable } from '../internals/verdict.js';
+import { answered, observed, refused, unobservable } from '../internals/verdict.js';
 
 // ── Monaco finder (injected into TV page) ──
 const FIND_MONACO = `
@@ -176,12 +176,11 @@ export function analyze({ source }) {
     }
   }
 
-  return {
-    success: true,
+  return answered({
     issue_count: diagnostics.length,
     diagnostics,
     note: diagnostics.length === 0 ? 'No static analysis issues found. Use pine_compile or pine_smart_compile for full server-side compilation check.' : undefined,
-  };
+  });
 }
 
 export async function check({ source }) {
@@ -232,15 +231,14 @@ export async function check({ source }) {
   }
 
   const compiled = errors.length === 0;
-  return {
-    success: true,
+  return answered({
     compiled,
     error_count: errors.length,
     warning_count: warnings.length,
     errors: errors.length > 0 ? errors : undefined,
     warnings: warnings.length > 0 ? warnings : undefined,
     note: compiled ? 'Pine Script compiled successfully.' : undefined,
-  };
+  });
 }
 
 // ── Functions requiring TradingView connection ──
@@ -261,7 +259,7 @@ export async function getSource() {
     throw new Error('Monaco editor found but getValue() returned null.');
   }
 
-  return { success: true, source, line_count: source.split('\n').length, char_count: source.length };
+  return answered({ source, line_count: source.split('\n').length, char_count: source.length });
 }
 
 export async function setSource({ source }) {
@@ -359,12 +357,11 @@ export async function getErrors() {
     })()
   `);
 
-  return {
-    success: true,
+  return answered({
     has_errors: errors?.length > 0,
     error_count: errors?.length || 0,
     errors: errors || [],
-  };
+  });
 }
 
 export async function save() {
@@ -451,7 +448,7 @@ export async function getConsole() {
     })()
   `);
 
-  return { success: true, entries: entries || [], entry_count: entries?.length || 0 };
+  return answered({ entries: entries || [], entry_count: entries?.length || 0 });
 }
 
 export async function smartCompile() {
@@ -641,7 +638,23 @@ export async function openScript({ name }) {
     throw new Error(result.error);
   }
 
-  return { success: true, name: result.name, script_id: result.id, lines: result.lines, source: 'internal_api', opened: true };
+  // The page reports setValue() as done; read the buffer back rather than
+  // trusting that, the same check setSource() and newScript() make.
+  const detail = { name: result.name, script_id: result.id, lines: result.lines, source: 'internal_api' };
+  const linesInEditor = await evaluate(
+    '(function() { var m = ' + FIND_MONACO + '; if (!m) return null; '
+    + 'return m.editor.getValue().split(String.fromCharCode(10)).length; })()',
+  );
+  if (linesInEditor === null || linesInEditor === undefined) {
+    return unobservable('the editor buffer could not be read back after loading the script source', { ...detail, opened: true });
+  }
+  if (linesInEditor !== result.lines) {
+    return refused(
+      'the editor holds ' + linesInEditor + ' line(s) after loading a ' + result.lines + '-line script',
+      { ...detail, lines_in_editor: linesInEditor, opened: false },
+    );
+  }
+  return observed({ lines_in_editor: linesInEditor }, { ...detail, opened: true });
 }
 
 export async function listScripts() {
@@ -665,11 +678,10 @@ export async function listScripts() {
       .catch(function(e) { return {scripts: [], error: e.message}; })
   `);
 
-  return {
-    success: true,
+  return answered({
     scripts: scripts?.scripts || [],
     count: scripts?.scripts?.length || 0,
     source: 'internal_api',
     error: scripts?.error,
-  };
+  });
 }

@@ -6,7 +6,7 @@
  * search UI so bare tickers resolve the same way they do for a human.
  */
 import { evaluate, evaluateAsync, getClient } from '../connection.js';
-import { observed, refused, unobservable } from '../internals/verdict.js';
+import { answered, failed, observed, refused } from '../internals/verdict.js';
 
 // TV renamed the right-rail button: current builds use data-name="base" with
 // aria-label "Watchlist, details, and news"; older builds used
@@ -107,13 +107,12 @@ export async function get() {
   `);
 
   const listInfo = await getActiveListInfo();
-  return {
-    success: true,
+  return answered({
     count: data?.symbols?.length || 0,
     source: data?.source || 'unknown',
     ...(listInfo && { list_id: listInfo.id, list_name: listInfo.name }),
     symbols: data?.symbols || [],
-  };
+  });
 }
 
 export async function add({ symbol }) {
@@ -155,21 +154,30 @@ export async function add({ symbol }) {
     })()
   `);
 
-  return { success: !!verified, symbol, added_as: verified, action: verified ? 'added' : 'not_verified' };
+  const detail = { symbol, added_as: verified, action: verified ? 'added' : 'not_verified' };
+  if (!verified) {
+    return refused(`no watchlist row matches "${symbol}" after adding it`, detail);
+  }
+  return observed({ row_symbol: verified }, detail);
 }
 
 export async function addBulk({ symbols }) {
+  // Each entry is the per-symbol verdict itself (symbol, added_as, success
+  // and the observation behind it), not a hand-built copy of its flag.
   const results = [];
   for (const symbol of symbols) {
     try {
-      const r = await add({ symbol });
-      results.push({ symbol, success: r.success, added_as: r.added_as });
+      results.push(await add({ symbol }));
     } catch (err) {
-      results.push({ symbol, success: false, error: err.message });
+      results.push(failed('internal', { symbol, error: err.message }));
     }
   }
   const added = results.filter(r => r.success).length;
-  return { success: added > 0, added, failed: results.length - added, results };
+  const detail = { added, failed: results.length - added, results };
+  if (added === 0) {
+    return refused(`none of the ${results.length} symbol(s) was seen in the watchlist after adding`, detail);
+  }
+  return observed({ rows_verified: added }, detail);
 }
 
 export async function remove({ symbols }) {
@@ -191,7 +199,7 @@ export async function remove({ symbols }) {
     }
   }
   if (!toRemove.length) {
-    return { success: false, removed: [], skipped, error: 'No matching symbols in the active watchlist' };
+    return failed('not_found', { removed: [], skipped, error: 'No matching symbols in the active watchlist' });
   }
 
   // Page-context fetch — browser attaches session cookies automatically.

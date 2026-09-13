@@ -28,6 +28,7 @@ import { resolveEntity } from './pine-inputs.js';
 import { list as listAlerts } from './alerts.js';
 import { buildKey, checkBuild, compareManifest, inputsSnapshotJs, readManifest } from '../internals/inputs.js';
 import { strategyAlertConfigs } from '../internals/alert-config.js';
+import { adopt, answered, failed, withDetail } from '../internals/verdict.js';
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -35,12 +36,12 @@ const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 function loadManifest(buildTag, manifestPath) {
   const path = manifestPath ? resolve(manifestPath) : join(REPO, 'manifests', `${buildTag}.intended.json`);
   if (!existsSync(path)) {
-    return { ok: false, reason: 'not_found', error: `No committed manifest at ${path}. Generate it with scripts/make-manifest.mjs.`, path };
+    return failed('not_found', { error: `No committed manifest at ${path}. Generate it with scripts/make-manifest.mjs.`, path });
   }
   try {
-    return { ok: true, path, file: JSON.parse(readFileSync(path, 'utf8')) };
+    return answered({ path, file: JSON.parse(readFileSync(path, 'utf8')) });
   } catch (err) {
-    return { ok: false, reason: 'invalid_argument', error: `Manifest at ${path} is not valid JSON: ${err.message}`, path };
+    return failed('invalid_argument', { error: `Manifest at ${path} is not valid JSON: ${err.message}`, path });
   }
 }
 
@@ -55,21 +56,19 @@ export async function preflight({ buildTag, manifestPath = null, entityId = null
   const readFile = _deps?.readFile || ((p) => readFileSync(p));
 
   const tag = buildKey(buildTag);
-  if (!tag) return { ok: false, reason: 'invalid_argument', error: 'build_tag is required, e.g. "b14".' };
+  if (!tag) return failed('invalid_argument', { error: 'build_tag is required, e.g. "b14".' });
 
   const loaded = _deps?.manifestFile
-    ? { ok: true, path: '(injected)', file: _deps.manifestFile }
+    ? answered({ path: '(injected)', file: _deps.manifestFile })
     : loadManifest(tag, manifestPath);
   if (!loaded.ok) return loaded;
   const file = loaded.file;
   const parsed = readManifest(file);
-  if (!parsed.ok) return { ...parsed, manifest_path: loaded.path };
+  if (!parsed.ok) return withDetail(adopt(parsed, { defaultReason: 'invalid_argument' }), { manifest_path: loaded.path });
   if (parsed.build && parsed.build !== tag) {
-    return {
-      ok: false,
-      reason: 'invalid_argument',
+    return failed('invalid_argument', {
       error: `build_tag is "${tag}" and the manifest at ${loaded.path} declares "${parsed.build}". One manifest describes one build.`,
-    };
+    });
   }
 
   const checks = [];
@@ -207,16 +206,15 @@ export async function preflight({ buildTag, manifestPath = null, entityId = null
     checks.push(check('alerts', false, { reason: 'unavailable', error: err.message }));
   }
 
-  const failed = checks.filter((c) => !c.pass).map((c) => c.check);
-  return {
-    ok: true,
-    pass: failed.length === 0,
+  const failedChecks = checks.filter((c) => !c.pass).map((c) => c.check);
+  return answered({
+    pass: failedChecks.length === 0,
     build: tag,
     manifest_path: loaded.path,
-    failed,
+    failed: failedChecks,
     checks,
     note:
       'Each check stands alone; ok means preflight ran, pass means every check held. Nothing was changed. ' +
       'An alert runs the configuration it was created with, so the alerts check reads each alert’s own frozen map.',
-  };
+  });
 }

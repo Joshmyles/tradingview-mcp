@@ -11,6 +11,7 @@
  */
 import CDP from 'chrome-remote-interface';
 import { getClient, reconnectTo, CDP_HOST, CDP_PORT } from '../connection.js';
+import { answered, observed, refused } from '../internals/verdict.js';
 
 /**
  * List all open chart tabs (CDP page targets).
@@ -36,7 +37,7 @@ export async function list() {
       is_chart: /tradingview\.com\/chart/i.test(t.url),
     }));
 
-  return { success: true, tab_count: tabs.length, tabs };
+  return answered({ tab_count: tabs.length, tabs });
 }
 
 /**
@@ -172,12 +173,20 @@ export async function newTab({ layout, name } = {}) {
 
   if (!layout) {
     const state = await list();
-    return {
-      success: shellCounts ? shellCounts.after > shellCounts.before : !!landing,
+    const detail = {
       action: 'new_tab_opened',
       note: 'Tab is on the layout picker. Call tab_new with layout: "new" or a saved layout name to open a chart in it.',
-      ...state,
+      tab_count: state.tab_count,
+      tabs: state.tabs,
     };
+    if (shellCounts) {
+      return shellCounts.after > shellCounts.before
+        ? observed({ shell_tabs_before: shellCounts.before, shell_tabs_after: shellCounts.after }, detail)
+        : refused(`the shell tab bar holds ${shellCounts.after} tab(s) after clicking new-tab (was ${shellCounts.before})`, detail);
+    }
+    return landing
+      ? observed({ landing_target_id: landing.id }, detail)
+      : refused('no new-tab landing page target is open', detail);
   }
 
   if (!landing)
@@ -301,12 +310,11 @@ export async function newTab({ layout, name } = {}) {
   // Give the chart a moment to boot, then follow it.
   await new Promise((r) => setTimeout(r, 2000));
   await reconnectTo(chartTarget.id);
-  return {
-    success: true,
+  return observed({ chart_target_id: chartTarget.id }, {
     action: wantNew ? 'new_layout_created' : 'layout_opened_in_new_tab',
     layout: picked,
     chart_id: chartTarget.url.match(/\/chart\/([^/?]+)/)?.[1] || null,
-  };
+  });
 }
 
 /**
@@ -346,12 +354,11 @@ export async function closeTab() {
     /* next tool call will reconnect */
   }
 
-  return {
-    success: result < before,
-    action: 'tab_closed',
-    tabs_before: before,
-    tabs_after: result,
-  };
+  const detail = { action: 'tab_closed', tabs_before: before, tabs_after: result };
+  if (!(result < before)) {
+    return refused(`the shell tab bar holds ${result} tab(s) after closing (was ${before})`, detail);
+  }
+  return observed({ tabs_after: result }, detail);
 }
 
 /**
@@ -409,12 +416,13 @@ export async function switchTab({ index }) {
     );
   }
 
-  return {
-    success: true,
+  // Visibility of the target was checked above: either it was already the
+  // visible page, or the click loop stopped only once it became so.
+  return observed({ visible_target_id: target.id }, {
     action: 'switched',
     index: idx,
     tab_id: target.id,
     chart_id: target.chart_id,
     visually_switched: true,
-  };
+  });
 }

@@ -31,6 +31,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { pineInputsAssert } from './pine-inputs.js';
 import { assertReplayEnvironment } from '../internals/invariants.js';
+import { answered } from '../internals/verdict.js';
 
 export const DEFAULT_MANIFEST_PATH = fileURLToPath(
   new URL('../../manifests/b15.manifest.json', import.meta.url),
@@ -71,15 +72,17 @@ export async function assertStrategyManifest({
   manifestPath = DEFAULT_MANIFEST_PATH,
   requireComplete = true,
   skipEnvironment = false,
+  profile,
   _deps,
 } = {}) {
   const manifest = loadManifest(manifestPath);
 
   // The environment check first: asserting against an ambiguous chart would
-  // assert against whichever study came first out of dataSources().
+  // assert against whichever study came first out of dataSources(). `profile`
+  // is passed through unresolved: assertReplayEnvironment refuses a missing one.
   let env = null;
   if (!skipEnvironment) {
-    env = await assertReplayEnvironment({ expectStrategyTitle: manifest.description || null });
+    env = await assertReplayEnvironment({ expectStrategyTitle: manifest.description || null, profile });
   }
 
   const res = await pineInputsAssert({
@@ -114,8 +117,7 @@ export async function assertStrategyManifest({
     );
   }
 
-  return {
-    ok: true,
+  return answered({
     manifest_path: manifestPath,
     build: manifest.build,
     title: res.title,
@@ -128,5 +130,5 @@ export async function assertStrategyManifest({
     inputs_checked: res.checked,
     source_sha256: manifest.derived_from?.source_sha256 ?? null,
     ...(env && { environment: { layout: env.layout, target_id: env.target_id } }),
-  };
+  });
 }

@@ -34,6 +34,7 @@
  * a manifest that matches on values while the script underneath changed is a
  * false pass.
  */
+import { answered, failed } from './verdict.js';
 
 /** FNV-1a, matching study-state.js so the two hashes are comparable. */
 function fnv(str) {
@@ -238,12 +239,11 @@ export function compareManifest(expected, inputs, { requireComplete = false } = 
     }
   }
   const notInManifest = inputs.filter((i) => !(i.id in expected)).map((i) => i.id);
-  const ok =
+  const matchedAll =
     mismatches.length === 0 &&
     missingFromChart.length === 0 &&
     (!requireComplete || notInManifest.length === 0);
-  return {
-    ok,
+  const detail = {
     checked,
     matched: checked - mismatches.length,
     mismatches,
@@ -252,6 +252,7 @@ export function compareManifest(expected, inputs, { requireComplete = false } = 
     not_in_manifest: notInManifest.slice(0, 30),
     require_complete: requireComplete,
   };
+  return matchedAll ? answered(detail) : failed('inputs_mismatch', detail);
 }
 
 /**
@@ -298,6 +299,7 @@ const ENVELOPE_KEYS = new Set([
   'note',
   'source',
   'ok',
+  'success',
   'count',
   'non_default_count',
   'non_default',
@@ -321,12 +323,10 @@ const ENVELOPE_KEYS = new Set([
  */
 export function readManifest(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
-    return {
-      ok: false,
-      reason: 'invalid_argument',
+    return failed('invalid_argument', {
       error:
         'manifest must be an object: an id-to-value map, a pine_inputs_snapshot response, or a committed manifest file.',
-    };
+    });
   }
   const envelope = input.manifest && typeof input.manifest === 'object' && !Array.isArray(input.manifest);
   const expected = {};
@@ -338,31 +338,26 @@ export function readManifest(input) {
     else stray.push(k);
   }
   if (stray.length) {
-    return {
-      ok: false,
-      reason: 'invalid_argument',
+    return failed('invalid_argument', {
       error:
         `Not input ids: ${stray.slice(0, 8).join(', ')}${stray.length > 8 ? ` (+${stray.length - 8} more)` : ''}. ` +
         'A manifest maps in_<N> to its expected value; build identity goes in build/title/pine_id.',
       stray_keys: stray.slice(0, 20),
-    };
+    });
   }
   if (!Object.keys(expected).length) {
-    return {
-      ok: false,
-      reason: 'invalid_argument',
+    return failed('invalid_argument', {
       error: 'The manifest pins no inputs, so it asserts nothing.',
-    };
+    });
   }
-  return {
-    ok: true,
+  return answered({
     expected,
     build: buildKey(input.build) ?? buildKey(input.title),
     title: typeof input.title === 'string' ? input.title : null,
     pine_id: input.pine_id || null,
     pine_version: input.pine_version || null,
     declared_hash: input.manifest_hash || null,
-  };
+  });
 }
 
 /**

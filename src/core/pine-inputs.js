@@ -16,6 +16,20 @@ import {
   readManifest,
   toManifest,
 } from '../internals/inputs.js';
+import { adopt, answered, failed } from '../internals/verdict.js';
+
+/**
+ * A page read that did not answer `ok: true`, as a verdict.
+ *
+ * The page's own `{ ok: false, reason, error }` is adopted with its reason
+ * intact; nothing at all, or an object carrying no verdict, is `no_result`.
+ */
+function pageFailure(raw) {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw) && (typeof raw.ok === 'boolean' || typeof raw.success === 'boolean')) {
+    return adopt(raw, { defaultReason: 'no_result' });
+  }
+  return failed('no_result', { error: 'The page returned nothing.' });
+}
 
 /**
  * Every study on the chart, with enough identity to pick one.
@@ -48,7 +62,10 @@ export async function resolveEntity({ hint = null, _deps } = {}) {
       return { ok: true, symbol: cw.symbol(), resolution: cw.resolution(), studies: out };
     } catch (e) { return { ok: false, reason: 'resolve_failed', error: String(e && e.message || e) }; }
   })()`);
-  if (!listed?.ok) return listed || { ok: false, reason: 'no_result', error: 'The page returned nothing.' };
+  if (!listed?.ok) return pageFailure(listed);
+  // The page's own verdict keys are dropped here; the verdict below is issued
+  // from what was matched, not carried over from the listing.
+  const { ok: _pageOk, success: _pageSuccess, reason: _pageReason, ...listedDetail } = listed;
 
   const studies = listed.studies.map((s) => ({ ...s, build: buildKey(s.title) }));
 
@@ -75,7 +92,7 @@ export async function resolveEntity({ hint = null, _deps } = {}) {
   }
 
   if (candidates.length === 1) {
-    return { ok: true, ...listed, studies, resolved: candidates[0], candidates, matched_by, ambiguous: false };
+    return answered({ ...listedDetail, studies, resolved: candidates[0], candidates, matched_by, ambiguous: false });
   }
 
   // AMBIGUITY IS A REFUSAL, NOT A TIE-BREAK.
@@ -85,9 +102,7 @@ export async function resolveEntity({ hint = null, _deps } = {}) {
   // first would attach every subsequent read, assert and backtest to whichever
   // study happened to come first out of `dataSources()` - and nothing
   // downstream could tell afterwards that it had happened.
-  return {
-    ok: false,
-    reason: candidates.length ? 'ambiguous' : 'not_found',
+  return failed(candidates.length ? 'ambiguous' : 'not_found', {
     error: candidates.length
       ? `${candidates.length} studies match${hint ? ` "${hint}"` : ''}: ` +
         `${candidates.map((c) => `${c.title || '(untitled)'} (${c.entity_id})`).join(', ')}. ` +
@@ -100,7 +115,7 @@ export async function resolveEntity({ hint = null, _deps } = {}) {
     matched_by,
     candidates,
     studies,
-  };
+  });
 }
 
 /**
@@ -114,16 +129,14 @@ export async function resolveEntity({ hint = null, _deps } = {}) {
 async function resolveOne({ entityId = null, _deps } = {}) {
   const r = await resolveEntity({ hint: entityId, _deps });
   if (!r.ok) {
-    return {
-      ok: false,
-      reason: r.reason === 'ambiguous' ? 'ambiguous_entity' : r.reason,
+    return failed(r.reason === 'ambiguous' ? 'ambiguous_entity' : r.reason, {
       error: r.error,
       candidates: r.candidates,
       symbol: r.symbol,
       resolution: r.resolution,
-    };
+    });
   }
-  return { ok: true, ...r.resolved, symbol: r.symbol, resolution: r.resolution };
+  return answered({ ...r.resolved, symbol: r.symbol, resolution: r.resolution });
 }
 
 /**
@@ -143,15 +156,14 @@ export async function pineInputsSnapshot({ entityId = null, include = [], _deps 
   const target = await resolveOne({ entityId, _deps });
   if (!target.ok) return target;
   const raw = await ev(inputsSnapshotJs(JSON.stringify(target.entity_id)));
-  if (!raw?.ok) return raw || { ok: false, reason: 'no_result', error: 'The page returned nothing.' };
+  if (!raw?.ok) return pageFailure(raw);
 
   const inputs = annotate(raw.inputs);
   const map = toManifest(raw.inputs);
   const nonDefault = inputs.filter((i) => i.is_default === false);
   const unknownDefault = inputs.filter((i) => i.is_default === null);
 
-  return {
-    ok: true,
+  return answered({
     entity_id: raw.entity_id,
     title: raw.title,
     build: buildKey(raw.title),
@@ -170,7 +182,7 @@ export async function pineInputsSnapshot({ entityId = null, include = [], _deps 
       'non_default lists only inputs that differ from the compiled default, which is the set that describes this build. ' +
       'manifest_hash covers ALL inputs, so it changes when a default-valued input moves too. ' +
       'pine_id and pine_version identify the script itself: a manifest that matches on values while these differ is a false pass.',
-  };
+  });
 }
 
 /**
@@ -202,11 +214,9 @@ export async function pineInputsAssert({
   // rather than after a chart round-trip.
   const wantBuild = buildKey(build) ?? parsed.build;
   if (build && parsed.build && buildKey(build) !== parsed.build) {
-    return {
-      ok: false,
-      reason: 'invalid_argument',
+    return failed('invalid_argument', {
       error: `build was given as "${buildKey(build)}" and the manifest declares "${parsed.build}". One manifest describes one build.`,
-    };
+    });
   }
 
   const target = await resolveOne({ entityId, _deps });
@@ -222,19 +232,21 @@ export async function pineInputsAssert({
     actualTitle: target.title,
   });
   if (wrongBuild) {
-    return {
-      ok: false,
-      ...wrongBuild,
+    // checkBuild's `reason` is the verdict's reason; everything else it
+    // carries is detail.
+    const { reason: wrongReason, ...wrongDetail } = wrongBuild;
+    return failed(wrongReason, {
+      ...wrongDetail,
       entity_id: target.entity_id,
       title: target.title,
       symbol: target.symbol,
       resolution: target.resolution,
-    };
+    });
   }
 
   const ev = _deps?.evaluate || evaluate;
   const raw = await ev(inputsSnapshotJs(JSON.stringify(target.entity_id)));
-  if (!raw?.ok) return raw || { ok: false, reason: 'no_result', error: 'The page returned nothing.' };
+  if (!raw?.ok) return pageFailure(raw);
 
   const cmp = compareManifest(expected, raw.inputs, { requireComplete });
   const scriptDrift = [];
@@ -251,13 +263,11 @@ export async function pineInputsAssert({
   // `ok: true` alongside `reason: 'script_drift'` and an error string saying the
   // inputs were not comparable - a pass and a refusal in one object, and a
   // caller reading `.ok` got the pass. Measured live: manifest pinned pine
-  // 0.46, chart carried 0.51, drift recorded, ok: true. cmp's verdict is now
-  // destructured away so only the computed one is returned.
-  const { ok: _inputsOk, ...cmpDetail } = cmp;
-  const ok = cmp.ok && scriptDrift.length === 0;
-  return {
-    ok,
-    ...(ok ? {} : { reason: scriptDrift.length ? 'script_drift' : 'inputs_mismatch' }),
+  // 0.46, chart carried 0.51, drift recorded, ok: true. compareManifest now
+  // returns a verdict of its own, so its fields are PICKED here by name rather
+  // than spread, and the only verdict on this result is the one issued below
+  // by internals/verdict.js.
+  const detail = {
     entity_id: raw.entity_id,
     title: raw.title,
     build: buildKey(raw.title),
@@ -266,15 +276,24 @@ export async function pineInputsAssert({
     resolution: raw.resolution,
     manifest_hash: manifestHash(toManifest(raw.inputs)),
     inputs_ok: cmp.ok,
-    ...cmpDetail,
+    checked: cmp.checked,
+    matched: cmp.matched,
+    mismatches: cmp.mismatches,
+    missing_from_chart: cmp.missing_from_chart,
+    not_in_manifest_count: cmp.not_in_manifest_count,
+    not_in_manifest: cmp.not_in_manifest,
+    require_complete: cmp.require_complete,
     ...(scriptDrift.length && { script_drift: scriptDrift }),
-    ...(ok
-      ? {}
-      : {
-          error:
-            scriptDrift.length
-              ? 'The script itself differs from the one the manifest was taken against, so the inputs are not comparable.'
-              : `${cmp.mismatches.length} input(s) differ from the manifest. Any measurement taken now describes a different configuration.`,
-        }),
   };
+  if (cmp.ok && scriptDrift.length === 0) return answered(detail);
+  if (scriptDrift.length) {
+    return failed('script_drift', {
+      ...detail,
+      error: 'The script itself differs from the one the manifest was taken against, so the inputs are not comparable.',
+    });
+  }
+  return failed('inputs_mismatch', {
+    ...detail,
+    error: `${cmp.mismatches.length} input(s) differ from the manifest. Any measurement taken now describes a different configuration.`,
+  });
 }

@@ -19,6 +19,7 @@ import {
   summariseSteps,
   validatePredicate,
 } from '../internals/replay.js';
+import { adopt, answered, failed, observed, refused, withDetail } from '../internals/verdict.js';
 
 export const VALID_AUTOPLAY_DELAYS = [100, 143, 200, 300, 1000, 2000, 3000, 5000, 10000];
 
@@ -78,7 +79,10 @@ async function _start({ date, _deps } = {}) {
     throw new Error('Replay failed to start. The selected date may not have data for this timeframe. Try a more recent date or a higher timeframe (e.g., Daily).');
   }
 
-  return { success: true, replay_started: true, date: date || '(first available)', current_date: currentDate };
+  return observed(
+    { is_replay_started: started, current_date: currentDate },
+    { replay_started: true, date: date || '(first available)', current_date: currentDate },
+  );
 }
 
 export async function step({ timeoutMs = 10000, _deps } = {}) {
@@ -119,7 +123,10 @@ async function _step({ timeoutMs = 10000, _deps } = {}) {
       + '(all three measured); reload the chart to re-establish it.',
     );
   }
-  return { success: true, action: 'step', current_date: currentDate, advanced_ms: Date.now() - t0 };
+  return observed(
+    { cursor_before: before, cursor_after: currentDate },
+    { action: 'step', current_date: currentDate, advanced_ms: Date.now() - t0 },
+  );
 }
 
 export async function autoplay({ speed, _deps } = {}) {
@@ -141,7 +148,18 @@ async function _autoplay({ speed, _deps } = {}) {
   await evaluate(`${rp}.toggleAutoplay()`);
   const isAutoplay = await evaluate(wv(`${rp}.isAutoplayStarted()`));
   const currentDelay = await evaluate(wv(`${rp}.autoplayDelay()`));
-  return { success: true, autoplay_active: !!isAutoplay, delay_ms: currentDelay };
+  const detail = { autoplay_active: !!isAutoplay, delay_ms: currentDelay };
+  // A speed is a request to PLAY, and toggleAutoplay() on a session already
+  // playing pauses it instead — so reading "not playing" back is a refusal.
+  // Without a speed the call is a documented toggle and states no target, so
+  // the read-back is reported as what was seen.
+  if (speed > 0 && !isAutoplay) {
+    return refused(
+      `Autoplay was requested at ${speed}ms, and isAutoplayStarted() reads false after the toggle.`,
+      { ...detail, requested_delay_ms: speed },
+    );
+  }
+  return observed({ is_autoplay_started: !!isAutoplay, autoplay_delay: currentDelay }, detail);
 }
 
 export async function stop({ _deps } = {}) {
@@ -158,18 +176,19 @@ async function _stop({ _deps } = {}) {
   // earlier stop is cleared here too. See CLEAR_REPLAY_SESSION_JS.
   if (!started) {
     const session = await evaluate(CLEAR_REPLAY_SESSION_JS);
-    return { success: true, action: 'already_stopped', saved_session: session };
+    if (session?.ok === false) {
+      const error = 'Replay was not running, but the saved replay session could not be cleared; TradingView will ask "Continue your last replay?" on the next load.';
+      return refused(error, { action: 'already_stopped', saved_session: session, error });
+    }
+    return observed({ is_replay_started: false, saved_session: session ?? null }, { action: 'already_stopped', saved_session: session });
   }
   await evaluate(`${rp}.stopReplay()`);
   const session = await evaluate(CLEAR_REPLAY_SESSION_JS);
-  return {
-    success: session?.ok !== false,
-    action: 'replay_stopped',
-    saved_session: session,
-    ...(session?.ok === false && {
-      error: 'Replay stopped, but the saved replay session could not be cleared; TradingView will ask "Continue your last replay?" on the next load.',
-    }),
-  };
+  if (session?.ok === false) {
+    const error = 'Replay stopped, but the saved replay session could not be cleared; TradingView will ask "Continue your last replay?" on the next load.';
+    return refused(error, { action: 'replay_stopped', saved_session: session, error });
+  }
+  return observed({ saved_session: session ?? null }, { action: 'replay_stopped', saved_session: session });
 }
 
 /*
@@ -218,7 +237,7 @@ export async function status({ _deps } = {}) {
   `);
   const pos = await evaluate(wv(`${rp}.position()`));
   const pnl = await evaluate(wv(`${rp}.realizedPL()`));
-  return { success: true, ...st, position: pos, realized_pnl: pnl };
+  return answered({ ...st, position: pos, realized_pnl: pnl });
 }
 
 
@@ -250,19 +269,17 @@ export async function stepUntil({
 
   const n = Number(maxBars);
   if (!Number.isFinite(n) || n < 1) {
-    return { ok: false, reason: 'invalid_argument', error: `max_bars must be a positive number; got "${maxBars}".` };
+    return failed('invalid_argument', { error: `max_bars must be a positive number; got "${maxBars}".` });
   }
   const bound = Math.floor(n);
 
   const v = validatePredicate(predicate, { settleEachStep });
   if (!v.ok) {
-    return {
-      ok: false,
-      reason: 'invalid_argument',
+    return failed('invalid_argument', {
       error: v.error,
       fields: { series: SERIES_FIELDS, report: REPORT_FIELDS },
       operators: OPS,
-    };
+    });
   }
 
   // Resolve the study explicitly even though most predicates do not need one:
@@ -273,12 +290,10 @@ export async function stepUntil({
   if (needsStudy || entityId) {
     const r = await resolveEntity({ hint: entityId, _deps });
     if (!r.ok) {
-      return {
-        ok: false,
-        reason: r.reason === 'ambiguous' ? 'ambiguous_entity' : r.reason,
+      return failed(r.reason === 'ambiguous' ? 'ambiguous_entity' : r.reason, {
         error: r.error,
         candidates: r.candidates,
-      };
+      });
     }
     entity = r.resolved;
   }
@@ -295,14 +310,13 @@ export async function stepUntil({
       settleTimeoutMs,
     }),
   );
-  if (!out) return { ok: false, reason: 'no_result', error: 'The page returned nothing.' };
-  if (out.ok === false) return out;
+  if (!out) return failed('no_result', { error: 'The page returned nothing.' });
+  if (out.ok === false) return adopt(out, { defaultReason: 'step_failed' });
 
   const steps = summariseSteps(out.step_ms);
   const undetermined = (out.clause_results || []).filter((c) => c.undetermined);
 
-  return {
-    ok: true,
+  const detail = {
     stopped_on: out.stopped_on,
     matched: out.stopped_on === 'predicate' || out.stopped_on === 'already_true',
     bars_advanced: out.bars_advanced,
@@ -331,6 +345,20 @@ export async function stepUntil({
             ? 'The predicate held before any step was taken. Nothing was advanced.'
             : 'Replay is left AT the stopping bar deliberately — that bar is the result. Use replay_stop to return to realtime.',
   };
+  // The page counts a bar only once currentDate() has moved past it, so a
+  // non-zero count IS the read-back. Zero bars advanced (already_true, or a
+  // stall on the first step) changed nothing, and claims nothing.
+  if (out.bars_advanced > 0) {
+    return observed(
+      {
+        bars_advanced: out.bars_advanced,
+        cursor_before: out.start_state?.time ?? null,
+        cursor_after: out.state?.time ?? null,
+      },
+      detail,
+    );
+  }
+  return answered(detail);
 }
 
 /**
@@ -349,10 +377,10 @@ export async function stepUntil({
 export async function health({ probe = false, timeoutMs = 12000, _deps } = {}) {
   const { evaluate } = _resolve(_deps);
   const raw = await evaluate(HEALTH_JS);
-  const state = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  const reading = typeof raw === 'string' ? JSON.parse(raw) : raw;
 
   let probeResult;
-  if (probe && state?.is_replay_started === true) {
+  if (probe && reading?.is_replay_started === true) {
     probeResult = await withTransportLock(
       'step',
       () => _probeStep({ timeoutMs, _deps }),
@@ -367,21 +395,22 @@ export async function health({ probe = false, timeoutMs = 12000, _deps } = {}) {
     });
   }
 
-  const verdict = classifyHealth(state, probeResult);
-  // `state` is the RAW reading and `verdict.state` is the classification, and
-  // spreading the verdict first let the reading overwrite it — caught live on
-  // 2026-09-12 when this returned the reading object where 'healthy' belonged.
-  // That is the same shape as the pine_inputs_assert defect this phase fixed,
-  // written by the same hand that fixed it an hour earlier, which is the whole
-  // argument for internals/verdict.js: the shape has to be impossible, because
-  // knowing about it is demonstrably not enough. The reading is now `reading`.
-  return {
-    success: true,
-    ...verdict,
+  const classification = classifyHealth(reading, probeResult);
+  // The raw reading was once named `state`, and `classification.state` is the
+  // classification; spreading the classification first let the reading
+  // overwrite it — caught live on 2026-09-12 when this returned the reading
+  // object where 'healthy' belonged. That is the same shape as the
+  // pine_inputs_assert defect this phase fixed, written by the same hand that
+  // fixed it an hour earlier, which is the whole argument for
+  // internals/verdict.js: the shape has to be impossible, because knowing about
+  // it is demonstrably not enough. The reading is now `reading`, and it is added
+  // through withDetail(), which throws on ANY key the classification already
+  // carries — so a future `state` here is an error, not an overwrite.
+  return withDetail(answered(classification), {
     probe: probeResult ?? null,
     transport_in_flight: currentOperation(),
-    reading: state,
-  };
+    reading,
+  });
 }
 
 /**

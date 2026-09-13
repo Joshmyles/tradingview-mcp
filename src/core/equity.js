@@ -31,6 +31,7 @@ import {
   tighteningBenefit,
   tradingviewComparison,
 } from '../internals/equity.js';
+import { adopt, answered, failed } from '../internals/verdict.js';
 
 /**
  * Bars per round trip. Bounded because the whole slice is materialised as JSON
@@ -50,28 +51,26 @@ const SLICE = 5000;
 async function readAllBars(ev) {
   const extent = await ev(BARS_EXTENT_JS);
   if (!extent || !extent.size) {
-    return { ok: false, reason: 'no_bars', error: 'The price series holds no bars.' };
+    return failed('no_bars', { error: 'The price series holds no bars.' });
   }
   const rows = [];
   for (let from = extent.first; from <= extent.last; from += SLICE) {
     const slice = await ev(barsSliceJs(from, Math.min(from + SLICE - 1, extent.last)));
     if (!slice?.rows) {
-      return { ok: false, reason: 'bar_read_failed', error: `Bar slice from ${from} returned nothing.` };
+      return failed('bar_read_failed', { error: `Bar slice from ${from} returned nothing.` });
     }
     for (const row of slice.rows) rows.push(row);
   }
   const after = await ev(BARS_EXTENT_JS);
   if (!after || after.first !== extent.first || after.t_first !== extent.t_first) {
-    return {
-      ok: false,
-      reason: 'series_moved',
+    return failed('series_moved', {
       error:
         'The price series rebased while its bars were being read, so the slices do not describe one continuous history. Retry on a settled chart.',
       before: extent,
       after,
-    };
+    });
   }
-  return { ok: true, rows, extent, appended: after.last - extent.last };
+  return answered({ rows, extent, appended: after.last - extent.last });
 }
 
 /**
@@ -95,14 +94,12 @@ export async function equityCurve({
   const want = new Set(include);
 
   const first = await read({ entityId, includeOrders: false });
-  if (!first.ok) return first;
+  if (!first.ok) return adopt(first);
   const wantFrom = first.window?.backtest_from;
   if (wantFrom == null) {
-    return {
-      ok: false,
-      reason: 'no_window',
+    return failed('no_window', {
       error: 'The report does not carry a backtest window, so there is nothing to load history to.',
-    };
+    });
   }
 
   const history = await evAsync(ensureHistoryJs(Math.floor(wantFrom / 1000), 10000, maxHistoryRounds));
@@ -111,7 +108,7 @@ export async function equityCurve({
   // second read costs one gated round trip and removes the only way this
   // function can lie.
   const report = await read({ entityId: entityId || first.entity_id, includeOrders: false });
-  if (!report.ok) return report;
+  if (!report.ok) return adopt(report);
 
   const bars = await readAllBars(ev);
   if (!bars.ok) return bars;
@@ -119,9 +116,7 @@ export async function equityCurve({
   const prepared = prepareBars(bars.rows);
   const rec = reconstructEquity(report.trades, prepared);
   if (rec.history_short_error) {
-    return {
-      ok: false,
-      reason: 'history_too_short',
+    return failed('history_too_short', {
       error: rec.history_short_error,
       legs_outside_loaded_history: rec.legs_outside_loaded_history,
       unplaced_trade_indexes: rec.unplaced_trade_indexes,
@@ -129,7 +124,7 @@ export async function equityCurve({
       loaded_bars: prepared.n,
       loaded_from: prepared.n ? prepared.times[0] : null,
       backtest_from: report.window.backtest_from,
-    };
+    });
   }
 
   const paths = excursionPaths(rec.placed, prepared);
@@ -146,8 +141,7 @@ export async function equityCurve({
   const halfCommission = (report.trades.find((t) => t.commission != null)?.commission ?? 0) / 2;
   const r4 = (v) => Math.round(v * 1e4) / 1e4;
 
-  return {
-    ok: true,
+  return answered({
     entity_id: report.entity_id,
     window: report.window,
     history: {
@@ -204,7 +198,7 @@ export async function equityCurve({
     }),
     ...(want.has('paths') && { excursion_paths: paths.rows }),
     ...(want.has('curve') && { curve: downsample(rec, prepared, 500) }),
-  };
+  });
 }
 
 /**

@@ -11,6 +11,7 @@ import { waitForChartReady } from '../wait.js';
 import { readStrategyReport } from '../strategy-report.js';
 import { fromReaderFailure } from '../tools/_format.js';
 import { captureReportState, requireSettled } from '../settle.js';
+import { answered, failed } from '../internals/verdict.js';
 
 const MAX_OHLCV_BARS = 500;
 const MAX_TRADES = 20;
@@ -114,11 +115,10 @@ const settleNote = (gate) =>
 
 async function gateRead({ wait = true, series = false, timeoutMs } = {}) {
   if (wait === false) {
-    return {
-      ok: true,
+    return answered({
       unsettled_by_request: true,
       note: 'wait=false: returned without waiting for the chart to settle. If the chart was mid-recompute, this describes the previous state.',
-    };
+    });
   }
   const gate = await requireSettled({
     scope: 'all',
@@ -222,8 +222,7 @@ export async function getOhlcv({ count, summary, wait } = {}) {
     const volumes = bars.map((b) => b.volume);
     const first = bars[0];
     const last = bars[bars.length - 1];
-    return {
-      success: true,
+    return answered({
       bar_count: bars.length,
       period: { from: first.time, to: last.time },
       open: first.open,
@@ -240,17 +239,16 @@ export async function getOhlcv({ count, summary, wait } = {}) {
       ),
       last_5_bars: bars.slice(-5),
       provenance,
-    };
+    });
   }
 
-  return {
-    success: true,
+  return answered({
     bar_count: data.bars.length,
     total_available: data.total_bars,
     source: data.source,
     bars: data.bars,
     provenance,
-  };
+  });
 }
 
 export async function getIndicator({ entity_id }) {
@@ -281,7 +279,7 @@ export async function getIndicator({ entity_id }) {
       return true;
     });
   }
-  return { success: true, entity_id, visible: data?.visible, inputs };
+  return answered({ entity_id, visible: data?.visible, inputs });
 }
 
 // TradingView will not compute a strategy report at all until the Strategy
@@ -329,9 +327,10 @@ async function ensureReportPossible() {
  * computing" from "will never compute".
  */
 function reportFailure(r, extra = {}) {
+  // fromReaderFailure reads only reason / error and carries the rest as
+  // evidence, so the argument holds no verdict keys of its own.
   return fromReaderFailure(
     {
-      ok: false,
       reason: r.reason,
       error: r.error,
       ...(r.settle && {
@@ -394,8 +393,7 @@ export async function getStrategyResults() {
   for (const k of Object.keys(metrics))
     if (metrics[k] !== null && metrics[k] !== undefined) clean[k] = metrics[k];
 
-  return {
-    success: Object.keys(clean).length > 0,
+  const detail = {
     metric_count: Object.keys(clean).length,
     strategy: r.title,
     entity_id: r.entity_id,
@@ -413,6 +411,7 @@ export async function getStrategyResults() {
     },
     ...unhiddenNote(unhidden, 'the report'),
   };
+  return detail.metric_count > 0 ? answered(detail) : failed('not_found', detail);
 }
 
 export async function getTrades({ max_trades } = {}) {
@@ -431,8 +430,7 @@ export async function getTrades({ max_trades } = {}) {
   // same array object, so this returns exactly what the old direct read did.
   const all = r.orders || [];
   const tail = all.slice(Math.max(0, all.length - limit));
-  return {
-    success: tail.length > 0,
+  const detail = {
     trade_count: tail.length,
     total_orders: all.length,
     source: 'internal_api',
@@ -456,6 +454,7 @@ export async function getTrades({ max_trades } = {}) {
     },
     ...unhiddenNote(unhidden, 'orders'),
   };
+  return tail.length > 0 ? answered(detail) : failed('not_found', detail);
 }
 
 export async function getEquity() {
@@ -473,8 +472,7 @@ export async function getEquity() {
   // to a note, so this tool has never returned a curve. What does exist is the
   // running cumulative P&L on each trade row, which is a real per-trade curve.
   const eq = r.equity || { points: [] };
-  return {
-    success: eq.points.length > 0,
+  const detail = {
     data_points: eq.points.length,
     source: 'internal_api',
     basis: eq.basis,
@@ -488,6 +486,7 @@ export async function getEquity() {
     },
     ...unhiddenNote(unhidden, 'the equity curve'),
   };
+  return eq.points.length > 0 ? answered(detail) : failed('not_found', detail);
 }
 
 export async function getQuote({ symbol } = {}) {
@@ -563,7 +562,7 @@ async function _getQuoteInternal({ symbol } = {}) {
       throw new Error(
         'Could not retrieve quote. The chart may still be loading.',
       );
-    return { success: true, ...data };
+    return answered({ ...data });
   } finally {
     if (needsRestore && originalSymbol) {
       try {
@@ -624,8 +623,7 @@ export async function getDepth() {
 
   if (!data || !data.found)
     throw new Error(data?.error || 'DOM panel not found.');
-  return {
-    success: true,
+  return answered({
     bid_levels: data.bids?.length || 0,
     ask_levels: data.asks?.length || 0,
     spread: data.spread,
@@ -633,7 +631,7 @@ export async function getDepth() {
     asks: data.asks || [],
     raw_values: data.raw_values,
     note: data.note,
-  };
+  });
 }
 
 export async function getStudyValues({ wait } = {}) {
@@ -677,14 +675,13 @@ export async function getStudyValues({ wait } = {}) {
       return results;
     })()
   `);
-  return {
-    success: true,
+  return answered({
     study_count: data?.length || 0,
     studies: data || [],
     ...(gate.unsettled_by_request
       ? { settled: false, note: gate.note }
       : { settled: true, settle_ms: gate.settle.elapsed_ms }),
-  };
+  });
 }
 
 export async function getPineLines({ study_filter, verbose, wait } = {}) {
@@ -693,7 +690,7 @@ export async function getPineLines({ study_filter, verbose, wait } = {}) {
   const filter = study_filter || '';
   const raw = await evaluate(buildGraphicsJS('dwglines', 'lines', filter));
   if (!raw || raw.length === 0)
-    return { success: true, study_count: 0, studies: [], ...settleNote(gate) };
+    return answered({ study_count: 0, studies: [], ...settleNote(gate) });
 
   const studies = raw.map((s) => {
     const hLevels = [];
@@ -729,7 +726,7 @@ export async function getPineLines({ study_filter, verbose, wait } = {}) {
     if (verbose) result.all_lines = allLines;
     return result;
   });
-  return { success: true, study_count: studies.length, studies, ...settleNote(gate) };
+  return answered({ study_count: studies.length, studies, ...settleNote(gate) });
 }
 
 export async function getPineLabels({
@@ -743,7 +740,7 @@ export async function getPineLabels({
   const filter = study_filter || '';
   const raw = await evaluate(buildGraphicsJS('dwglabels', 'labels', filter));
   if (!raw || raw.length === 0)
-    return { success: true, study_count: 0, studies: [], ...settleNote(gate) };
+    return answered({ study_count: 0, studies: [], ...settleNote(gate) });
 
   const limit = max_labels || 50;
   const studies = raw.map((s) => {
@@ -774,7 +771,7 @@ export async function getPineLabels({
       labels,
     };
   });
-  return { success: true, study_count: studies.length, studies, ...settleNote(gate) };
+  return answered({ study_count: studies.length, studies, ...settleNote(gate) });
 }
 
 export async function getPineTables({ study_filter, wait } = {}) {
@@ -785,7 +782,7 @@ export async function getPineTables({ study_filter, wait } = {}) {
     buildGraphicsJS('dwgtablecells', 'tableCells', filter),
   );
   if (!raw || raw.length === 0)
-    return { success: true, study_count: 0, studies: [], ...settleNote(gate) };
+    return answered({ study_count: 0, studies: [], ...settleNote(gate) });
 
   const studies = raw.map((s) => {
     const tables = {};
@@ -816,7 +813,7 @@ export async function getPineTables({ study_filter, wait } = {}) {
     });
     return { name: s.name, tables: tableList };
   });
-  return { success: true, study_count: studies.length, studies, ...settleNote(gate) };
+  return answered({ study_count: studies.length, studies, ...settleNote(gate) });
 }
 
 export async function getPineBoxes({ study_filter, verbose, wait } = {}) {
@@ -825,7 +822,7 @@ export async function getPineBoxes({ study_filter, verbose, wait } = {}) {
   const filter = study_filter || '';
   const raw = await evaluate(buildGraphicsJS('dwgboxes', 'boxes', filter));
   if (!raw || raw.length === 0)
-    return { success: true, study_count: 0, studies: [], ...settleNote(gate) };
+    return answered({ study_count: 0, studies: [], ...settleNote(gate) });
 
   const studies = raw.map((s) => {
     const zones = [];
@@ -860,5 +857,5 @@ export async function getPineBoxes({ study_filter, verbose, wait } = {}) {
     if (verbose) result.all_boxes = allBoxes;
     return result;
   });
-  return { success: true, study_count: studies.length, studies, ...settleNote(gate) };
+  return answered({ study_count: studies.length, studies, ...settleNote(gate) });
 }

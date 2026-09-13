@@ -2,7 +2,7 @@
  * Core indicator settings logic.
  */
 import { evaluate, safeString } from '../connection.js';
-import { observed, refused, unobservable } from '../internals/verdict.js';
+import { answered, observed, refused } from '../internals/verdict.js';
 
 const CHART_API = 'window.TradingViewApi._activeChartWidgetWV.value()';
 const DIALOG = '[data-name="indicators-dialog"]';
@@ -97,7 +97,7 @@ export async function searchStudies({ query, limit } = {}) {
   await closeDialog();
   if (!res || !res.open) throw new Error('Indicators dialog closed unexpectedly during search.');
   const results = (res.results || []).map(({ title, section }) => ({ title, section })).slice(0, cap);
-  return { success: true, query, count: results.length, results };
+  return answered({ query, count: results.length, results });
 }
 
 /**
@@ -151,13 +151,20 @@ export async function addStudyFromSearch({ query, match, section } = {}) {
   const beforeSet = new Set(before || []);
   const added = (after || []).filter((s) => !beforeSet.has(s.id));
 
-  return {
-    success: added.length > 0,
+  const detail = {
     added_from_search: clicked?.clicked || null,
     section: clicked?.section || null,
     entity_id: added[0]?.id || null,
     added_count: added.length,
   };
+  if (!added.length) {
+    return refused(
+      `no new study appeared on the chart after clicking "${clicked?.clicked || want}" — `
+      + `the chart holds the same ${(after || []).length} study(ies) as before`,
+      detail,
+    );
+  }
+  return observed({ entity_id: added[0].id, added_count: added.length }, detail);
 }
 
 export async function setInputs({ entity_id, inputs: inputsRaw }) {

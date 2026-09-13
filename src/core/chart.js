@@ -3,7 +3,7 @@
  */
 import { evaluate as _evaluate, evaluateAsync as _evaluateAsync, safeString, requireFinite } from '../connection.js';
 import { captureFence as _captureFence } from '../settle.js';
-import { observed, refused, unobservable } from '../internals/verdict.js';
+import { answered, observed, refused, unobservable } from '../internals/verdict.js';
 
 const CHART_API = 'window.TradingViewApi._activeChartWidgetWV.value()';
 
@@ -30,15 +30,18 @@ function _resolve(deps) {
  * at the end rather than once per mutation.
  */
 function applied(detail, fence) {
-  return {
-    success: true,
-    applied: true,
-    // Deliberately not a readiness claim. Nothing here has been waited on.
-    settled: false,
-    ...detail,
-    fence,
-    next: 'Reads gate themselves. Call chart_await_settled first only if you need to know the chart has caught up before doing something else.',
-  };
+  return unobservable(
+    'the change was requested and deliberately not waited on: the chart applies it asynchronously, '
+    + 'so it is not read back here. The returned fence is what a later read uses to prove the chart moved on.',
+    {
+      applied: true,
+      // Deliberately not a readiness claim. Nothing here has been waited on.
+      settled: false,
+      ...detail,
+      fence,
+      next: 'Reads gate themselves. Call chart_await_settled first only if you need to know the chart has caught up before doing something else.',
+    },
+  );
 }
 
 export async function getState({ _deps } = {}) {
@@ -61,7 +64,7 @@ export async function getState({ _deps } = {}) {
       };
     })()
   `);
-  return { success: true, ...state };
+  return answered({ ...state });
 }
 
 export async function setSymbol({ symbol, _deps }) {
@@ -177,14 +180,17 @@ export async function manageIndicator({ action, indicator, entity_id, inputs: in
       else appliedInputs = { applied: result?.confirmed || {}, ...(result?.unknown?.length && { unknown_inputs: result.unknown }) };
     }
 
-    return {
-      success: newIds.length > 0,
+    const detail = {
       action: 'add',
       indicator,
       entity_id: entityId,
       new_study_count: newIds.length,
       ...(appliedInputs && { inputs: appliedInputs }),
     };
+    if (newIds.length === 0) {
+      return refused(`no new study id appeared on the chart after createStudy() for "${indicator}"`, detail);
+    }
+    return observed({ new_entity_ids: newIds }, detail);
   } else if (action === 'remove') {
     if (!entity_id) throw new Error('entity_id required for remove action. Use chart_get_state to find study IDs.');
     const removal = await evaluate(`
@@ -228,7 +234,7 @@ export async function getVisibleRange({ _deps } = {}) {
       return { visible_range: chart.getVisibleRange(), bars_range: chart.getVisibleBarsRange() };
     })()
   `);
-  return { success: true, visible_range: result.visible_range, bars_range: result.bars_range };
+  return answered({ visible_range: result.visible_range, bars_range: result.bars_range });
 }
 
 export async function setVisibleRange({ from, to, _deps }) {
@@ -393,7 +399,7 @@ export async function symbolInfo({ _deps } = {}) {
       };
     })()
   `);
-  return { success: true, ...result };
+  return answered({ ...result });
 }
 
 export async function symbolSearch({ query, type }) {
@@ -422,5 +428,5 @@ export async function symbolSearch({ query, type }) {
     full_name: r.exchange ? `${r.exchange}:${strip(r.symbol)}` : strip(r.symbol),
   }));
 
-  return { success: true, query, source: 'rest_api', results, count: results.length };
+  return answered({ query, source: 'rest_api', results, count: results.length });
 }

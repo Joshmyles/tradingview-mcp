@@ -1,0 +1,79 @@
+{
+  "ok": true,
+  "available_children": [
+    "_listeners",
+    "_muteChildChanges",
+    "_owner",
+    "_name",
+    "_childs",
+    "_dependents",
+    "_schema",
+    "_themedColors",
+    "_restoreFactoryDefaultsEvent",
+    "_replaceThemedColorsOnThemeChange",
+    "_forbidSavingDefaults",
+    "_defaultName",
+    "_useUserPreferences",
+    "_saveNonDefaultUserPreferencesOnly",
+    "_ignoreAllowSavingDefaults",
+    "_saveDefaultsConsumer",
+    "_factoryDefaultsSupplier",
+    "_allStateKeys",
+    "_excludedStateKeys",
+    "_nonThemedDefaultsKeys",
+    "_themedDefaultsKeys",
+    "_allDefaultsKeys",
+    "_excludedDefaultsKeys",
+    "_excludedTemplateKeys",
+    "_alwaysSaveDefaultKeys",
+    "_theme",
+    "commission_type",
+    "commission_value",
+    "currency",
+    "initial_capital",
+    "recoveryState",
+    "text"
+  ],
+  "before": {
+    "initial_capital": 1000000,
+    "currency": "NONE",
+    "commission_type": "percent",
+    "commission_value": 0
+  },
+  "write_errors": {},
+  "after": {
+    "initial_capital": 100000,
+    "currency": "USD",
+    "commission_type": "cash_per_contract",
+    "commission_value": 0.11
+  },
+  "broker_view": {},
+  "broker_equity": 100000,
+  "verdict": {
+    "initial_capital": {
+      "requested": 100000,
+      "read_back": 100000,
+      "took": true,
+      "was": 1000000
+    },
+    "currency": {
+      "requested": "USD",
+      "read_back": "USD",
+      "took": true,
+      "was": "NONE"
+    },
+    "commission_type": {
+      "requested": "cash_per_contract",
+      "read_back": "cash_per_contract",
+      "took": true,
+      "was": "percent"
+    },
+    "commission_value": {
+      "requested": 0.11,
+      "read_back": 0.11,
+      "took": true,
+      "was": 0
+    }
+  },
+  "all_took": true
+}

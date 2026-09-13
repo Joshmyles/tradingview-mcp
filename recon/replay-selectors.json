@@ -1,0 +1,792 @@
+{
+  "_": "Phase 0 selector registry for the replay auto-execution harness. Captured 2026-09-12 against TradingView Desktop 3.4.1.8194 (Chrome/146.0.7680.216, Electron 41.7.1), layout 'Trial Ground', ICMARKETS:XAUUSD @ 45S, Bar Replay ACTIVE, Replay Broker connected.",
+  "_read_this_first": "The DOM is NOT the recommended control path. Every replay-toolbar control and every order intent in the spec has a named, semantic in-page API (see api_registry). The DOM entries exist because Phase 0 asked for them, and because two things (the 'Open Replay Trading' arming button and the qty field) have no confirmed API equivalent. Confidence describes survival across a TradingView update, not correctness today.",
+  "environment": {
+    "captured_at": "2026-09-12",
+    "tv_desktop": "3.4.1.8194",
+    "chrome": "146.0.7680.216",
+    "electron": "41.7.1",
+    "cdp": "127.0.0.1:9222",
+    "layout": "Trial Ground",
+    "chart_target": "4E51661AF478385AB3365D3E21473E59",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S",
+    "_phase0_5_invariants": {
+      "page_targets_total": 7,
+      "page_targets_with_TradingViewApi": 1,
+      "page_targets_that_do_not_answer_CDP": 3,
+      "dataSources_total": 56,
+      "studies_total": 16,
+      "pine_studies": 11,
+      "pine_studies_visible": 1,
+      "strategies": 1,
+      "note": "Both stated section-1 invariants (\"one page target\", \"one study\") are FALSE as written. See src/internals/invariants.js for what was implemented instead, and why."
+    },
+    "_phase0_6_chart_state": {
+      "drawings_actual": 5,
+      "drawings_list": [
+        "LineToolRiskRewardLong",
+        "LineToolRiskRewardShort",
+        "LineToolTrendLine",
+        "LineToolCallout x2"
+      ],
+      "the_29_were_alert_labels": "CORRECTION to Phase 0.5. The 29 \"drawings\" are AlertLabel sources, one per active price alert. They are rendered from the alert service and do NOT appear in the saved layout.",
+      "layout": {
+        "id": "R7HDoRZ2",
+        "name": "Trial Ground"
+      },
+      "autosave_enabled": true,
+      "has_unsaved_changes_before_reload": false,
+      "SAVECHART_IS_NOT_A_SAVE": "TradingViewApi.saveChart(cb) only serialises to JSON and hands it to the callback - it never reaches the server. The real save is _saveChartService.saveExistentChart(before, ok, err). NOTE the hazard in _doSave: it assigns location.href when location.pathname === \"/chart/\"."
+    }
+  },
+  "api_registry": {
+    "_": "Preferred path. All roots reachable from the page global with no click synthesis.",
+    "roots": {
+      "replayApi": "window.TradingViewApi._replayApi",
+      "replayUIController": "window.TradingViewApi._replayApi._replayUIController",
+      "tradingUIController": "window.TradingViewApi._replayApi._replayUIController.tradingUIController()",
+      "webpackRequire": "window.webpackChunktradingview.push([[unique],{},function(r){ req = r; }])",
+      "tradingService": "req('822530').tradingService()",
+      "internalBrokerIds": "req('754318').InternalBrokerId",
+      "orderEnums": "req('601629') -> { Side, OrderType, OrderStatus, ParentType }"
+    },
+    "enums": {
+      "Side": {
+        "Buy": 1,
+        "Sell": -1
+      },
+      "OrderType": {
+        "Limit": 1,
+        "Market": 2,
+        "Stop": 3,
+        "StopLimit": 4
+      },
+      "OrderStatus": {
+        "Canceled": 1,
+        "Filled": 2,
+        "Inactive": 3,
+        "Placing": 4,
+        "Rejected": 5,
+        "Working": 6
+      },
+      "ParentType": {
+        "Order": 1,
+        "Position": 2,
+        "IndividualPosition": 3
+      }
+    },
+    "session_control": {
+      "is_replay_started": {
+        "call": "replayApi.isReplayStarted()",
+        "wrapped": true,
+        "verified": true
+      },
+      "is_replay_available": {
+        "call": "replayApi.isReplayAvailable()",
+        "wrapped": true,
+        "verified": true
+      },
+      "current_bar_time": {
+        "call": "replayApi.currentDate()",
+        "wrapped": true,
+        "verified": true,
+        "units": "EPOCH SECONDS - multiply by 1000"
+      },
+      "selected_start_bar": {
+        "call": "replayApi.getReplaySelectedDate()",
+        "wrapped": true,
+        "verified": true,
+        "units": "epoch seconds"
+      },
+      "select_start_bar": {
+        "call": "replayApi.selectDate(msTimestamp)",
+        "verified": true,
+        "note": "async in page; must be awaited in-page (see src/core/replay.js)"
+      },
+      "step_one_bar": {
+        "call": "replayApi.doStep()",
+        "verified": true,
+        "note": "returns no promise; confirm via the currentDate() edge"
+      },
+      "autoplay_toggle": {
+        "call": "replayApi.toggleAutoplay()",
+        "verified": true,
+        "note": "NOT used by the harness - step-synchronous only"
+      },
+      "stop_replay": {
+        "call": "replayApi.stopReplay()",
+        "verified": true,
+        "note": "must be followed by chartWidgetCollection.updateReplaySessionState(null)"
+      },
+      "replay_mode": {
+        "call": "replayApi.replayMode()",
+        "observed": "AllCharts"
+      },
+      "replay_timing_mode": {
+        "call": "replayApi.replayTimingMode()",
+        "observed": "manual"
+      },
+      "replay_depth": {
+        "read": "replayUIController._replayDepth  /  replayUIController._replayResolutionsDepth",
+        "observed": {
+          "45S": 1702971716,
+          "1S": 1702971716,
+          "5S": 1702971716,
+          "15S": 1702971716,
+          "1T": 1773392217
+        },
+        "WARNING": "Do NOT call getReplayDepth(arg). Source is getReplayDepth(e){ if(e) this.enableReplayMode(false); return this._replayDepth } - the argument is not a resolution, it is a flag that MUTATES replay mode."
+      },
+      "_phase0_5_depth": {
+        "_": "MEASURED. The Phase 0 UNKNOWN is closed, and the repo belief that 45s history is a rolling ~20k-bar window is wrong about replay SEEK depth.",
+        "earliest_selectable_utc": "2023-12-19T07:41:56Z",
+        "earliest_selectable_epoch_sec": 1702971716,
+        "earliest_bar_actually_served_utc": "2023-12-19T07:42:30Z",
+        "selecting_the_boundary_instant": "0 bars - there is nothing before it to draw",
+        "behaviour_before_the_floor": "CLAMPED, NOT REFUSED. _onPointSelected does Math.max(depth, t-1) and fires a \"replay_time_point_corrected\" notification. There is no refusal to walk backwards into.",
+        "confirmed_loading_at": [
+          "2023-12-20",
+          "2023-12-26",
+          "2024-01-15",
+          "2024-03-11",
+          "2024-06-03",
+          "2025-06-02",
+          "2026-01-15",
+          "2026-05-01",
+          "2026-07-01",
+          "2026-08-11",
+          "2026-08-25",
+          "2026-09-01"
+        ],
+        "per_resolution": {
+          "45S": 1702971716,
+          "1S": 1702971716,
+          "5S": 1702971716,
+          "15S": 1702971716,
+          "1T": 1773392217
+        },
+        "per_resolution_reading": "The seconds tier shares ONE floor; ticks have their own, shorter one. Not a placeholder, and not backwards.",
+        "caveat": "Seek depth is NOT study history depth. That replay can START at 2024-06-03 does not mean B15 computes a full book from there. Unmeasured.",
+        "step_granularity": "UNKNOWN - the session wedged before it could be measured."
+      },
+      "_phase0_5_wedge_warning": "A replay session can enter a state where doStep() returns a promise that NEVER SETTLES and autoplay advances nothing, while reporting itself connected, started and unfinished (sessionState 2, replayStatus 3). Measured 2026-09-12 after arming Replay Trading and issuing ~15 selectDate calls in quick succession. NOT recoverable by stopReplay+start, leaveReplay, removing the <chartId>_additional replay model, or disconnectionSessionIfExists - all four tried. Recovery is a chart reload. Any loop MUST treat a non-advancing step as a hard failure; core/replay.js step() now throws rather than reporting a stale success.",
+      "_phase0_6_step_granularity": {
+        "_": "The Phase 0.5 UNKNOWN is CLOSED.",
+        "granularity_at_45S": "per bar, exactly 45 seconds",
+        "observed_cursors": [
+          1788220799,
+          1788220829,
+          1788220874,
+          1788220919
+        ],
+        "first_step_note": "The first step from a start instant that is not on a bar boundary snaps to the boundary (30s here, from 23:59:59), then steps 45s per bar.",
+        "autoplay": {
+          "delay_ms": 1000,
+          "advanced_sec_in_6s": 225,
+          "bars": 5
+        },
+        "doStep_settle_ms_observed": [
+          496,
+          548,
+          589
+        ]
+      },
+      "_phase0_6_recovery": {
+        "wedge_recovery": "A chart reload clears it. The reload does NOT resume the session - replay is left OFF (isReplayStarted false, isInReplay false, currentBroker null) and must be restarted.",
+        "reload_cost_measured_sec": 44.7,
+        "drawings_survive_reload": true,
+        "manifest_survives_reload": "hash b8d3b7ff unchanged",
+        "single_flight": "src/internals/replay-transport.js serialises selectDate/step/play/pause/stop and REFUSES a selectDate while a step is in flight.",
+        "health_read": "replay_health tool; classifyHealth distinguishes healthy / wedged / stalled / armed_unprobed. No status FLAG distinguishes wedged from healthy - only a probe does."
+      },
+      "_phase0_6_bar_integrity": {
+        "_": "Deep 45S bars are GENUINE, not derived or upsampled.",
+        "tests": {
+          "pct_consecutive_deltas_45s": {
+            "floor_2023_12": 99.0,
+            "recent_2026": 99.83
+          },
+          "repeated_ohlc_pct": {
+            "floor": 0.0,
+            "recent": 0.0
+          },
+          "non_45s_deltas": {
+            "floor": {
+              "90": 2,
+              "3915": 1
+            },
+            "recent": {
+              "3825": 1
+            }
+          },
+          "open_equals_prev_close": false,
+          "price_level_2023_12_20": 2039.16
+        },
+        "skipped_bars_are_the_clincher": "The 90s deltas at depth are 45s windows in which no tick printed. An upsample interpolates; it never skips. That is the strongest single evidence against synthesis.",
+        "relative_range_by_era_pct": {
+          "2023-12": 0.0093,
+          "2024-01": 0.0107,
+          "2024-06": 0.0146,
+          "2025-06": 0.0194,
+          "2026-05": 0.0249,
+          "2026-08": 0.0164
+        },
+        "relative_range_reading": "Regime, not data quality: the within-2026 spread (0.0164-0.0249) is as wide as most cross-era gaps, and gold more than doubled over the period.",
+        "usable_depth": "the full seek depth - the bars never start looking synthetic",
+        "UNMEASURED_AND_GATING": "Whether a STUDY computes a correct book at a deep replay start. Replay serves only ~300-600 bars around the cursor while build15 declares max_bars_back 3000 and PS runs sma(atr,100). Do not treat a deep-replay book as out-of-sample evidence until warm-up is measured."
+      }
+    },
+    "interlocks": {
+      "in_replay_mode": {
+        "call": "tradingService().isInReplay()",
+        "observed": true,
+        "verified": true
+      },
+      "replay_mode_enabled": {
+        "call": "replayUIController.isReplayModeEnabled()",
+        "observed": true,
+        "verified": true
+      },
+      "active_broker_id": {
+        "call": "tradingService().activeBroker().currentBroker()",
+        "observed": "REPLAYBROKER",
+        "verified": true
+      },
+      "active_broker_metainfo_id": {
+        "call": "tradingService().activeBroker().metainfo().id",
+        "observed": "REPLAYBROKER",
+        "verified": true
+      },
+      "broker_connected": {
+        "call": "tradingService().activeBroker().isConnected()",
+        "observed": true,
+        "verified": true
+      },
+      "account_type": {
+        "call": "tradingService().activeBroker().currentAccountType()",
+        "observed": "demo",
+        "verified": true
+      },
+      "REQUIRED_BROKER_ID": "REPLAYBROKER",
+      "REFUSE_IF_BROKER_IS_ANY_OTHER": [
+        "Paper",
+        "DUMMY",
+        "MOCKBROKER",
+        "MOCKBROKER_IMPLICIT",
+        "MOCKBROKER_CODE",
+        "any of the 137 entries in tradingService().brokersList()"
+      ],
+      "NAMING_TRAP": "tradingUIController()._isConnectedToBroker means 'connected to the REPLAY broker', not 'a real broker is attached'. Never use it as the refusal signal.",
+      "_phase0_5": {
+        "re_verified_armed": true,
+        "observed": {
+          "currentBroker": "REPLAYBROKER",
+          "isInReplay": true,
+          "isReplayStarted": true,
+          "connectionStatus": 1,
+          "currentAccount": "primary",
+          "currentAccountType": "demo",
+          "brokersList_length": 137
+        },
+        "arming_the_panel_did_not_change_the_broker": true,
+        "implemented_in": "src/core/replay-interlock.js as an ALLOWLIST (137 brokers are listed; a denylist fails open on the 138th). Unknown is a refusal.",
+        "naming_trap_pinned_by": "tests/replay-interlock.test.js - asserts the decision is identical for _isConnectedToBroker true/false/null/undefined, in BOTH directions."
+      }
+    },
+    "orders": {
+      "_": "All on tradingService().activeBroker(). These are the SAME methods a real broker uses - the interlock above is the only separation. Verified present and supported by config flags; NOT exercised (no order was placed in Phase 0).",
+      "place": "broker.placeOrder(preOrder, confirmId?) -> Promise",
+      "preorder_shape_observed": {
+        "symbol": "string",
+        "side": "Side",
+        "type": "OrderType"
+      },
+      "preorder_shape_inferred": {
+        "qty": "number",
+        "limitPrice": "number?",
+        "stopPrice": "number?",
+        "takeProfit": "number?",
+        "stopLoss": "number?"
+      },
+      "preorder_shape_note": "createInitialPreOrder({symbol,side,type}) echoed those three back. Price and bracket field NAMES are inferred from the config flags and the standard broker API shape, NOT observed.",
+      "modify": "broker.modifyOrder(order, confirmId?)",
+      "cancel": "broker.cancelOrder(orderId)",
+      "cancel_many": "broker.cancelOrders(symbol, side, orderIds)",
+      "close_position": "broker.closePosition(positionId, amount?)",
+      "reverse": "broker.reversePosition(positionId)",
+      "position_brackets": "broker.editPositionBrackets(positionId, brackets, confirmId?)",
+      "read_orders": "await broker.orders(symbol?)",
+      "read_positions": "await broker.positions(symbol?)",
+      "read_executions": "await broker.allExecutions() | broker.executions(symbol)",
+      "read_orders_history": "await broker.ordersHistory()",
+      "read_account_summary": "broker.accountManagerInfo()",
+      "NO_CLIENT_ORDER_ID": "placeOrder takes no caller-supplied id. There is no native idempotency key.",
+      "_phase0_5_order_object": {
+        "observed_in_source": [
+          "type (OrderType enum)",
+          "takeProfit",
+          "stopLoss"
+        ],
+        "still_inferred": [
+          "side (Side enum)",
+          "qty",
+          "limitPrice",
+          "stopPrice"
+        ],
+        "order_id": "GENERATED INSIDE placeOrder as order_${guid()}; returns { orderId, label }. Third independent confirmation that there is no client order id.",
+        "bracket_routing": "MARKET orders get POSITION brackets; every other type gets ORDER brackets keyed to the parent order id. replay_brackets_set must model both.",
+        "wire_format": "{ id, action: \"place\", params: { b: <isBuy>, q: <qty>, tp: <typeString>, c: <comment> } }",
+        "capability_path": "currentAccountApi().placeOrderCapability.placeOrder(order, ...)"
+      },
+      "_phase0_6_measured": {
+        "_": "MEASURED on a live fill, not inferred. Order id order_2481ed79-1dc0-4828-9e3d-dc5bb0ec82c8.",
+        "order_object_accepted": {
+          "symbol": "ICMARKETS:XAUUSD",
+          "side": "Side.Buy (1)",
+          "type": "OrderType.Market (2)",
+          "qty": 1
+        },
+        "field_names_now_measured": [
+          "symbol",
+          "side",
+          "qty",
+          "type"
+        ],
+        "still_untested": [
+          "limitPrice",
+          "stopPrice"
+        ],
+        "return_value": {
+          "shape": "{ orderId, result }",
+          "observed": {
+            "orderId": "order_<guid>",
+            "result": 0
+          },
+          "no_label_field": "Phase 0.5 predicted {orderId, label}. There is NO label; there is a result."
+        },
+        "returns_a_promise": true,
+        "returned_synchronously": false,
+        "resolve_ms_observed": 701,
+        "reconciliation_consequence": "The generated id is NOT available before the call resolves, so it cannot serve as a pre-submit dedup key. It IS a sound after-the-fact matching handle. The pre-submit orders()/allExecutions() snapshot plus re-read on an ambiguous response remains necessary.",
+        "filled_order_wire_shape": "{ b: <isBuy>, c: \"Buy market order\", e: null, id, p: <price>, q: <qty>, tm, tp: \"MARKET\", utm: <epoch ms> }"
+      },
+      "_phase0_6_executions": {
+        "_": "CORRECTION. executions() is NOT the fill surface on this broker.",
+        "executions_symbol_filtered": {
+          "call": "activeBroker().executions({symbol})",
+          "observed_after_a_fill": [],
+          "verdict": "EMPTY even after a confirmed fill. Do not use it."
+        },
+        "allExecutions": {
+          "call": "activeBroker().allExecutions()",
+          "observed": [
+            {
+              "id": "order_2481ed79-...",
+              "symbol": "ICMARKETS:XAUUSD",
+              "qty": 1,
+              "side": 1,
+              "price": 4452.39,
+              "time": 1788220785000
+            },
+            {
+              "id": "order_dbd927ac-...",
+              "symbol": "ICMARKETS:XAUUSD",
+              "qty": 1,
+              "side": -1,
+              "price": 4451.39,
+              "time": 1788220875000
+            }
+          ],
+          "verdict": "THIS is the fill surface. Use it."
+        }
+      },
+      "_phase0_6_position_semantics": {
+        "open_position_shape": {
+          "avgPrice": 4452.39,
+          "id": "ICMARKETS:XAUUSD-<guid>",
+          "qty": 1,
+          "side": 1,
+          "symbol": "ICMARKETS:XAUUSD",
+          "unrealizedPl": 0
+        },
+        "CLOSED_POSITION_KEEPS_ITS_ROW": true,
+        "closed_position_shape": {
+          "avgPrice": null,
+          "qty": 0,
+          "side": -1,
+          "unrealizedPl": 0,
+          "note": "side is FLIPPED and avgPrice is null; the row is NOT removed"
+        },
+        "FLATTEN_CHECK_TRAP": "positions().length === 0 is NEVER true once a trade has existed on the symbol, so a flatten-and-verify loop written that way hangs forever. FLAT MEANS every row has qty === 0. Measured: rows 1, open_qty 0, flat true."
+      }
+    },
+    "instrument": {
+      "symbol_info": "await broker.symbolInfo('ICMARKETS:XAUUSD')",
+      "observed": {
+        "qty": {
+          "min": 1,
+          "max": 1000000000000,
+          "step": 1,
+          "uiStep": 1,
+          "default": 1
+        },
+        "pipSize": 0.01,
+        "pipValue": 0.01,
+        "minTick": 0.01,
+        "type": "commodity",
+        "description": "Gold vs US Dollar"
+      },
+      "WARNING": "qty.min and qty.step are both 1 and there is no lotSize field. The UNIT of qty on the Replay Broker is not established - ounces, lots and contracts are all consistent with what was observed. Sizing arithmetic cannot be trusted until one order is placed and P&L per point is measured.",
+      "_phase0_5_symbolInfo": {
+        "note": "symbolInfo() is a PROMISE on this broker; Phase 0 recorded it unresolved. Awaited values:",
+        "qty": {
+          "min": 1,
+          "max": 1000000000000,
+          "step": 1,
+          "uiStep": 1,
+          "default": 1
+        },
+        "minTick": 0.01,
+        "pipValue": 0.01,
+        "pipSize": 0.01,
+        "type": "commodity",
+        "lotSize": "ABSENT - still no lotSize field",
+        "denomination_inference": "pipValue / pipSize = 1.0, so one qty unit moves P&L by $1.00 per $1.00 of price, i.e. qty is in OUNCES and 1 contract = 1 oz. INFERRED from two quoted figures, NOT measured on a fill. Settle it with the Task 5 order."
+      },
+      "_phase0_6_denomination_SETTLED": {
+        "_": "A2 SETTLED BY MEASUREMENT, replacing the pipValue/pipSize inference.",
+        "dollars_per_point_at_qty1": 1.0,
+        "one_contract_equals": "1 troy ounce",
+        "evidence_intratrade": [
+          {
+            "d_price": -2.51,
+            "d_pl": -2.51
+          },
+          {
+            "d_price": -3.59,
+            "d_pl": -3.59
+          },
+          {
+            "d_price": -1.0,
+            "d_pl": -1.0
+          }
+        ],
+        "evidence_roundtrip": {
+          "entry": 4452.39,
+          "exit": 4451.39,
+          "gross_without_commission": 1.0
+        }
+      }
+    },
+    "strategy_read": {
+      "chart_bars": "chartWidget._chartWidget.model().mainSeries().bars() -> { size(), firstIndex(), lastIndex(), valueAt(i) = [time,o,h,l,c,v] }",
+      "bar_time_units": "epoch SECONDS in the bar tuple",
+      "study_by_id": "chartWidget.getStudyById(entityId)",
+      "study_inputs": "chartWidget.getStudyById(id).getInputValues() -> [{id,value}]",
+      "study_report": "dataSources().find(id).reportData() -> { trades: [...] }; lags a step by a full recompute (13-21s on this chart)",
+      "study_status": "chartWidget.getStudyById(id).status() -> { type: 2 settled | 3 errored }"
+    },
+    "session_settings": {
+      "_": "OVERTURNS the Phase 0 conclusion that the replay session has no capital / currency / commission. It has all three - not on the broker, which genuinely has no account-settings surface, but on a separate replay-strategy property bag. accountSettingsInfo() throws BY CONSTRUCTION (its own source requires supportCreateAccount || supportResetAccount || supportChangeAccountSettings, and the Replay Broker carries none of them), so no session state could ever have made it answer.",
+      "root": "window.TradingViewApi.chart(<chartId>).replayStudyStrategyProperties()",
+      "root_is_a_promise": true,
+      "property_bag_name": "replayStudyStrategyInputs",
+      "discovered_via": "equityCapability.getEquity(), which reads initialCapital from getUserInputSettings()",
+      "children": {
+        "initial_capital": {
+          "type": "number",
+          "observed": 1000000,
+          "read": ".childs().initial_capital.value()",
+          "write": ".childs().initial_capital.setValue(n)",
+          "verified_read": true,
+          "verified_write": false
+        },
+        "currency": {
+          "type": "string",
+          "observed": "NONE",
+          "read": ".childs().currency.value()",
+          "write": ".childs().currency.setValue(s)",
+          "verified_read": true,
+          "verified_write": false
+        },
+        "commission_type": {
+          "type": "string",
+          "observed": "percent",
+          "read": ".childs().commission_type.value()",
+          "write": ".childs().commission_type.setValue(s)",
+          "verified_read": true,
+          "verified_write": false,
+          "note": "An axis the brief did not name. Defaults to percent; B15 itself models cash_per_contract 0.11/side. Set it explicitly rather than inheriting percent."
+        },
+        "commission_value": {
+          "type": "number",
+          "observed": 0,
+          "read": ".childs().commission_value.value()",
+          "write": ".childs().commission_value.setValue(n)",
+          "verified_read": true,
+          "verified_write": false
+        },
+        "recoveryState": {
+          "type": "string",
+          "observed": "{}"
+        },
+        "text": {
+          "type": "string",
+          "observed": ""
+        }
+      },
+      "NOT_THE_STRATEGY_TESTER": "B15 own initial_capital strategy property (in_330) reads 100000; this object reads 1000000. Different objects. The [data-qa-id=\"initial-capital\"] pill remains the WRONG surface - the dom_registry warning about it still stands.",
+      "equity_readback": {
+        "call": "currentAccountApi().equityCapability.getEquity()",
+        "observed": 1000000,
+        "verified": true
+      },
+      "_phase0_6_equity_semantics": {
+        "_": "P7 REFUTED. getEquity() does NOT track unrealised P&L.",
+        "at_entry": {
+          "equity": 99999.89,
+          "why": "initial 100000 minus the 0.11 entry commission"
+        },
+        "while_open": {
+          "equity": 99999.89,
+          "unrealised_pl_ran": [
+            -2.51,
+            -3.59,
+            -1.0
+          ],
+          "verdict": "equity did not move at all while the position was open"
+        },
+        "after_close": {
+          "equity": 99998.78,
+          "why": "99999.89 - 1.00 realised - 0.11 exit commission"
+        },
+        "reading": "getEquity() = initial capital + REALISED P&L - commissions. For unrealised, read positions()[i].unrealizedPl or reportData.position.openPL."
+      },
+      "_phase0_6_writes_confirmed": {
+        "_": "A6 SETTLED. setValue on replayStudyStrategyProperties children takes effect.",
+        "verified": {
+          "initial_capital": [
+            1000000,
+            100000
+          ],
+          "currency": [
+            "NONE",
+            "USD"
+          ],
+          "commission_type": [
+            "percent",
+            "cash_per_contract"
+          ],
+          "commission_value": [
+            0,
+            0.11
+          ]
+        },
+        "independent_confirmation": "equityCapability.getEquity() followed the capital write (1000000 -> 100000), and the realised book charged 0.22 round turn = 2 x 0.11, so commission_type/value reached the matching engine.",
+        "commission_type_accepted_value": "cash_per_contract"
+      }
+    },
+    "replay_transport": {
+      "_": "The transport the broker capabilities sit on, reached via activeBroker()._brokerConnection._brokerConnection.currentAccountApi().placeOrderCapability._transport. Semantic, typed, and it carries the session-scoped reads the harness needs.",
+      "getActiveChartId": {
+        "observed": 0,
+        "verified": true
+      },
+      "getChartIdsWithReplay": {
+        "observed": [
+          0
+        ],
+        "verified": true
+      },
+      "getReplaySymbol": {
+        "observed": "ICMARKETS:XAUUSD",
+        "verified": true
+      },
+      "getSelectedBarDate": {
+        "source": "getReplaySelectedDate().value()",
+        "units": "epoch SECONDS",
+        "verified": true
+      },
+      "isReplayFinished": {
+        "source": "chart(id).replayStatus().value() === ReplayStatus.Finish",
+        "observed": false,
+        "verified": true
+      },
+      "getUserInputSettings": {
+        "returns": "{ currency, initialCapital }",
+        "verified": true,
+        "see": "session_settings above"
+      },
+      "getActiveChartTradingData": {
+        "source": "replayStrategyFacade().reportData()",
+        "observed": null,
+        "verified": true,
+        "note": "null until the FIRST ORDER exists - the replay strategy is created then, not when the panel is armed. The panel says so: \"No data here, yet - place at least one ...\"."
+      },
+      "sendTradingData": {
+        "source": "replayStrategyFacade().notifyStudy(cmd)",
+        "note": "the wire the order commands travel on"
+      },
+      "getMarketPrice": {
+        "observed": null,
+        "verified": true,
+        "note": "null while no replay strategy exists"
+      }
+    }
+  },
+  "dom_registry": {
+    "_": "Fallback / no-API-equivalent only. Hashed class suffixes (e.g. -CvWEQ6Ei) are build-generated and WILL change on a TradingView release.",
+    "replay_toolbar_root": {
+      "what": "Replay bottom toolbar container.",
+      "primary": "[data-name=\"replay-bottom-toolbar\"]",
+      "fallback": "div[class*=\"replayWrapper-\"]",
+      "identified_by": "data-name attribute, observed directly",
+      "confidence": "high - data-name is a TradingView-stable hook",
+      "observed_rect": [
+        56,
+        747,
+        1287,
+        49
+      ]
+    },
+    "replay_toolbar_trading_state": {
+      "what": "Whether the toolbar renders its trading row.",
+      "primary": "[data-name=\"replay-bottom-toolbar\"] div[class*=\"replayToolbar-\"][class*=\"noTrading-\"]",
+      "meaning": "presence of a noTrading- class means Replay Trading is NOT open",
+      "identified_by": "observed class list on the live toolbar",
+      "confidence": "low - pure hashed class, no semantic attribute",
+      "api_equivalent": "tradingUIController()._replayTradingWidget._isDisabledWV (observed true); tradingUIController()._tradingModelMap.size (observed 0)"
+    },
+    "select_start_bar_button": {
+      "what": "'Select bar' - pick the replay start point.",
+      "primary": "div[class*=\"selectDateBar__button-\"][data-role=\"button\"]",
+      "fallback": "[data-qa-id=\"select-date-bar-mode-menu\"] then previousElementSibling",
+      "identified_by": "hashed BEM class; nearest stable neighbour is the mode menu",
+      "confidence": "low",
+      "api_equivalent": "replayApi.selectDate(ms)"
+    },
+    "select_bar_mode_menu": {
+      "what": "Dropdown beside 'Select bar'.",
+      "primary": "[data-qa-id=\"select-date-bar-mode-menu\"]",
+      "fallback": "none found",
+      "identified_by": "data-qa-id, observed directly",
+      "confidence": "medium-high - data-qa-id is a test hook and tends to survive",
+      "api_equivalent": "replayApi.toggleJumpToBarMode()"
+    },
+    "play_pause_button": {
+      "what": "Play / pause autoplay.",
+      "primary": "div[class*=\"controls-\"] > div[class*=\"controls__control-\"]:nth-of-type(3) [data-role=\"button\"]",
+      "fallback": "NONE FOUND",
+      "identified_by": "ordinal position only - this element carries NO data-name, data-qa-id, aria-label or title",
+      "confidence": "very low - positional; any toolbar reordering silently retargets it",
+      "api_equivalent": "replayApi.toggleAutoplay()"
+    },
+    "forward_one_bar_button": {
+      "what": "Advance a single bar.",
+      "primary": "div[class*=\"controls__control_type_forward-\"] [data-role=\"button\"]",
+      "fallback": "NONE FOUND - no aria-label or title on this control",
+      "identified_by": "the semantic fragment control_type_forward inside the hashed class",
+      "confidence": "low - the fragment is meaningful but the suffix hash changes per build",
+      "api_equivalent": "replayApi.doStep()"
+    },
+    "speed_button": {
+      "what": "Playback speed (observed '0.5x').",
+      "primary": "div[class*=\"controls-\"] [data-role=\"button\"] .js-button-text",
+      "fallback": "none found",
+      "identified_by": "rendered text content only",
+      "confidence": "very low",
+      "api_equivalent": "replayApi.changeAutoplayDelay(ms) / replayApi.autoplayDelay()"
+    },
+    "replay_resolution_button": {
+      "what": "Replay resolution (observed '45s').",
+      "primary": "same container as speed_button, second .js-button-text",
+      "fallback": "none found",
+      "identified_by": "rendered text content and ordinal position",
+      "confidence": "very low",
+      "api_equivalent": "replayApi.currentReplayResolution() / replayApi.changeReplayResolution()"
+    },
+    "exit_replay_button": {
+      "what": "Leave Bar Replay.",
+      "primary": "[title=\"Exit Bar Replay\"]",
+      "fallback": "div[class*=\"controls__control_type_close-\"] [data-role=\"button\"]",
+      "identified_by": "title attribute, observed directly",
+      "confidence": "medium - title text is localised, so this breaks under a non-English UI",
+      "api_equivalent": "replayApi.stopReplay()",
+      "note": "observed rect [0,0,0,0] - present in the DOM but collapsed at capture time"
+    },
+    "bar_replay_toggle_header": {
+      "what": "Header 'Replay' toggle; its pressed state reports that replay is on.",
+      "primary": "#header-toolbar-replay",
+      "fallback": "button[aria-label=\"Bar replay\"]",
+      "state": "class contains isActive- and pressed- when replay is active",
+      "identified_by": "element id plus aria-label, both observed",
+      "confidence": "high",
+      "note": "THREE elements match aria-label='Bar replay'; two are zero-size offscreen duplicates. Match on the id, not the label."
+    },
+    "open_replay_trading_button": {
+      "what": "Arms the Replay Trading session. NO CONFIRMED API EQUIVALENT.",
+      "primary": "[data-qa-id=\"replay_trading\"]",
+      "fallback": "button[aria-label=\"Open Replay Trading\"]",
+      "identified_by": "data-qa-id and aria-label, both present and observed",
+      "confidence": "high",
+      "observed_rect": [
+        207,
+        839,
+        169,
+        38
+      ],
+      "note": "TWO elements match the aria-label; only one also carries data-qa-id. The 'Open ...' label text is itself the unarmed/armed signal."
+    },
+    "buy_sell_buttons": {
+      "what": "Top-left instant order surface.",
+      "primary": "[data-name=\"buy-sell-buttons\"]",
+      "buy": "[data-name=\"buy-order-button\"]",
+      "sell": "[data-name=\"sell-order-button\"]",
+      "qty": "[data-name=\"qtyEl\"]",
+      "identified_by": "data-name attributes, observed directly",
+      "confidence": "high",
+      "observed_text": "Sell 4,394.57 | qty 1 | Buy 4,394.57",
+      "api_equivalent": "broker.placeOrder({type: Market, ...}). qty has no confirmed API setter other than tradingUIController()._replayTradingWidget._updateDefaultQty"
+    },
+    "trade_button": {
+      "what": "Opens the Order Ticket.",
+      "primary": "[data-qa-id=\"trade-button\"]",
+      "fallback": "none found",
+      "identified_by": "data-qa-id, observed directly",
+      "confidence": "medium-high",
+      "api_equivalent": "tradingService().toggleOrderDialog() / tradingService().toggleTradingWidget()"
+    },
+    "strategy_replay_status_pill": {
+      "what": "Per-study legend pill reading 'Replay mode'.",
+      "primary": "[data-qa-id=\"legend-source-item-status\"][title=\"Replay mode\"]",
+      "fallback": "[data-role=\"statuses-pill\"][title=\"Replay mode\"]",
+      "identified_by": "data-qa-id plus title, both observed",
+      "confidence": "medium - title is localised",
+      "use": "secondary confirmation that the STUDY is evaluating against replay data"
+    },
+    "strategy_tester_initial_capital": {
+      "what": "Initial capital pill in the Strategy Tester toolbar (observed '1 M').",
+      "primary": "[data-qa-id=\"initial-capital\"]",
+      "fallback": "button[aria-label=\"1 M\"]",
+      "identified_by": "data-qa-id, observed directly",
+      "confidence": "high",
+      "WARNING": "This belongs to the STRATEGY TESTER (backtest properties), NOT to Replay Trading. It does not configure the replay account. Do not wire replay_session_open to it."
+    },
+    "not_found": [
+      "Any Replay Trading panel field for initial capital, base currency or commission. The panel was not opened in Phase 0, and the Replay Broker reports no account-settings support at all (findings section 3).",
+      "A position/orders table for the Replay Broker. accountManagerInfo().summary was an empty array and orders/positions/executions all returned []; nothing was rendered to capture.",
+      "Any stable hook on the Play button or on a Jump-To control."
+    ]
+  },
+  "_phase0_5_amendments": {
+    "measured_on": "2026-09-12",
+    "read_with": "recon/PHASE0.5-FINDINGS.md",
+    "note": "Phase 0.5 amendments. Where this block and the Phase 0 entries below disagree, THIS BLOCK IS RIGHT and the older entry is kept so the correction stays visible rather than silent."
+  },
+  "_phase0_6_amendments": {
+    "measured_on": "2026-09-12",
+    "read_with": "recon/PHASE0.6-FINDINGS.md",
+    "note": "Phase 0.6 amendments. The FIRST ORDER was placed and filled, so several entries below move from inferred to measured. Where this block and an older entry disagree, THIS BLOCK IS RIGHT; the older entry is kept so the correction stays visible."
+  }
+}

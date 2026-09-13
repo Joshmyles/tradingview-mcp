@@ -28,15 +28,16 @@ After each significant move:
 1. `replay_status` — check current date, position, and P&L
 2. Announce what happened (breakout, support test, etc.)
 
-## Step 4: Execute Trades
+## Step 4: Trades — NOT AVAILABLE FROM THIS BRIDGE
 
-When the user identifies an entry:
-- `replay_trade` with action "buy" or "sell"
-- `replay_status` to confirm the position was opened
+There is no trade tool. `replay_trade` was deleted on 2026-09-12 (it reported
+success while submitting nothing; see CLAUDE.md, "Order capability"). Nothing
+in either shipped profile can open, change or close a position, and a test
+enforces that.
 
-When the user wants to exit:
-- `replay_trade` with action "close"
-- `replay_status` to show the P&L
+When the user identifies an entry or an exit, say so and let them click it in
+the Replay Trading panel themselves. `replay_status` then READS the resulting
+position and P&L, which is all this skill ever needed the tool for.
 
 ## Step 5: Review
 

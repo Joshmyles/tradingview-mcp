@@ -7,6 +7,7 @@ import { requireSettled } from '../settle.js';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { observed, refused, unobservable } from '../internals/verdict.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SCREENSHOT_DIR = join(dirname(dirname(__dirname)), 'screenshots');
@@ -42,12 +43,15 @@ export async function captureScreenshot({ region, filename, method, waitForRende
     try {
       const colPath = await getChartCollection();
       await evaluate(`${colPath}.takeScreenshot()`);
-      return {
-        success: true, method: 'api', waited_for_render: !!waitForRender,
-        settled: wait !== false,
-        ...(settle && { settle_ms: settle.elapsed_ms }),
-        note: 'takeScreenshot() triggered — TradingView will save/show the screenshot via its own UI',
-      };
+      return unobservable(
+        'takeScreenshot() hands the capture to TradingView’s own UI, which writes no file this '
+        + 'process can see; use method "cdp" when a verifiable file on disk is required.',
+        {
+          method: 'api', waited_for_render: !!waitForRender,
+          settled: wait !== false,
+          ...(settle && { settle_ms: settle.elapsed_ms }),
+        },
+      );
     } catch {
       // Fall through to CDP method
     }

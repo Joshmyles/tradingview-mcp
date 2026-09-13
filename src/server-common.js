@@ -44,7 +44,7 @@ Pine Script development:
 - WARNING: pine_get_source can return 200KB+ — avoid unless editing
 
 Screenshots: capture_screenshot → regions: "full", "chart", "strategy_tester"
-Replay: replay_start → replay_step → replay_trade → replay_status → replay_stop
+Replay: replay_start → replay_step → replay_status → replay_stop
 Alerts: alert_create, alert_list, alert_delete
 Launch: tv_launch → auto-detect and start TradingView with CDP
 

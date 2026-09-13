@@ -1,0 +1,661 @@
+{
+  "at": "2026-09-12T20:34:58.223Z",
+  "stages": [
+    {
+      "stage": "interlock",
+      "at": "2026-09-12T20:35:03.255Z",
+      "data": {
+        "armed": true,
+        "broker": "REPLAYBROKER",
+        "account": "primary",
+        "account_type": "demo",
+        "connection_status": 1,
+        "replay_cursor_sec": 1788220799
+      }
+    },
+    {
+      "stage": "pre_order_state",
+      "at": "2026-09-12T20:35:04.008Z",
+      "data": {
+        "positions": [],
+        "orders": [],
+        "executions": [],
+        "equity": 100000,
+        "report_data": null,
+        "market_price": 4452.39,
+        "replay_cursor": 1788220799,
+        "last_bar": {
+          "t": 1788220785,
+          "o": 4451.26,
+          "h": 4452.53,
+          "l": 4451.23,
+          "c": 4452.39
+        }
+      }
+    },
+    {
+      "stage": "place_order",
+      "at": "2026-09-12T20:35:05.095Z",
+      "data": {
+        "ok": true,
+        "enums": {
+          "Side": {
+            "1": "Buy",
+            "Buy": 1,
+            "Sell": -1,
+            "-1": "Sell"
+          },
+          "OrderType": {
+            "1": "Limit",
+            "2": "Market",
+            "3": "Stop",
+            "4": "StopLimit",
+            "Limit": 1,
+            "Market": 2,
+            "Stop": 3,
+            "StopLimit": 4
+          }
+        },
+        "order_sent": {
+          "symbol": "ICMARKETS:XAUUSD",
+          "side": 1,
+          "type": 2,
+          "qty": 1
+        },
+        "returned_synchronously": false,
+        "sync_value": null,
+        "resolved": {
+          "orderId": "order_2481ed79-1dc0-4828-9e3d-dc5bb0ec82c8",
+          "result": 0
+        },
+        "elapsed_ms": 701
+      }
+    },
+    {
+      "stage": "post_order_state",
+      "at": "2026-09-12T20:35:06.379Z",
+      "data": {
+        "positions": [
+          {
+            "avgPrice": 4452.39,
+            "id": "ICMARKETS:XAUUSD-68d0dd75-15dd-4ec1-815a-42f9bdad86ca",
+            "qty": 1,
+            "side": 1,
+            "symbol": "ICMARKETS:XAUUSD",
+            "unrealizedPl": 0
+          }
+        ],
+        "orders": [
+          {
+            "symbol": "ICMARKETS:XAUUSD",
+            "id": "order_2481ed79-1dc0-4828-9e3d-dc5bb0ec82c8",
+            "type": 2,
+            "side": 1,
+            "qty": 1,
+            "status": 2
+          }
+        ],
+        "executions": [],
+        "equity": 99999.89,
+        "report_data": {
+          "activeOrders": [],
+          "position": {
+            "openPL": 0,
+            "openPLPercent": 0,
+            "qty": 1,
+            "price": 4452.39,
+            "symbolToAccountRate": 1
+          },
+          "ordersBrackets": [],
+          "currency": "USD",
+          "settings": {
+            "dateRange": {
+              "backtest": {
+                "from": 1786917720000,
+                "to": 1788220785000
+              },
+              "trade": {
+                "from": 1788220785000,
+                "to": 1788220785000
+              }
+            }
+          },
+          "filledOrders": [
+            {
+              "b": true,
+              "c": "Buy market order",
+              "e": null,
+              "id": "order_2481ed79-1dc0-4828-9e3d-dc5bb0ec82c8",
+              "p": 4452.39,
+              "q": 1,
+              "tm": 0,
+              "tp": "MARKET",
+              "utm": 1788220785000
+            }
+          ],
+          "performance": {
+            "all": {
+              "avgBarsInLossTrade": 0,
+              "avgBarsInTrade": 0,
+              "avgBarsInWinTrade": 0,
+              "avgLosTrade": null,
+              "avgLosTradePercent": null,
+              "avgTrade": null,
+              "avgTradePercent": null,
+              "avgWinTrade": null,
+              "avgWinTradePercent": null,
+              "commissionPaid": 0.11,
+              "grossLoss": 0.11,
+              "grossLossPercent": 0.0000011,
+              "grossLossWC": 0,
+              "grossProfit": 0,
+              "grossProfitPercent": 0,
+              "grossProfitWC": 0,
+              "largestLosTrade": null,
+              "largestLosTradePercent": null,
+              "largestWinTrade": null,
+              "largestWinTradePercent": null,
+              "marginCalls": 0,
+              "maxContractsHeld": 1,
+              "netProfit": -0.11,
+              "netProfitPercent": -0.0000011,
+              "numberOfLosingTrades": 0,
+              "numberOfWiningTrades": 0,
+              "percentProfitable": null,
+              "profitFactor": 0,
+              "ratioAvgWinAvgLoss": null,
+              "totalOpenTrades": 1,
+              "totalTrades": 0
+            },
+            "long": {
+              "avgBarsInLossTrade": 0,
+              "avgBarsInTrade": 0,
+              "avgBarsInWinTrade": 0,
+              "avgLosTrade": null,
+              "avgLosTradePercent": null,
+              "avgTrade": null,
+              "avgTradePercent": null,
+              "avgWinTrade": null,
+              "avgWinTradePercent": null,
+              "commissionPaid": 0.11,
+              "grossLoss": 0.11,
+              "grossLossPercent": 0.0000011,
+              "grossLossWC": 0,
+              "grossProfit": 0,
+              "grossProfitPercent": 0,
+              "grossProfitWC": 0,
+              "largestLosTrade": null,
+              "largestLosTradePercent": null,
+              "largestWinTrade": null,
+              "largestWinTradePercent": null,
+              "marginCalls": 0,
+              "maxContractsHeld": 1,
+              "netProfit": -0.11,
+              "netProfitPercent": -0.0000011,
+              "numberOfLosingTrades": 0,
+              "numberOfWiningTrades": 0,
+              "percentProfitable": null,
+              "profitFactor": 0,
+              "ratioAvgWinAvgLoss": null,
+              "totalOpenTrades": 1,
+              "totalTrades": 0
+            },
+            "maxStrategyDrawDown": 0.11000000000058208,
+            "openPL": 0,
+            "buyHoldReturn": 0,
+            "sharpeRatio": null,
+            "sortinoRatio": null,
+            "maxStrategyDrawDownPercent": 0.0000011000000000058209,
+            "maxStrategyRunUp": 0,
+            "maxStrategyRunUpPercent": 0,
+            "buyHoldReturnPercent": 0,
+            "openPLPercent": 0,
+            "buyHoldGainPercent": 0,
+            "maxMarginUsed": 0,
+            "avgMarginUsed": null,
+            "openMarginUsed": 0,
+            "short": {
+              "avgBarsInLossTrade": 0,
+              "avgBarsInTrade": 0,
+              "avgBarsInWinTrade": 0,
+              "avgLosTrade": null,
+              "avgLosTradePercent": null,
+              "avgTrade": null,
+              "avgTradePercent": null,
+              "avgWinTrade": null,
+              "avgWinTradePercent": null,
+              "commissionPaid": 0,
+              "grossLoss": 0,
+              "grossLossPercent": 0,
+              "grossLossWC": 0,
+              "grossProfit": 0,
+              "grossProfitPercent": 0,
+              "grossProfitWC": 0,
+              "largestLosTrade": null,
+              "largestLosTradePercent": null,
+              "largestWinTrade": null,
+              "largestWinTradePercent": null,
+              "marginCalls": 0,
+              "maxContractsHeld": 0,
+              "netProfit": 0,
+              "netProfitPercent": 0,
+              "numberOfLosingTrades": 0,
+              "numberOfWiningTrades": 0,
+              "percentProfitable": null,
+              "profitFactor": null,
+              "ratioAvgWinAvgLoss": null,
+              "totalOpenTrades": 0,
+              "totalTrades": 0
+            }
+          },
+          "trades": [
+            {
+              "e": {
+                "c": "Buy market order",
+                "p": 4452.39,
+                "tm": 1788220785000,
+                "b": 20349,
+                "tp": "le"
+              },
+              "q": 1,
+              "x": {
+                "c": "",
+                "p": 4452.39,
+                "tm": 1788220785000,
+                "b": 20349,
+                "tp": "lx"
+              },
+              "tp": {
+                "v": -0.22,
+                "p": -0.000049410442
+              },
+              "cp": {
+                "v": -0.33,
+                "p": -0.0000022000024
+              },
+              "rn": {
+                "v": 0,
+                "p": 0
+              },
+              "v": 4452.39,
+              "dd": {
+                "v": 0.11,
+                "p": 0.000024705221
+              },
+              "cm": 0.11
+            }
+          ],
+          "firstTradeIndex": 0
+        },
+        "market_price": 4452.39,
+        "replay_cursor": 1788220799,
+        "last_bar": {
+          "t": 1788220785,
+          "o": 4451.26,
+          "h": 4452.53,
+          "l": 4451.23,
+          "c": 4452.39
+        }
+      }
+    },
+    {
+      "stage": "pnl_per_point",
+      "at": "2026-09-12T20:35:19.734Z",
+      "data": {
+        "samples": [
+          {
+            "label": "after_fill",
+            "price": 4452.39,
+            "pl": 0,
+            "qty": 1,
+            "avg_price": 4452.39,
+            "equity": 99999.89,
+            "cursor": 1788220799
+          },
+          {
+            "label": "after_step_1",
+            "price": 4449.88,
+            "pl": -2.5100000000002183,
+            "qty": 1,
+            "avg_price": 4452.39,
+            "equity": 99999.89,
+            "cursor": 1788220829
+          },
+          {
+            "label": "after_step_2",
+            "price": 4448.8,
+            "pl": -3.5900000000001455,
+            "qty": 1,
+            "avg_price": 4452.39,
+            "equity": 99999.89,
+            "cursor": 1788220874
+          },
+          {
+            "label": "after_step_3",
+            "price": 4451.39,
+            "pl": -1,
+            "qty": 1,
+            "avg_price": 4452.39,
+            "equity": 99999.89,
+            "cursor": 1788220919
+          }
+        ],
+        "dollars_per_point_at_qty1": 1,
+        "basis": {
+          "dPrice": -3.5900000000001455,
+          "dPl": -3.5900000000001455,
+          "from": "after_fill",
+          "to": "after_step_2"
+        }
+      }
+    },
+    {
+      "stage": "flatten",
+      "at": "2026-09-12T20:35:22.003Z",
+      "data": {
+        "ok": true,
+        "positions_before": [
+          {
+            "avgPrice": null,
+            "id": "ICMARKETS:XAUUSD-68d0dd75-15dd-4ec1-815a-42f9bdad86ca",
+            "qty": 0,
+            "side": -1,
+            "symbol": "ICMARKETS:XAUUSD",
+            "unrealizedPl": 0
+          }
+        ],
+        "positions_after": [
+          {
+            "avgPrice": null,
+            "id": "ICMARKETS:XAUUSD-68d0dd75-15dd-4ec1-815a-42f9bdad86ca",
+            "qty": 0,
+            "side": -1,
+            "symbol": "ICMARKETS:XAUUSD",
+            "unrealizedPl": 0
+          }
+        ],
+        "orders_after": [
+          {
+            "symbol": "ICMARKETS:XAUUSD",
+            "id": "order_2481ed79-1dc0-4828-9e3d-dc5bb0ec82c8",
+            "type": 2,
+            "side": 1,
+            "qty": 1,
+            "status": 2
+          },
+          {
+            "symbol": "ICMARKETS:XAUUSD",
+            "id": "order_dbd927ac-e754-43ef-ac9b-15464628730a",
+            "type": 2,
+            "side": -1,
+            "qty": 1,
+            "status": 2
+          }
+        ],
+        "flat": false
+      }
+    },
+    {
+      "stage": "final_state",
+      "at": "2026-09-12T20:35:22.229Z",
+      "data": {
+        "positions": [
+          {
+            "avgPrice": null,
+            "id": "ICMARKETS:XAUUSD-68d0dd75-15dd-4ec1-815a-42f9bdad86ca",
+            "qty": 0,
+            "side": -1,
+            "symbol": "ICMARKETS:XAUUSD",
+            "unrealizedPl": 0
+          }
+        ],
+        "orders": [
+          {
+            "symbol": "ICMARKETS:XAUUSD",
+            "id": "order_2481ed79-1dc0-4828-9e3d-dc5bb0ec82c8",
+            "type": 2,
+            "side": 1,
+            "qty": 1,
+            "status": 2
+          },
+          {
+            "symbol": "ICMARKETS:XAUUSD",
+            "id": "order_dbd927ac-e754-43ef-ac9b-15464628730a",
+            "type": 2,
+            "side": -1,
+            "qty": 1,
+            "status": 2
+          }
+        ],
+        "executions": [],
+        "equity": 99998.78,
+        "report_data": {
+          "activeOrders": [],
+          "position": {
+            "openPL": 0,
+            "openPLPercent": null,
+            "qty": 0,
+            "price": null,
+            "symbolToAccountRate": 1
+          },
+          "ordersBrackets": [],
+          "currency": "USD",
+          "settings": {
+            "dateRange": {
+              "backtest": {
+                "from": 1786917720000,
+                "to": 1788220875000
+              },
+              "trade": {
+                "from": 1788220785000,
+                "to": 1788220875000
+              }
+            }
+          },
+          "filledOrders": [
+            {
+              "b": true,
+              "c": "Buy market order",
+              "e": null,
+              "id": "order_2481ed79-1dc0-4828-9e3d-dc5bb0ec82c8",
+              "p": 4452.39,
+              "q": 1,
+              "tm": 0,
+              "tp": "MARKET",
+              "utm": 1788220785000
+            },
+            {
+              "b": false,
+              "c": "Close position",
+              "e": null,
+              "id": "order_dbd927ac-e754-43ef-ac9b-15464628730a",
+              "p": 4451.39,
+              "q": 1,
+              "tm": 1,
+              "tp": "MARKET",
+              "utm": 1788220875000
+            }
+          ],
+          "performance": {
+            "all": {
+              "avgBarsInLossTrade": 3,
+              "avgBarsInTrade": 3,
+              "avgBarsInWinTrade": 0,
+              "avgLosTrade": 1.22,
+              "avgLosTradePercent": 0.0002740033688938799,
+              "avgTrade": -1.22,
+              "avgTradePercent": -0.0002740033688938799,
+              "avgWinTrade": null,
+              "avgWinTradePercent": null,
+              "commissionPaid": 0.22,
+              "grossLoss": 1.2200000000000002,
+              "grossLossPercent": 0.000012200000000000002,
+              "grossLossWC": 1.0000000000000002,
+              "grossProfit": 0,
+              "grossProfitPercent": 0,
+              "grossProfitWC": 0,
+              "largestLosTrade": 1.2200000000000002,
+              "largestLosTradePercent": 0.000274003369,
+              "largestWinTrade": null,
+              "largestWinTradePercent": null,
+              "marginCalls": 0,
+              "maxContractsHeld": 1,
+              "netProfit": -1.2200000000000002,
+              "netProfitPercent": -0.000012200000000000002,
+              "numberOfLosingTrades": 1,
+              "numberOfWiningTrades": 0,
+              "percentProfitable": 0,
+              "profitFactor": 0,
+              "ratioAvgWinAvgLoss": 0,
+              "totalOpenTrades": 0,
+              "totalTrades": 1
+            },
+            "long": {
+              "avgBarsInLossTrade": 3,
+              "avgBarsInTrade": 3,
+              "avgBarsInWinTrade": 0,
+              "avgLosTrade": 1.22,
+              "avgLosTradePercent": 0.0002740033688938799,
+              "avgTrade": -1.22,
+              "avgTradePercent": -0.0002740033688938799,
+              "avgWinTrade": null,
+              "avgWinTradePercent": null,
+              "commissionPaid": 0.22,
+              "grossLoss": 1.2200000000000002,
+              "grossLossPercent": 0.000012200000000000002,
+              "grossLossWC": 1.0000000000000002,
+              "grossProfit": 0,
+              "grossProfitPercent": 0,
+              "grossProfitWC": 0,
+              "largestLosTrade": 1.2200000000000002,
+              "largestLosTradePercent": 0.000274003369,
+              "largestWinTrade": null,
+              "largestWinTradePercent": null,
+              "marginCalls": 0,
+              "maxContractsHeld": 1,
+              "netProfit": -1.2200000000000002,
+              "netProfitPercent": -0.000012200000000000002,
+              "numberOfLosingTrades": 1,
+              "numberOfWiningTrades": 0,
+              "percentProfitable": 0,
+              "profitFactor": 0,
+              "ratioAvgWinAvgLoss": 0,
+              "totalOpenTrades": 0,
+              "totalTrades": 1
+            },
+            "maxStrategyDrawDown": 6.0200000000040745,
+            "openPL": 0,
+            "buyHoldReturn": -22.400000000000002,
+            "sharpeRatio": null,
+            "sortinoRatio": null,
+            "maxStrategyDrawDownPercent": 0.000060200000000040745,
+            "maxStrategyRunUp": 1.9499999999970896,
+            "maxStrategyRunUpPercent": 0.000019499641206572695,
+            "buyHoldReturnPercent": -0.00022400000000000002,
+            "openPLPercent": 0,
+            "buyHoldGainPercent": -0.0002245984740779671,
+            "maxMarginUsed": 0,
+            "avgMarginUsed": 0,
+            "openMarginUsed": 0,
+            "short": {
+              "avgBarsInLossTrade": 0,
+              "avgBarsInTrade": 0,
+              "avgBarsInWinTrade": 0,
+              "avgLosTrade": null,
+              "avgLosTradePercent": null,
+              "avgTrade": null,
+              "avgTradePercent": null,
+              "avgWinTrade": null,
+              "avgWinTradePercent": null,
+              "commissionPaid": 0,
+              "grossLoss": 0,
+              "grossLossPercent": 0,
+              "grossLossWC": 0,
+              "grossProfit": 0,
+              "grossProfitPercent": 0,
+              "grossProfitWC": 0,
+              "largestLosTrade": null,
+              "largestLosTradePercent": null,
+              "largestWinTrade": null,
+              "largestWinTradePercent": null,
+              "marginCalls": 0,
+              "maxContractsHeld": 0,
+              "netProfit": 0,
+              "netProfitPercent": 0,
+              "numberOfLosingTrades": 0,
+              "numberOfWiningTrades": 0,
+              "percentProfitable": null,
+              "profitFactor": null,
+              "ratioAvgWinAvgLoss": null,
+              "totalOpenTrades": 0,
+              "totalTrades": 0
+            }
+          },
+          "trades": [
+            {
+              "e": {
+                "c": "Buy market order",
+                "p": 4452.39,
+                "tm": 1788220785000,
+                "b": 20349,
+                "tp": "le"
+              },
+              "q": 1,
+              "x": {
+                "c": "Close position",
+                "p": 4451.39,
+                "tm": 1788220875000,
+                "b": 20351,
+                "tp": "lx"
+              },
+              "tp": {
+                "v": -1.22,
+                "p": -0.00027400337
+              },
+              "cp": {
+                "v": -1.22,
+                "p": -0.0000122
+              },
+              "rn": {
+                "v": 1.84,
+                "p": 0.000413251
+              },
+              "v": 4452.39,
+              "dd": {
+                "v": 6.02,
+                "p": 0.0013520494
+              },
+              "cm": 0.22
+            }
+          ],
+          "firstTradeIndex": 0,
+          "buyHold": [
+            100000,
+            99977.6
+          ],
+          "buyHoldPercent": [
+            100,
+            99.9776
+          ]
+        },
+        "market_price": 4451.39,
+        "replay_cursor": 1788220919,
+        "last_bar": {
+          "t": 1788220875,
+          "o": 4448.82,
+          "h": 4451.5,
+          "l": 4448.82,
+          "c": 4451.39
+        }
+      }
+    }
+  ],
+  "summary": {
+    "order_id": "order_2481ed79-1dc0-4828-9e3d-dc5bb0ec82c8",
+    "returned_synchronously": false,
+    "filled": true,
+    "flattened": false,
+    "dollars_per_point_at_qty1": 1,
+    "final_positions": 1
+  }
+}

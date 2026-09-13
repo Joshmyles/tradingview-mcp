@@ -1,0 +1,1140 @@
+{
+  "ok": true,
+  "captured_at": "2026-09-12T18:50:11.506Z",
+  "chart": {
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": {
+      "__error": "m.mainSeries(...).resolution is not a function"
+    },
+    "timezone": "Africa/Nairobi",
+    "pane_count": 2
+  },
+  "drawings": [
+    {
+      "pane": 0,
+      "toolname": "LineToolRiskRewardShort",
+      "id": "2lqWVk",
+      "title": "short position",
+      "state": {
+        "type": "LineToolRiskRewardShort",
+        "id": "2lqWVk",
+        "state": {
+          "linecolor": "#787B86",
+          "textcolor": "#ffffff",
+          "stopBackground": "rgba(242, 54, 69, 0.2)",
+          "profitBackground": "rgba(8, 153, 129, 0.2)",
+          "stopBackgroundTransparency": 80,
+          "profitBackgroundTransparency": 80,
+          "linewidth": 1,
+          "fontsize": 12,
+          "compact": false,
+          "riskDisplayMode": "money",
+          "accountSize": 150,
+          "lotSize": 0.01,
+          "risk": 60,
+          "leverage": 1000,
+          "alwaysShowStats": false,
+          "showPriceLabels": true,
+          "qtyPrecision": "default",
+          "currency": "NONE",
+          "infoBlocks": {
+            "tpPriceOffset": {
+              "visible": true
+            },
+            "tpPercentOffset": {
+              "visible": true
+            },
+            "tpTickOffset": {
+              "visible": true
+            },
+            "tpAmount": {
+              "visible": true
+            },
+            "tpPL": {
+              "visible": false
+            },
+            "openClosePL": {
+              "visible": true
+            },
+            "qty": {
+              "visible": true
+            },
+            "riskRewardRatio": {
+              "visible": true
+            },
+            "slPriceOffset": {
+              "visible": true
+            },
+            "slPercentOffset": {
+              "visible": true
+            },
+            "slTickOffset": {
+              "visible": true
+            },
+            "slAmount": {
+              "visible": true
+            },
+            "slPL": {
+              "visible": false
+            }
+          },
+          "symbolStateVersion": 2,
+          "zOrderVersion": 2,
+          "frozen": false,
+          "title": "",
+          "interval": "45S",
+          "symbol": "ICMARKETS:XAUUSD",
+          "currencyId": null,
+          "unitId": null,
+          "metricId": "price",
+          "visible": true,
+          "adjustedToSplitTime": 1789143679.998,
+          "stopLevel": 540,
+          "profitLevel": 1313,
+          "qty": 11.111111111109988,
+          "amountTarget": 295.89,
+          "amountStop": 90,
+          "entryPointCurrencyRate": 1,
+          "closePointCurrencyRate": 1
+        },
+        "points": [
+          {
+            "time_t": 1789143285,
+            "offset": 0,
+            "price": 4364.7,
+            "interval": "45S"
+          },
+          {
+            "time_t": 1789143645,
+            "offset": 42,
+            "price": 4364.7,
+            "interval": "45S"
+          }
+        ],
+        "zorder": -261250,
+        "ownerSource": "_seriesId",
+        "indexes": [
+          {
+            "index": 16285,
+            "time": 1789154085,
+            "price": 4364.7,
+            "interval": "45S"
+          },
+          {
+            "index": 16335,
+            "time": 1789156335,
+            "price": 4364.7,
+            "interval": "45S"
+          }
+        ],
+        "version": 2,
+        "ownerSourceBase": 100
+      },
+      "points": [
+        {
+          "index": 16285,
+          "price": 4364.7,
+          "time": 1789154085
+        },
+        {
+          "index": 16335,
+          "price": 4364.7,
+          "time": 1789156335
+        }
+      ],
+      "properties": {
+        "linecolor": "#787B86",
+        "textcolor": "#ffffff",
+        "stopBackground": "rgba(242, 54, 69, 0.2)",
+        "profitBackground": "rgba(8, 153, 129, 0.2)",
+        "stopBackgroundTransparency": 80,
+        "profitBackgroundTransparency": 80,
+        "linewidth": 1,
+        "fontsize": 12,
+        "compact": false,
+        "riskDisplayMode": "money",
+        "accountSize": 150,
+        "lotSize": 0.01,
+        "risk": 60,
+        "leverage": 1000,
+        "alwaysShowStats": false,
+        "showPriceLabels": true,
+        "qtyPrecision": "default",
+        "currency": "NONE",
+        "infoBlocks": {
+          "tpPriceOffset": {
+            "visible": true
+          },
+          "tpPercentOffset": {
+            "visible": true
+          },
+          "tpTickOffset": {
+            "visible": true
+          },
+          "tpAmount": {
+            "visible": true
+          },
+          "tpPL": {
+            "visible": false
+          },
+          "openClosePL": {
+            "visible": true
+          },
+          "qty": {
+            "visible": true
+          },
+          "riskRewardRatio": {
+            "visible": true
+          },
+          "slPriceOffset": {
+            "visible": true
+          },
+          "slPercentOffset": {
+            "visible": true
+          },
+          "slTickOffset": {
+            "visible": true
+          },
+          "slAmount": {
+            "visible": true
+          },
+          "slPL": {
+            "visible": false
+          }
+        },
+        "symbolStateVersion": 2,
+        "zOrderVersion": 2,
+        "frozen": false,
+        "title": "",
+        "interval": "45S",
+        "symbol": "ICMARKETS:XAUUSD",
+        "currencyId": null,
+        "unitId": null,
+        "metricId": "price",
+        "visible": true,
+        "adjustedToSplitTime": 1789143679.998,
+        "stopLevel": 540,
+        "profitLevel": 1313,
+        "qty": 11.111111111109988,
+        "amountTarget": 295.89,
+        "amountStop": 90,
+        "entryPointCurrencyRate": 1,
+        "closePointCurrencyRate": 1
+      },
+      "z_order": -261250
+    },
+    {
+      "pane": 0,
+      "toolname": "LineToolTrendLine",
+      "id": "T8RhFl",
+      "title": "trendline",
+      "state": {
+        "type": "LineToolTrendLine",
+        "id": "T8RhFl",
+        "state": {
+          "linecolor": "rgba(255, 255, 255, 1)",
+          "textcolor": "rgba(255, 255, 255, 1)",
+          "linewidth": 1,
+          "linestyle": 0,
+          "extendLeft": false,
+          "extendRight": false,
+          "leftEnd": 0,
+          "rightEnd": 0,
+          "horzLabelsAlign": "center",
+          "vertLabelsAlign": "middle",
+          "fontsize": 14,
+          "bold": false,
+          "italic": false,
+          "alwaysShowStats": false,
+          "showMiddlePoint": false,
+          "showPriceLabels": false,
+          "showPriceRange": false,
+          "showPercentPriceRange": false,
+          "showPipsPriceRange": false,
+          "showBarsRange": false,
+          "showDateTimeRange": false,
+          "showDistance": false,
+          "showAngle": false,
+          "statsPosition": 2,
+          "text": "",
+          "symbolStateVersion": 2,
+          "zOrderVersion": 2,
+          "frozen": false,
+          "title": "",
+          "interval": "45S",
+          "symbol": "ICMARKETS:XAUUSD",
+          "currencyId": null,
+          "unitId": null,
+          "metricId": "price",
+          "visible": true,
+          "adjustedToSplitTime": 1789104176.015
+        },
+        "points": [
+          {
+            "time_t": 1789104135,
+            "offset": 15,
+            "price": 4397.118364024527,
+            "interval": "45S"
+          },
+          {
+            "time_t": 1789104135,
+            "offset": 15,
+            "price": 4338.527294336967,
+            "interval": "45S"
+          }
+        ],
+        "zorder": -262500,
+        "ownerSource": "_seriesId",
+        "indexes": [
+          {
+            "index": 15430,
+            "time": 1789115610,
+            "price": 4397.118364024527,
+            "interval": "45S"
+          },
+          {
+            "index": 15430,
+            "time": 1789115610,
+            "price": 4338.527294336967,
+            "interval": "45S"
+          }
+        ]
+      },
+      "points": [
+        {
+          "index": 15430,
+          "price": 4397.118364024527,
+          "time": 1789115610
+        },
+        {
+          "index": 15430,
+          "price": 4338.527294336967,
+          "time": 1789115610
+        }
+      ],
+      "properties": {
+        "linecolor": "rgba(255, 255, 255, 1)",
+        "textcolor": "rgba(255, 255, 255, 1)",
+        "linewidth": 1,
+        "linestyle": 0,
+        "extendLeft": false,
+        "extendRight": false,
+        "leftEnd": 0,
+        "rightEnd": 0,
+        "horzLabelsAlign": "center",
+        "vertLabelsAlign": "middle",
+        "fontsize": 14,
+        "bold": false,
+        "italic": false,
+        "alwaysShowStats": false,
+        "showMiddlePoint": false,
+        "showPriceLabels": false,
+        "showPriceRange": false,
+        "showPercentPriceRange": false,
+        "showPipsPriceRange": false,
+        "showBarsRange": false,
+        "showDateTimeRange": false,
+        "showDistance": false,
+        "showAngle": false,
+        "statsPosition": 2,
+        "text": "",
+        "symbolStateVersion": 2,
+        "zOrderVersion": 2,
+        "frozen": false,
+        "title": "",
+        "interval": "45S",
+        "symbol": "ICMARKETS:XAUUSD",
+        "currencyId": null,
+        "unitId": null,
+        "metricId": "price",
+        "visible": true,
+        "adjustedToSplitTime": 1789104176.015
+      },
+      "z_order": -262500
+    },
+    {
+      "pane": 0,
+      "toolname": "LineToolRiskRewardLong",
+      "id": "dGqwx8",
+      "title": "long position",
+      "state": {
+        "type": "LineToolRiskRewardLong",
+        "id": "dGqwx8",
+        "state": {
+          "linecolor": "#787B86",
+          "textcolor": "#ffffff",
+          "stopBackground": "rgba(242, 54, 69, 0.2)",
+          "profitBackground": "rgba(8, 153, 129, 0.2)",
+          "stopBackgroundTransparency": 80,
+          "profitBackgroundTransparency": 80,
+          "linewidth": 1,
+          "fontsize": 12,
+          "compact": false,
+          "riskDisplayMode": "percents",
+          "accountSize": 100,
+          "lotSize": 0.01,
+          "risk": 5,
+          "leverage": 50,
+          "alwaysShowStats": false,
+          "showPriceLabels": true,
+          "qtyPrecision": "default",
+          "currency": "NONE",
+          "infoBlocks": {
+            "tpPriceOffset": {
+              "visible": true
+            },
+            "tpPercentOffset": {
+              "visible": true
+            },
+            "tpTickOffset": {
+              "visible": true
+            },
+            "tpAmount": {
+              "visible": true
+            },
+            "tpPL": {
+              "visible": false
+            },
+            "openClosePL": {
+              "visible": true
+            },
+            "qty": {
+              "visible": true
+            },
+            "riskRewardRatio": {
+              "visible": true
+            },
+            "slPriceOffset": {
+              "visible": true
+            },
+            "slPercentOffset": {
+              "visible": true
+            },
+            "slTickOffset": {
+              "visible": true
+            },
+            "slAmount": {
+              "visible": true
+            },
+            "slPL": {
+              "visible": false
+            }
+          },
+          "symbolStateVersion": 2,
+          "zOrderVersion": 2,
+          "frozen": false,
+          "title": "",
+          "interval": "45S",
+          "symbol": "ICMARKETS:XAUUSD",
+          "currencyId": null,
+          "unitId": null,
+          "metricId": "price",
+          "visible": true,
+          "adjustedToSplitTime": 1789062759.641,
+          "stopLevel": 251,
+          "profitLevel": 605,
+          "qty": 1.1468679037548455,
+          "amountTarget": 106.94,
+          "amountStop": 97.12,
+          "entryPointCurrencyRate": 1,
+          "closePointCurrencyRate": 1
+        },
+        "points": [
+          {
+            "time_t": 1789062735,
+            "offset": 0,
+            "price": 4359.7,
+            "interval": "45S"
+          },
+          {
+            "time_t": 1789062735,
+            "offset": 29,
+            "price": 4359.7,
+            "interval": "45S"
+          },
+          {
+            "time_t": 1789062735,
+            "offset": 0,
+            "price": 4359.7,
+            "interval": "45S"
+          }
+        ],
+        "zorder": -265000,
+        "ownerSource": "_seriesId",
+        "indexes": [
+          {
+            "index": 14579,
+            "time": 1789073535,
+            "price": 4359.7,
+            "interval": "45S"
+          },
+          {
+            "index": 14608,
+            "time": 1789074840,
+            "price": 4359.7,
+            "interval": "45S"
+          }
+        ],
+        "version": 2,
+        "ownerSourceBase": 100
+      },
+      "points": [
+        {
+          "index": 14579,
+          "price": 4359.7,
+          "time": 1789073535
+        },
+        {
+          "index": 14608,
+          "price": 4359.7,
+          "time": 1789074840
+        }
+      ],
+      "properties": {
+        "linecolor": "#787B86",
+        "textcolor": "#ffffff",
+        "stopBackground": "rgba(242, 54, 69, 0.2)",
+        "profitBackground": "rgba(8, 153, 129, 0.2)",
+        "stopBackgroundTransparency": 80,
+        "profitBackgroundTransparency": 80,
+        "linewidth": 1,
+        "fontsize": 12,
+        "compact": false,
+        "riskDisplayMode": "percents",
+        "accountSize": 100,
+        "lotSize": 0.01,
+        "risk": 5,
+        "leverage": 50,
+        "alwaysShowStats": false,
+        "showPriceLabels": true,
+        "qtyPrecision": "default",
+        "currency": "NONE",
+        "infoBlocks": {
+          "tpPriceOffset": {
+            "visible": true
+          },
+          "tpPercentOffset": {
+            "visible": true
+          },
+          "tpTickOffset": {
+            "visible": true
+          },
+          "tpAmount": {
+            "visible": true
+          },
+          "tpPL": {
+            "visible": false
+          },
+          "openClosePL": {
+            "visible": true
+          },
+          "qty": {
+            "visible": true
+          },
+          "riskRewardRatio": {
+            "visible": true
+          },
+          "slPriceOffset": {
+            "visible": true
+          },
+          "slPercentOffset": {
+            "visible": true
+          },
+          "slTickOffset": {
+            "visible": true
+          },
+          "slAmount": {
+            "visible": true
+          },
+          "slPL": {
+            "visible": false
+          }
+        },
+        "symbolStateVersion": 2,
+        "zOrderVersion": 2,
+        "frozen": false,
+        "title": "",
+        "interval": "45S",
+        "symbol": "ICMARKETS:XAUUSD",
+        "currencyId": null,
+        "unitId": null,
+        "metricId": "price",
+        "visible": true,
+        "adjustedToSplitTime": 1789062759.641,
+        "stopLevel": 251,
+        "profitLevel": 605,
+        "qty": 1.1468679037548455,
+        "amountTarget": 106.94,
+        "amountStop": 97.12,
+        "entryPointCurrencyRate": 1,
+        "closePointCurrencyRate": 1
+      },
+      "z_order": -265000
+    },
+    {
+      "pane": 0,
+      "toolname": "LineToolCallout",
+      "id": "IrSM1W",
+      "title": "callout",
+      "state": {
+        "type": "LineToolCallout",
+        "id": "IrSM1W",
+        "state": {
+          "color": "#ffffff",
+          "backgroundColor": "rgba(8, 153, 129, 0.7)",
+          "bordercolor": "#0097A7",
+          "transparency": 50,
+          "linewidth": 2,
+          "fontsize": 12,
+          "bold": false,
+          "italic": false,
+          "wordWrap": false,
+          "wordWrapWidth": 200,
+          "text": "shown order block",
+          "symbolStateVersion": 2,
+          "zOrderVersion": 2,
+          "frozen": false,
+          "title": "",
+          "interval": "45S",
+          "symbol": "ICMARKETS:XAUUSD",
+          "currencyId": null,
+          "unitId": null,
+          "metricId": "price",
+          "visible": true,
+          "adjustedToSplitTime": 1789200524.669
+        },
+        "points": [
+          {
+            "price": 4440.27293466653,
+            "time_t": 1788734910,
+            "offset": 0,
+            "interval": "45S"
+          },
+          {
+            "time_t": 1788734730,
+            "offset": 46,
+            "price": 4444.38866669634,
+            "interval": "45S"
+          }
+        ],
+        "zorder": -260625,
+        "ownerSource": "_seriesId",
+        "indexes": [
+          {
+            "index": 7546,
+            "time": 1788745710,
+            "price": 4440.27293466653,
+            "interval": "45S"
+          },
+          {
+            "price": 4444.38866669634,
+            "index": 7588,
+            "interval": "45S"
+          }
+        ],
+        "barOffset": 42
+      },
+      "points": [
+        {
+          "index": 7546,
+          "price": 4440.27293466653,
+          "time": 1788745710
+        },
+        {
+          "index": 7588,
+          "price": 4444.38866669634
+        }
+      ],
+      "properties": {
+        "color": "#ffffff",
+        "backgroundColor": "rgba(8, 153, 129, 0.7)",
+        "bordercolor": "#0097A7",
+        "transparency": 50,
+        "linewidth": 2,
+        "fontsize": 12,
+        "bold": false,
+        "italic": false,
+        "wordWrap": false,
+        "wordWrapWidth": 200,
+        "text": "shown order block",
+        "symbolStateVersion": 2,
+        "zOrderVersion": 2,
+        "frozen": false,
+        "title": "",
+        "interval": "45S",
+        "symbol": "ICMARKETS:XAUUSD",
+        "currencyId": null,
+        "unitId": null,
+        "metricId": "price",
+        "visible": true,
+        "adjustedToSplitTime": 1789200524.669
+      },
+      "z_order": -260625
+    },
+    {
+      "pane": 0,
+      "toolname": "LineToolCallout",
+      "id": "aGPTR4",
+      "title": "callout",
+      "state": {
+        "type": "LineToolCallout",
+        "id": "aGPTR4",
+        "state": {
+          "color": "#ffffff",
+          "backgroundColor": "rgba(8, 153, 129, 0.7)",
+          "bordercolor": "#0097A7",
+          "transparency": 50,
+          "linewidth": 2,
+          "fontsize": 12,
+          "bold": false,
+          "italic": false,
+          "wordWrap": false,
+          "wordWrapWidth": 200,
+          "text": "order block appearing out\nof no where when it could\nhave informed on a potential\nresistance zone before that \npullback",
+          "symbolStateVersion": 2,
+          "zOrderVersion": 2,
+          "frozen": false,
+          "title": "",
+          "interval": "45S",
+          "symbol": "ICMARKETS:XAUUSD",
+          "currencyId": null,
+          "unitId": null,
+          "metricId": "price",
+          "visible": true,
+          "adjustedToSplitTime": 1789200591.272
+        },
+        "points": [
+          {
+            "price": 4434.637547733405,
+            "time_t": 1788735135,
+            "offset": 0,
+            "interval": "45S"
+          },
+          {
+            "time_t": 1788735855,
+            "offset": 47,
+            "price": 4438.94323662613,
+            "interval": "45S"
+          }
+        ],
+        "zorder": -260313,
+        "ownerSource": "_seriesId",
+        "indexes": [
+          {
+            "index": 7551,
+            "time": 1788745935,
+            "price": 4434.637547733405,
+            "interval": "45S"
+          },
+          {
+            "price": 4438.94323662613,
+            "index": 7614,
+            "interval": "45S"
+          }
+        ],
+        "barOffset": 63
+      },
+      "points": [
+        {
+          "index": 7551,
+          "price": 4434.637547733405,
+          "time": 1788745935
+        },
+        {
+          "index": 7614,
+          "price": 4438.94323662613
+        }
+      ],
+      "properties": {
+        "color": "#ffffff",
+        "backgroundColor": "rgba(8, 153, 129, 0.7)",
+        "bordercolor": "#0097A7",
+        "transparency": 50,
+        "linewidth": 2,
+        "fontsize": 12,
+        "bold": false,
+        "italic": false,
+        "wordWrap": false,
+        "wordWrapWidth": 200,
+        "text": "order block appearing out\nof no where when it could\nhave informed on a potential\nresistance zone before that \npullback",
+        "symbolStateVersion": 2,
+        "zOrderVersion": 2,
+        "frozen": false,
+        "title": "",
+        "interval": "45S",
+        "symbol": "ICMARKETS:XAUUSD",
+        "currencyId": null,
+        "unitId": null,
+        "metricId": "price",
+        "visible": true,
+        "adjustedToSplitTime": 1789200591.272
+      },
+      "z_order": -260313
+    }
+  ],
+  "widget_api_shapes": [
+    {
+      "id": "dGqwx8",
+      "name": "long_position",
+      "points": [
+        {
+          "price": 4359.7,
+          "time": 1789062735
+        },
+        {
+          "price": 4359.7,
+          "time": 1789064040
+        }
+      ],
+      "properties": {
+        "linecolor": "#787B86",
+        "textcolor": "#ffffff",
+        "stopBackground": "rgba(242, 54, 69, 0.2)",
+        "profitBackground": "rgba(8, 153, 129, 0.2)",
+        "stopBackgroundTransparency": 80,
+        "profitBackgroundTransparency": 80,
+        "linewidth": 1,
+        "fontsize": 12,
+        "compact": false,
+        "riskDisplayMode": "percents",
+        "accountSize": 100,
+        "lotSize": 0.01,
+        "risk": 5,
+        "leverage": 50,
+        "alwaysShowStats": false,
+        "showPriceLabels": true,
+        "qtyPrecision": "default",
+        "currency": "NONE",
+        "infoBlocks": {
+          "tpPriceOffset": {
+            "visible": true
+          },
+          "tpPercentOffset": {
+            "visible": true
+          },
+          "tpTickOffset": {
+            "visible": true
+          },
+          "tpAmount": {
+            "visible": true
+          },
+          "tpPL": {
+            "visible": false
+          },
+          "openClosePL": {
+            "visible": true
+          },
+          "qty": {
+            "visible": true
+          },
+          "riskRewardRatio": {
+            "visible": true
+          },
+          "slPriceOffset": {
+            "visible": true
+          },
+          "slPercentOffset": {
+            "visible": true
+          },
+          "slTickOffset": {
+            "visible": true
+          },
+          "slAmount": {
+            "visible": true
+          },
+          "slPL": {
+            "visible": false
+          }
+        },
+        "frozen": false,
+        "visible": true,
+        "stopLevel": 251,
+        "profitLevel": 605,
+        "qty": 1.1468679037548455,
+        "amountTarget": 106.94,
+        "amountStop": 97.12,
+        "entryPointCurrencyRate": 1,
+        "closePointCurrencyRate": 1
+      },
+      "visible": null,
+      "locked": null
+    },
+    {
+      "id": "T8RhFl",
+      "name": "trend_line",
+      "points": [
+        {
+          "price": 4397.118364024527,
+          "time": 1789104810
+        },
+        {
+          "price": 4338.527294336967,
+          "time": 1789104810
+        }
+      ],
+      "properties": {
+        "linecolor": "rgba(255, 255, 255, 1)",
+        "textcolor": "rgba(255, 255, 255, 1)",
+        "linewidth": 1,
+        "linestyle": 0,
+        "extendLeft": false,
+        "extendRight": false,
+        "leftEnd": 0,
+        "rightEnd": 0,
+        "horzLabelsAlign": "center",
+        "vertLabelsAlign": "middle",
+        "fontsize": 14,
+        "bold": false,
+        "italic": false,
+        "alwaysShowStats": false,
+        "showMiddlePoint": false,
+        "showPriceLabels": false,
+        "showPriceRange": false,
+        "showPercentPriceRange": false,
+        "showPipsPriceRange": false,
+        "showBarsRange": false,
+        "showDateTimeRange": false,
+        "showDistance": false,
+        "showAngle": false,
+        "statsPosition": 2,
+        "text": "",
+        "frozen": false,
+        "visible": true
+      },
+      "visible": null,
+      "locked": null
+    },
+    {
+      "id": "2lqWVk",
+      "name": "short_position",
+      "points": [
+        {
+          "price": 4364.7,
+          "time": 1789143285
+        },
+        {
+          "price": 4364.7,
+          "time": 1789145535
+        }
+      ],
+      "properties": {
+        "linecolor": "#787B86",
+        "textcolor": "#ffffff",
+        "stopBackground": "rgba(242, 54, 69, 0.2)",
+        "profitBackground": "rgba(8, 153, 129, 0.2)",
+        "stopBackgroundTransparency": 80,
+        "profitBackgroundTransparency": 80,
+        "linewidth": 1,
+        "fontsize": 12,
+        "compact": false,
+        "riskDisplayMode": "money",
+        "accountSize": 150,
+        "lotSize": 0.01,
+        "risk": 60,
+        "leverage": 1000,
+        "alwaysShowStats": false,
+        "showPriceLabels": true,
+        "qtyPrecision": "default",
+        "currency": "NONE",
+        "infoBlocks": {
+          "tpPriceOffset": {
+            "visible": true
+          },
+          "tpPercentOffset": {
+            "visible": true
+          },
+          "tpTickOffset": {
+            "visible": true
+          },
+          "tpAmount": {
+            "visible": true
+          },
+          "tpPL": {
+            "visible": false
+          },
+          "openClosePL": {
+            "visible": true
+          },
+          "qty": {
+            "visible": true
+          },
+          "riskRewardRatio": {
+            "visible": true
+          },
+          "slPriceOffset": {
+            "visible": true
+          },
+          "slPercentOffset": {
+            "visible": true
+          },
+          "slTickOffset": {
+            "visible": true
+          },
+          "slAmount": {
+            "visible": true
+          },
+          "slPL": {
+            "visible": false
+          }
+        },
+        "frozen": false,
+        "visible": true,
+        "stopLevel": 540,
+        "profitLevel": 1313,
+        "qty": 11.111111111109988,
+        "amountTarget": 295.89,
+        "amountStop": 90,
+        "entryPointCurrencyRate": 1,
+        "closePointCurrencyRate": 1
+      },
+      "visible": null,
+      "locked": null
+    },
+    {
+      "id": "IrSM1W",
+      "name": "callout",
+      "points": [
+        {
+          "price": 4440.27293466653,
+          "time": 1788734910
+        },
+        {
+          "price": 4444.38866669634,
+          "time": 1788736800
+        }
+      ],
+      "properties": {
+        "color": "#ffffff",
+        "backgroundColor": "rgba(8, 153, 129, 0.7)",
+        "bordercolor": "#0097A7",
+        "transparency": 50,
+        "linewidth": 2,
+        "fontsize": 12,
+        "bold": false,
+        "italic": false,
+        "wordWrap": false,
+        "wordWrapWidth": 200,
+        "text": "shown order block",
+        "frozen": false,
+        "visible": true
+      },
+      "visible": null,
+      "locked": null
+    },
+    {
+      "id": "aGPTR4",
+      "name": "callout",
+      "points": [
+        {
+          "price": 4434.637547733405,
+          "time": 1788735135
+        },
+        {
+          "price": 4438.94323662613,
+          "time": 1788737970
+        }
+      ],
+      "properties": {
+        "color": "#ffffff",
+        "backgroundColor": "rgba(8, 153, 129, 0.7)",
+        "bordercolor": "#0097A7",
+        "transparency": 50,
+        "linewidth": 2,
+        "fontsize": 12,
+        "bold": false,
+        "italic": false,
+        "wordWrap": false,
+        "wordWrapWidth": 200,
+        "text": "order block appearing out\nof no where when it could\nhave informed on a potential\nresistance zone before that \npullback",
+        "frozen": false,
+        "visible": true
+      },
+      "visible": null,
+      "locked": null
+    }
+  ],
+  "studies": [
+    {
+      "pane": 0,
+      "type": "Study",
+      "id": "8uE6BI",
+      "title": "Adaptive Trend Finder"
+    },
+    {
+      "pane": 0,
+      "type": "Study",
+      "id": "3qODoG",
+      "title": "Consolidation Zones - Live"
+    },
+    {
+      "pane": 0,
+      "type": "Study",
+      "id": "fLgsEX",
+      "title": "LuxAlgo - Liquidity Sweeps"
+    },
+    {
+      "pane": 0,
+      "type": "Study",
+      "id": "m19xew",
+      "title": "LuxAlgo - Fair Value Gap"
+    },
+    {
+      "pane": 0,
+      "type": "Study",
+      "id": "Tbo1Da",
+      "title": "LuxAlgo - Support Resistance Classification (VR)"
+    },
+    {
+      "pane": 0,
+      "type": "Study",
+      "id": "Aou1T7",
+      "title": "Delta Volume Bubbles"
+    },
+    {
+      "pane": 0,
+      "type": "Study",
+      "id": "yOAmH5",
+      "title": "LuxAlgo - Fair Value Gap"
+    },
+    {
+      "pane": 0,
+      "type": "Study",
+      "id": "SVIL5Q",
+      "title": "Delta Volume Bubbles"
+    },
+    {
+      "pane": 0,
+      "type": "Study",
+      "id": "OMDJUm",
+      "title": "LuxAlgo - Institutional Order Flow Strength Classifier"
+    },
+    {
+      "pane": 0,
+      "type": "Study",
+      "id": "3qBoRm",
+      "title": "Multi-Session ORB"
+    },
+    {
+      "pane": 0,
+      "type": "StudyStrategy",
+      "id": "xVbiv5",
+      "title": "B15"
+    },
+    {
+      "pane": 1,
+      "type": "Study",
+      "id": "hj5b3t",
+      "title": "ADX and DI for v4"
+    }
+  ],
+  "alert_label_count": 29,
+  "layout_source_types": {
+    "MainSeries": 1,
+    "Study": 11,
+    "LineToolRiskRewardShort": 1,
+    "LineToolTrendLine": 1,
+    "LineToolRiskRewardLong": 1,
+    "LineToolCallout": 2,
+    "StudyStrategy": 1
+  }
+}

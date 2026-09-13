@@ -1,0 +1,92 @@
+{
+  "entity": "xVbiv5",
+  "bars_back": 7000,
+  "settle_A": {
+    "size": 498,
+    "bars": 349,
+    "loading": false,
+    "status": 2,
+    "waited_ms": 4386
+  },
+  "A": {
+    "rows": 498,
+    "bars": 349,
+    "t_first": 1789137840,
+    "t_last": 1789160205,
+    "trades": 82,
+    "date_range": {
+      "backtest": {
+        "from": 1787781720000,
+        "to": 1789160205000
+      },
+      "trade": {
+        "from": 1787783880000,
+        "to": 1789160205000
+      }
+    },
+    "net": 183.98000000000124
+  },
+  "extend": {
+    "covered": true,
+    "rounds": 2,
+    "started": {
+      "size": 349,
+      "first": -49,
+      "last": 299,
+      "t0": 1789144545
+    },
+    "final": {
+      "size": 10349,
+      "first": -10049,
+      "last": 299,
+      "t0": 1788493755
+    },
+    "log": [
+      {
+        "round": 1,
+        "size": 5349,
+        "t0": 1788911985,
+        "polls": 4
+      },
+      {
+        "round": 2,
+        "size": 10349,
+        "t0": 1788493755,
+        "polls": 3
+      }
+    ]
+  },
+  "settle_B": {
+    "size": 10349,
+    "bars": 10349,
+    "loading": false,
+    "status": 2,
+    "waited_ms": 4760
+  },
+  "B": {
+    "rows": 10349,
+    "bars": 10349,
+    "t_first": 1788493755,
+    "t_last": 1789160205,
+    "trades": 82,
+    "date_range": {
+      "backtest": {
+        "from": 1787781720000,
+        "to": 1789160205000
+      },
+      "trade": {
+        "from": 1787783880000,
+        "to": 1789160205000
+      }
+    },
+    "net": 183.98000000000124
+  },
+  "stability": {
+    "overlap_rows": 498,
+    "rows_changed": 0,
+    "per_plot_changed": {},
+    "first_changed": [],
+    "trades_only_in_A": [],
+    "trades_only_in_B": 0
+  }
+}

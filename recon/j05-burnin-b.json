@@ -1,0 +1,46 @@
+[
+ {
+  "other": "recon/j05-floor-2024-01-18.json",
+  "compute_starts": {
+   "base": "2023-12-25T23:02",
+   "other": "2024-01-02T23:02",
+   "apart_hours": 192
+  },
+  "overlap": {
+   "from": "2024-01-02T23:02",
+   "to": "2024-01-11T14:00",
+   "hours": 206.97
+  },
+  "trades_in_overlap": {
+   "base": 1,
+   "other": 1,
+   "identical": 1,
+   "differing_rows": 0
+  },
+  "differences": [],
+  "burn_in_hours": 0,
+  "note": "all trades in the overlap agree"
+ },
+ {
+  "other": "recon/j05-floor-2024-01-25.json",
+  "compute_starts": {
+   "base": "2023-12-25T23:02",
+   "other": "2024-01-09T23:02",
+   "apart_hours": 360
+  },
+  "overlap": {
+   "from": "2024-01-09T23:02",
+   "to": "2024-01-11T14:00",
+   "hours": 38.98
+  },
+  "trades_in_overlap": {
+   "base": 0,
+   "other": 0,
+   "identical": 0,
+   "differing_rows": 0
+  },
+  "differences": [],
+  "burn_in_hours": 0,
+  "note": "all trades in the overlap agree"
+ }
+]

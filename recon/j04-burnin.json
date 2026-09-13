@@ -1,0 +1,182 @@
+[
+ {
+  "other": "recon/j04-B-mid-1500.json",
+  "compute_starts": {
+   "base": "2025-02-24T23:02",
+   "other": "2025-02-24T23:02",
+   "apart_hours": 0
+  },
+  "overlap": {
+   "from": "2025-02-24T23:02",
+   "to": "2025-03-12T13:59",
+   "hours": 374.96
+  },
+  "trades_in_overlap": {
+   "base": 29,
+   "other": 30,
+   "identical": 29,
+   "differing_rows": 1
+  },
+  "differences": [
+   {
+    "at": "2025-03-12T13:18",
+    "hours_after_later_compute_start": 374.27,
+    "side": "other_only",
+    "entry": "RVX DN@2910.64",
+    "exit": "@2915.74 2025-03-12T13:59"
+   }
+  ],
+  "burn_in_hours": 374.96,
+  "note": "every trade entered after 2025-03-12T13:59 agrees (first such: none in overlap)"
+ },
+ {
+  "other": "recon/j04-B-mid-500.json",
+  "compute_starts": {
+   "base": "2025-02-24T23:02",
+   "other": "2025-02-24T23:02",
+   "apart_hours": 0
+  },
+  "overlap": {
+   "from": "2025-02-24T23:02",
+   "to": "2025-03-12T13:59",
+   "hours": 374.96
+  },
+  "trades_in_overlap": {
+   "base": 29,
+   "other": 30,
+   "identical": 29,
+   "differing_rows": 1
+  },
+  "differences": [
+   {
+    "at": "2025-03-12T13:18",
+    "hours_after_later_compute_start": 374.27,
+    "side": "other_only",
+    "entry": "RVX DN@2910.64",
+    "exit": "@2915.74 2025-03-12T13:59"
+   }
+  ],
+  "burn_in_hours": 374.96,
+  "note": "every trade entered after 2025-03-12T13:59 agrees (first such: none in overlap)"
+ },
+ {
+  "other": "recon/j04-Z1d.json",
+  "compute_starts": {
+   "base": "2025-02-24T23:02",
+   "other": "2025-02-25T23:02",
+   "apart_hours": 24
+  },
+  "overlap": {
+   "from": "2025-02-25T23:02",
+   "to": "2025-03-12T14:00",
+   "hours": 350.98
+  },
+  "trades_in_overlap": {
+   "base": 29,
+   "other": 28,
+   "identical": 28,
+   "differing_rows": 1
+  },
+  "differences": [
+   {
+    "at": "2025-03-12T13:18",
+    "hours_after_later_compute_start": 350.27,
+    "side": "base_only",
+    "entry": "RVX DN@2910.64",
+    "exit": "@2915.37 2025-03-12T14:00"
+   }
+  ],
+  "burn_in_hours": 350.98,
+  "note": "every trade entered after 2025-03-12T14:00 agrees (first such: none in overlap)"
+ },
+ {
+  "other": "recon/j04-Z2d.json",
+  "compute_starts": {
+   "base": "2025-02-24T23:02",
+   "other": "2025-02-26T23:02",
+   "apart_hours": 48
+  },
+  "overlap": {
+   "from": "2025-02-26T23:02",
+   "to": "2025-03-12T14:00",
+   "hours": 326.98
+  },
+  "trades_in_overlap": {
+   "base": 27,
+   "other": 26,
+   "identical": 26,
+   "differing_rows": 1
+  },
+  "differences": [
+   {
+    "at": "2025-03-12T13:18",
+    "hours_after_later_compute_start": 326.27,
+    "side": "base_only",
+    "entry": "RVX DN@2910.64",
+    "exit": "@2915.37 2025-03-12T14:00"
+   }
+  ],
+  "burn_in_hours": 326.98,
+  "note": "every trade entered after 2025-03-12T14:00 agrees (first such: none in overlap)"
+ },
+ {
+  "other": "recon/j04-Z5d.json",
+  "compute_starts": {
+   "base": "2025-02-24T23:02",
+   "other": "2025-02-27T23:02",
+   "apart_hours": 72
+  },
+  "overlap": {
+   "from": "2025-02-27T23:02",
+   "to": "2025-03-12T14:00",
+   "hours": 302.98
+  },
+  "trades_in_overlap": {
+   "base": 20,
+   "other": 19,
+   "identical": 19,
+   "differing_rows": 1
+  },
+  "differences": [
+   {
+    "at": "2025-03-12T13:18",
+    "hours_after_later_compute_start": 302.27,
+    "side": "base_only",
+    "entry": "RVX DN@2910.64",
+    "exit": "@2915.37 2025-03-12T14:00"
+   }
+  ],
+  "burn_in_hours": 302.98,
+  "note": "every trade entered after 2025-03-12T14:00 agrees (first such: none in overlap)"
+ },
+ {
+  "other": "recon/j04-Z8d.json",
+  "compute_starts": {
+   "base": "2025-02-24T23:02",
+   "other": "2025-03-04T23:02",
+   "apart_hours": 192
+  },
+  "overlap": {
+   "from": "2025-03-04T23:02",
+   "to": "2025-03-12T14:00",
+   "hours": 182.97
+  },
+  "trades_in_overlap": {
+   "base": 14,
+   "other": 13,
+   "identical": 13,
+   "differing_rows": 1
+  },
+  "differences": [
+   {
+    "at": "2025-03-12T13:18",
+    "hours_after_later_compute_start": 182.28,
+    "side": "base_only",
+    "entry": "RVX DN@2910.64",
+    "exit": "@2915.37 2025-03-12T14:00"
+   }
+  ],
+  "burn_in_hours": 182.97,
+  "note": "every trade entered after 2025-03-12T14:00 agrees (first such: none in overlap)"
+ }
+]

@@ -1,0 +1,98 @@
+{
+  "T": 1788833910,
+  "t_iso": "2026-09-08T02:18:30.000Z",
+  "test_rows": 1999,
+  "compared_rows": 1999,
+  "test_rows_not_in_reference": 0,
+  "rows_before_T": 498,
+  "bars_after_T": 1501,
+  "last_k": 1500,
+  "overall": {
+    "rows_after_T_with_any_mismatch": 1501,
+    "overall_k_star": null,
+    "plots_agreeing_from_k0": 61,
+    "plots_total": 64,
+    "binding_plot": {
+      "plot": 45,
+      "title": "IOF data window 3",
+      "k_star": null
+    },
+    "dangerous_after_T": 1503,
+    "visible_na_after_T": 0,
+    "mismatches_before_T": 498
+  },
+  "disagreeing_plots": [
+    {
+      "plot": 45,
+      "id": "plot_45",
+      "type": "line",
+      "title": "IOF data window 3",
+      "after_T": {
+        "na_vs_value": 0,
+        "wrong_number": 1501,
+        "value_vs_na": 0
+      },
+      "before_T": {
+        "na_vs_value": 0,
+        "wrong_number": 498,
+        "value_vs_na": 0
+      },
+      "max_abs_diff": 9,
+      "first_bad": {
+        "k": 0,
+        "t": 1788833910,
+        "replay": 55,
+        "reference": 46
+      },
+      "k_star": null
+    },
+    {
+      "plot": 60,
+      "id": "plot_60",
+      "type": "line",
+      "title": "SR data window 1",
+      "after_T": {
+        "na_vs_value": 0,
+        "wrong_number": 0,
+        "value_vs_na": 1
+      },
+      "before_T": {
+        "na_vs_value": 0,
+        "wrong_number": 0,
+        "value_vs_na": 0
+      },
+      "max_abs_diff": 0,
+      "first_bad": {
+        "k": 1500,
+        "t": 1788905190,
+        "replay": 2.1733353058103537,
+        "reference": null
+      },
+      "k_star": null
+    },
+    {
+      "plot": 61,
+      "id": "plot_61",
+      "type": "line",
+      "title": "SR data window 2",
+      "after_T": {
+        "na_vs_value": 0,
+        "wrong_number": 0,
+        "value_vs_na": 1
+      },
+      "before_T": {
+        "na_vs_value": 0,
+        "wrong_number": 0,
+        "value_vs_na": 0
+      },
+      "max_abs_diff": 0,
+      "first_bad": {
+        "k": 1500,
+        "t": 1788905190,
+        "replay": 2.9965892175367355,
+        "reference": null
+      },
+      "k_star": null
+    }
+  ]
+}

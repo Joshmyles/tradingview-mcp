@@ -1,0 +1,21 @@
+{
+  "T": 1741765500,
+  "t_iso": "2025-03-12T07:45:00.000Z",
+  "test_rows": 998,
+  "compared_rows": 998,
+  "test_rows_not_in_reference": 0,
+  "rows_before_T": 498,
+  "bars_after_T": 500,
+  "last_k": 499,
+  "overall": {
+    "rows_after_T_with_any_mismatch": 0,
+    "overall_k_star": 0,
+    "plots_agreeing_from_k0": 64,
+    "plots_total": 64,
+    "binding_plot": null,
+    "dangerous_after_T": 0,
+    "visible_na_after_T": 0,
+    "mismatches_before_T": 0
+  },
+  "disagreeing_plots": []
+}

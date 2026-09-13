@@ -1,0 +1,21 @@
+{
+  "T": 1788833910,
+  "t_iso": "2026-09-08T02:18:30.000Z",
+  "test_rows": 466,
+  "compared_rows": 466,
+  "test_rows_not_in_reference": 0,
+  "rows_before_T": 466,
+  "bars_after_T": 0,
+  "last_k": -1,
+  "overall": {
+    "rows_after_T_with_any_mismatch": 0,
+    "overall_k_star": 0,
+    "plots_agreeing_from_k0": 64,
+    "plots_total": 64,
+    "binding_plot": null,
+    "dangerous_after_T": 0,
+    "visible_na_after_T": 0,
+    "mismatches_before_T": 468
+  },
+  "disagreeing_plots": []
+}

@@ -13,9 +13,11 @@ import {
   errorEnvelope,
   fromReaderFailure,
   fromThrown,
+  handler,
   jsonResult,
   MAX_RESPONSE_CHARS,
 } from '../src/tools/_format.js';
+import { answered, isVerdict, refused } from '../src/internals/verdict.js';
 
 const rows = (n, pad = 40) =>
   Array.from({ length: n }, (_, i) => ({ i, text: 'x'.repeat(pad), v: i * 3 }));
@@ -74,6 +76,74 @@ describe('error envelope', () => {
     const parsed = JSON.parse(jsonResult({ success: true, data: 1 }).content[0].text);
     assert.equal(parsed.ok, true);
     assert.equal(parsed.success, true);
+  });
+});
+
+describe('verdict through the envelope', () => {
+  const parse = (r) => JSON.parse(r.content[0].text);
+
+  it('issues the error envelope as a verdict, with reason equal to the code', () => {
+    const e = errorEnvelope(ERROR_CODES.NOT_FOUND, 'gone');
+    assert.equal(isVerdict(e), true);
+    assert.equal(e.reason, 'not_found');
+    assert.equal(e.error.code, 'not_found');
+  });
+
+  it('handler(refused(...)) is an error: isError true, ok false, success false', async () => {
+    const r = await handler(async () => refused('panel is still closed'))();
+    assert.equal(r.isError, true);
+    const body = parse(r);
+    assert.equal(body.ok, false);
+    assert.equal(body.success, false);
+    assert.equal(body.reason, 'panel is still closed');
+  });
+
+  it('handler flags a legacy success:false with no ok as an error', async () => {
+    const r = await handler(async () => ({ success: false, error: 'x' }))();
+    assert.equal(r.isError, true);
+    const body = parse(r);
+    assert.equal(body.ok, false);
+    assert.equal(body.success, false);
+    assert.equal(body.error, 'x');
+  });
+
+  it('handler answers a bare payload as a read, not an error', async () => {
+    const r = await handler(async () => ({ rows: [1, 2] }))();
+    assert.equal(r.isError, undefined);
+    const body = parse(r);
+    assert.equal(body.ok, true);
+    assert.equal(body.success, true);
+    assert.deepEqual(body.rows, [1, 2]);
+  });
+
+  it('handler passes a finished MCP result through untouched', async () => {
+    const done = { content: [{ type: 'text', text: 'hi' }] };
+    assert.equal(await handler(async () => done)(), done);
+  });
+
+  it('handler turns a thrown error into the classified envelope', async () => {
+    const r = await handler(async () => { throw new Error('Shape not found: x'); })();
+    assert.equal(r.isError, true);
+    assert.equal(parse(r).error.code, 'not_found');
+  });
+
+  it('a result whose ok and success disagree becomes an internal error, not a throw', async () => {
+    const direct = jsonResult({ ok: true, success: false, data: 1 });
+    assert.equal(direct.isError, true);
+    const body = parse(direct);
+    assert.equal(body.ok, false);
+    assert.equal(body.error.code, ERROR_CODES.INTERNAL);
+    const viaHandler = await handler(async () => ({ ok: true, success: false }))();
+    assert.equal(viaHandler.isError, true);
+    assert.equal(parse(viaHandler).error.code, ERROR_CODES.INTERNAL);
+  });
+
+  it('serialises a frozen verdict without mutating it, trimmed or not', () => {
+    const v = answered({ rows: rows(5000) });
+    const text = jsonResult(v).content[0].text;
+    assert.equal(JSON.parse(text).response_budget.applied, true);
+    assert.equal(v.rows.length, 5000);
+    assert.equal(Object.isFrozen(v), true);
   });
 });
 

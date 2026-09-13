@@ -56,7 +56,7 @@ describe('pine logs internals', () => {
   it('refuses a stale cursor instead of returning a different slice', () => {
     const r = rows(10);
     const good = encodeCursor({ n: 4, head: rowFingerprint(r[0]), prev: rowFingerprint(r[3]) });
-    assert.deepEqual(resolveCursor(good, r), { ok: true, from: 4, fresh: false });
+    assert.deepEqual(resolveCursor(good, r), { from: 4, fresh: false, ok: true, success: true });
 
     assert.equal(resolveCursor(encodeCursor({ n: 4, head: 'deadbeef', prev: null }), r).reason, 'cursor_stale');
     assert.equal(resolveCursor(encodeCursor({ n: 99, head: null, prev: null }), r).reason, 'cursor_stale');

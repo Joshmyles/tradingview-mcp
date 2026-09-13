@@ -3,6 +3,7 @@ import { jsonResult, fromThrown } from './_format.js';
 import * as core from '../core/chart.js';
 import { awaitSettled } from '../settle.js';
 import { resolveEntity } from '../core/pine-inputs.js';
+import { answered, failed } from '../internals/verdict.js';
 
 export function registerChartTools(server) {
   server.tool('chart_get_state', 'Get current chart state (symbol, timeframe, chart type, indicators)', {}, async () => {
@@ -25,11 +26,11 @@ export function registerChartTools(server) {
       });
       // The full study snapshot is diagnostic bulk; keep the outcome legible.
       const { studies, ...rest } = r;
-      return jsonResult({
-        success: r.outcome === 'settled',
-        ...rest,
-        study_count: studies?.length ?? 0,
-      });
+      const detail = { ...rest, study_count: studies?.length ?? 0 };
+      // The outcome is already a stable code (timed_out, stuck, errored, absent).
+      return jsonResult(
+        r.outcome === 'settled' ? answered(detail) : failed(r.outcome || 'internal', detail),
+      );
     } catch (err) { return jsonResult(fromThrown(err)); }
   });
 

@@ -5,20 +5,53 @@
     "verified": "Reached only after the claimed change was read back and compared.",
     "aggregate": "A batch whose per-item verdicts carry the real answer.",
     "page-internal": "A resolve() inside page-context JS, not a tool's return value.",
-    "honest-partial": "Reports what it did and explicitly disclaims readiness in the same payload."
+    "honest-partial": "Reports what it did and explicitly disclaims readiness in the same payload.",
+    "unobservable": "A mutation whose effect this process cannot read back on this path; it returns unobservable(why), so the payload carries observed:false and names why instead of implying the effect happened."
   },
   "sites": {
+    "alerts.js::create": {
+      "classification": "verified",
+      "why": "Only returned when the alert service answers s==='ok'; the server-assigned alert_id is the evidence."
+    },
+    "alerts.js::deleteAlerts": {
+      "classification": "verified",
+      "why": "Only returned when the delete endpoint answers s==='ok'; the server is the observer here."
+    },
     "alerts.js::list": {
       "classification": "read",
       "why": "Returns the alert list fetched from TradingView's alert service; the alerts array is the evidence and no state is changed."
+    },
+    "autopsy.js::compareAsFound": {
+      "classification": "read",
+      "why": "Compares the as-found record with a fresh read of the chart field by field; a field is answered only when the re-read value matches, otherwise failed(not_as_found)."
+    },
+    "autopsy.js::lossAutopsy": {
+      "classification": "aggregate",
+      "why": "The packet carries per-view centring verdicts and the as-found restoration comparison; a thrown run returns failed(internal), so the inner verdicts are the answer."
     },
     "backtest.js::backtestRun": {
       "classification": "read",
       "why": "Returns the strategy report read off the chart after a gated settle; the metrics are the evidence."
     },
+    "backtest.js::runDeepWindow": {
+      "classification": "read",
+      "why": "Returns the strategy report read after the gated settle for the requested window and fails with window_mismatch when the report does not describe it; reader failures are adopted failing."
+    },
     "backtest.js::walkForward": {
       "classification": "read",
       "why": "Returns per-window reports it read; each window carries its own numbers as evidence."
+    },
+    "batch.js::batchRun": {
+      "classification": "aggregate",
+      "why": "The outer flag means the sweep ran; each iteration carries its own success/error, and successful/failed counts are reported alongside."
+    },
+    "capture.js::captureScreenshot": {
+      "classification": "verified",
+      "why": "The CDP path writes the PNG to disk and returns its path; the file is the evidence. The 'api' path cannot observe its own effect and now returns unobservable() instead."
+    },
+    "chart.js::(module)": {
+      "classification": "honest-partial",
+      "why": "The applied() helper: returns success with settled:false and a fence, explicitly declining to claim the chart has caught up. Reads gate themselves at the read."
     },
     "chart.js::getState": {
       "classification": "read",
@@ -28,6 +61,14 @@
       "classification": "read",
       "why": "Returns the visible range as read from the time scale."
     },
+    "chart.js::scrollToDate": {
+      "classification": "unobservable",
+      "why": "The visible range is re-read and compared (observed/refused); unobservable() only when the range could not be read back, and the payload says so."
+    },
+    "chart.js::setType": {
+      "classification": "unobservable",
+      "why": "Observed/refused when the chart type can be read back; unobservable() only on a build exposing no readable chart-type accessor, and the payload says so."
+    },
     "chart.js::symbolInfo": {
       "classification": "read",
       "why": "Returns the chart's symbolExt() record as read - description, type, session, pricescale; it changes nothing."
@@ -36,65 +77,121 @@
       "classification": "read",
       "why": "Returns search results from TradingView's symbol search."
     },
-    "data.js::getOhlcv": {
+    "data.js::(module)": {
       "classification": "read",
-      "why": "Returns bars read from the main series; the bars are the evidence."
-    },
-    "data.js::getIndicator": {
-      "classification": "read",
-      "why": "Returns indicator series values read from the study."
-    },
-    "data.js::getQuote": {
-      "classification": "read",
-      "why": "Returns a real-time quote snapshot as read from the symbol's quote session; the prices are the evidence."
+      "why": "gateRead with wait=false returns the current reading marked settled:false; it reports data it read and claims no change."
     },
     "data.js::getDepth": {
       "classification": "read",
       "why": "Returns order-book depth rows as read; the bid/ask ladder is the evidence and nothing is submitted."
     },
-    "data.js::getStudyValues": {
+    "data.js::getEquity": {
       "classification": "read",
-      "why": "Returns the current numeric values of visible indicators as read from their series; no inputs are written."
+      "why": "Returns per-closed-trade equity read off the gated report; an empty book is failed(not_found), not a success."
     },
-    "data.js::getPineLines": {
+    "data.js::getIndicator": {
       "classification": "read",
-      "why": "Returns line objects read from a Pine study's drawing collection."
+      "why": "Returns indicator series values read from the study."
     },
-    "data.js::getPineLabels": {
+    "data.js::getOhlcv": {
       "classification": "read",
-      "why": "Returns label objects read from a Pine study's drawing collection."
-    },
-    "data.js::getPineTables": {
-      "classification": "read",
-      "why": "Returns table objects read from a Pine study's drawing collection."
+      "why": "Returns bars read from the main series; the bars are the evidence."
     },
     "data.js::getPineBoxes": {
       "classification": "read",
       "why": "Returns box objects read from a Pine study's drawing collection."
     },
-    "drawing.js::listDrawings": {
+    "data.js::getPineLabels": {
       "classification": "read",
-      "why": "Returns getAllShapes() as read - one id and name per drawing; it claims no creation or removal."
+      "why": "Returns label objects read from a Pine study's drawing collection."
+    },
+    "data.js::getPineLines": {
+      "classification": "read",
+      "why": "Returns line objects read from a Pine study's drawing collection."
+    },
+    "data.js::getPineTables": {
+      "classification": "read",
+      "why": "Returns table objects read from a Pine study's drawing collection."
+    },
+    "data.js::getQuote": {
+      "classification": "read",
+      "why": "Returns a real-time quote snapshot as read from the symbol's quote session; the prices are the evidence."
+    },
+    "data.js::getStrategyResults": {
+      "classification": "read",
+      "why": "Returns the strategy metrics read off the gated report; an empty report is failed(not_found), not a success."
+    },
+    "data.js::getStudyValues": {
+      "classification": "read",
+      "why": "Returns the current numeric values of visible indicators as read from their series; no inputs are written."
+    },
+    "data.js::getTrades": {
+      "classification": "read",
+      "why": "Returns the trade list read off the gated report; an empty book is failed(not_found), not a success."
     },
     "drawing.js::getProperties": {
       "classification": "read",
       "why": "Returns one shape's points and properties as read; throws when the shape is absent."
     },
-    "health.js::healthCheck": {
+    "drawing.js::listDrawings": {
       "classification": "read",
-      "why": "Returns the probed CDP and chart state; the probe results are the evidence."
+      "why": "Returns getAllShapes() as read - one id and name per drawing; it claims no creation or removal."
+    },
+    "equity.js::(module)": {
+      "classification": "read",
+      "why": "readAllBars returns the price bars it read after extending history, and fails when the history never covered the requested span."
+    },
+    "equity.js::equityCurve": {
+      "classification": "read",
+      "why": "Returns a curve reconstructed from the trade book and bars it read, with its own agreement check against the report; reader failures are adopted failing."
     },
     "health.js::discover": {
       "classification": "read",
       "why": "Returns the probed TradingView API surface as read - which known paths resolve on this build; no state changes."
     },
+    "health.js::healthCheck": {
+      "classification": "read",
+      "why": "Returns the probed CDP and chart state; the probe results are the evidence."
+    },
     "health.js::uiState": {
       "classification": "read",
       "why": "Returns the observed UI state as read - which panels and dialogs are open; it opens nothing."
     },
+    "indicators.js::searchStudies": {
+      "classification": "verified",
+      "why": "Success is computed as added.length > 0 from a before/after study-id diff, not asserted; the added ids are the evidence."
+    },
+    "pane.js::focus": {
+      "classification": "unobservable",
+      "why": "This build exposes no readable active-pane index, so where focus cannot be confirmed it returns unobservable() naming that, never a bare success."
+    },
     "pane.js::list": {
       "classification": "read",
       "why": "Returns the pane inventory as read from the chart widget collection - index, symbol and resolution per pane."
+    },
+    "pane.js::setSymbol": {
+      "classification": "unobservable",
+      "why": "The pane symbol is re-read and compared (observed/refused); unobservable() only when that pane symbol could not be read back."
+    },
+    "pine-console.js::pineConsoleRead": {
+      "classification": "read",
+      "why": "Returns Pine log rows read from the study; a page result carrying no verdict becomes failed(internal) and failing page objects are adopted failing."
+    },
+    "pine-inputs.js::(module)": {
+      "classification": "read",
+      "why": "pageFailure() adopts a failing page-context object into a failed verdict, or failed(no_result); it is reached only on failure paths and cannot yield a success."
+    },
+    "pine-inputs.js::pineInputsAssert": {
+      "classification": "read",
+      "why": "Answers only when every pinned input read back from the chart equals the manifest and the script identity matches; drift and mismatch are failed verdicts carrying the diff."
+    },
+    "pine-inputs.js::pineInputsSnapshot": {
+      "classification": "read",
+      "why": "Returns the input values read via getInputValues() and their hash; it writes nothing to the chart."
+    },
+    "pine-inputs.js::resolveEntity": {
+      "classification": "read",
+      "why": "Returns the one study resolved from the chart, refusing with ambiguous or not_found rather than choosing; the resolved id is the evidence."
     },
     "pine.js::analyze": {
       "classification": "read",
@@ -104,113 +201,129 @@
       "classification": "read",
       "why": "Returns the compile server's own verdict on submitted source; the server response is the evidence."
     },
-    "pine.js::getSource": {
-      "classification": "read",
-      "why": "Returns the Pine editor's Monaco buffer contents as read; the source text is the evidence and nothing is written."
-    },
-    "pine.js::getErrors": {
-      "classification": "read",
-      "why": "Returns Monaco's current error markers as read - line, column, message, severity per marker."
+    "pine.js::compile": {
+      "classification": "unobservable",
+      "why": "The compile button is clicked and the compilation result is not read back here; pine_get_errors and pine_smart_compile are the observing paths."
     },
     "pine.js::getConsole": {
       "classification": "read",
       "why": "Returns the Pine console's output lines as read; it neither compiles nor clears the console."
     },
+    "pine.js::getErrors": {
+      "classification": "read",
+      "why": "Returns Monaco's current error markers as read - line, column, message, severity per marker."
+    },
+    "pine.js::getSource": {
+      "classification": "read",
+      "why": "Returns the Pine editor's Monaco buffer contents as read; the source text is the evidence and nothing is written."
+    },
     "pine.js::listScripts": {
       "classification": "read",
       "why": "Returns the saved-script list fetched from pine-facade; the array of script names and ids is the evidence."
     },
-    "replay.js::status": {
-      "classification": "read",
-      "why": "Returns replay state as read: started flag, cursor, autoplay delay, position."
-    },
-    "tab.js::list": {
-      "classification": "read",
-      "why": "Returns the CDP page-target list as read, annotated with each target's chart id; it opens and closes nothing."
-    },
-    "ui.js::layoutList": {
-      "classification": "read",
-      "why": "Returns saved layouts from getSavedCharts; carries its own error field when the call times out."
-    },
-    "ui.js::findElement": {
-      "classification": "read",
-      "why": "Returns matching DOM elements as read; claims no interaction."
-    },
-    "ui.js::uiEvaluate": {
-      "classification": "read",
-      "why": "Returns the evaluated expression's result, awaiting promises so a rejection throws rather than serialising as {}."
-    },
-    "watchlist.js::get": {
-      "classification": "read",
-      "why": "Returns the watchlist rows as read from the right-hand panel; it adds and removes nothing."
-    },
-    "indicators.js::searchStudies": {
-      "classification": "verified",
-      "why": "Success is computed as added.length > 0 from a before/after study-id diff, not asserted; the added ids are the evidence."
-    },
-    "alerts.js::create": {
-      "classification": "verified",
-      "why": "Only returned when the alert service answers s==='ok'; the server-assigned alert_id is the evidence."
-    },
-    "alerts.js::deleteAlerts": {
-      "classification": "verified",
-      "why": "Only returned when the delete endpoint answers s==='ok'; the server is the observer here."
-    },
-    "capture.js::captureScreenshot": {
-      "classification": "verified",
-      "why": "The CDP path writes the PNG to disk and returns its path; the file is the evidence. The 'api' path cannot observe its own effect and now returns unobservable() instead."
-    },
-    "health.js::launch": {
-      "classification": "verified",
-      "why": "Reached only when _waitForCdp found the debugging port bound and returned browser identity; the unbound case now returns success:false."
+    "pine.js::newScript": {
+      "classification": "unobservable",
+      "why": "The editor contents are compared with the template (observed/refused); unobservable() only when the buffer could not be read back after setValue()."
     },
     "pine.js::openScript": {
       "classification": "verified",
       "why": "Reached only after the fetched source was injected into Monaco inside the page; line count and script id are the evidence."
     },
-    "replay.js::start": {
-      "classification": "verified",
-      "why": "Polls isReplayStarted() and currentDate() until both are set before returning; current_date is the evidence."
+    "pine.js::save": {
+      "classification": "unobservable",
+      "why": "Ctrl+S is dispatched to the editor; whether TradingView accepted the save is not read back from this call, and the payload says so."
     },
-    "replay.js::step": {
-      "classification": "verified",
-      "why": "Returns only when the cursor has been observed to move; an unchanged cursor throws. Pinned by tests/replay.test.js."
+    "pine.js::setSource": {
+      "classification": "unobservable",
+      "why": "The editor line count is read back (observed/refused); unobservable() only when the editor buffer could not be read back after setValue()."
     },
-    "replay.js::autoplay": {
-      "classification": "verified",
-      "why": "Reads isAutoplayStarted() and autoplayDelay() back after toggling and reports the observed values."
+    "pine.js::smartCompile": {
+      "classification": "unobservable",
+      "why": "Study addition is observed from the study-count delta; unobservable() only when the chart study count could not be read, so reaching the chart is unknown."
     },
-    "replay.js::stop": {
-      "classification": "verified",
-      "why": "Returns the saved-session state read back after clearing; success follows session.ok."
+    "preflight.js::(module)": {
+      "classification": "read",
+      "why": "loadManifest returns the manifest parsed from disk, or failed(reason) when it is not one; nothing on the chart is changed."
     },
-    "tab.js::newTab": {
-      "classification": "verified",
-      "why": "Polls the CDP target list until the new chart target exists, then reattaches to it; throws if it never appears."
-    },
-    "tab.js::switchTab": {
-      "classification": "verified",
-      "why": "Throws unless the target chart became visible and CDP reattached to it."
-    },
-    "update.js::update": {
-      "classification": "verified",
-      "why": "Returns git rev-parse output taken after the fast-forward; the before/after commit hashes are the evidence."
-    },
-    "batch.js::batchRun": {
+    "preflight.js::preflight": {
       "classification": "aggregate",
-      "why": "The outer flag means the sweep ran; each iteration carries its own success/error, and successful/failed counts are reported alongside."
+      "why": "Returns every individual check with its own verdict and lists the failed ones; the overall answer derives from those checks and a bad manifest is adopted failing."
+    },
+    "replay-manifest.js::assertStrategyManifest": {
+      "classification": "read",
+      "why": "Answers only after the environment invariants and the manifest input comparison both pass; any mismatch throws ManifestMismatchError carrying the diff."
+    },
+    "replay.js::health": {
+      "classification": "read",
+      "why": "Reports a classification of the replay session's state; the reading it classified is returned whole as `state`, and the optional step probe is returned as `probe`, so the verdict can be checked against its own evidence. Success means the health check ran - a wedged session is reported as wedged:true with success:true, because failing to return would withhold the one answer this call exists to give."
+    },
+    "replay.js::status": {
+      "classification": "read",
+      "why": "Returns replay state as read: started flag, cursor, autoplay delay, position."
+    },
+    "replay.js::stepUntil": {
+      "classification": "honest-partial",
+      "why": "Answered only when no bar was advanced (already_true, or stopped before the first step) with bars_advanced:0 saying so; any movement is observed with the before/after cursor."
+    },
+    "tab.js::list": {
+      "classification": "read",
+      "why": "Returns the CDP page-target list as read, annotated with each target's chart id; it opens and closes nothing."
+    },
+    "ui.js::click": {
+      "classification": "unobservable",
+      "why": "The element is found and clicked; the effect of the click is not read back, and the payload says so."
+    },
+    "ui.js::findElement": {
+      "classification": "read",
+      "why": "Returns matching DOM elements as read; claims no interaction."
+    },
+    "ui.js::fullscreen": {
+      "classification": "unobservable",
+      "why": "The fullscreen button is found and clicked; the resulting window state is not read back, and the payload says so."
+    },
+    "ui.js::hover": {
+      "classification": "unobservable",
+      "why": "The pointer is moved onto the located element; whether a hover state or tooltip resulted is not readable from here."
+    },
+    "ui.js::keyboard": {
+      "classification": "unobservable",
+      "why": "The key event is dispatched to the page; what the page did with it is not visible from here, and the payload says so."
+    },
+    "ui.js::layoutList": {
+      "classification": "read",
+      "why": "Returns saved layouts from getSavedCharts; carries its own error field when the call times out."
     },
     "ui.js::layoutSwitch": {
       "classification": "page-internal",
       "why": "Both sites are resolve() calls inside the page-context promise, feeding the Node-side check. The tool's own return is built by the verdict helpers after polling layoutId()."
     },
-    "chart.js::(module)": {
-      "classification": "honest-partial",
-      "why": "The applied() helper: returns success with settled:false and a fence, explicitly declining to claim the chart has caught up. Reads gate themselves at the read."
+    "ui.js::mouseClick": {
+      "classification": "unobservable",
+      "why": "The click is dispatched at coordinates; what sits there and how it responded is not visible from here."
     },
-    "replay.js::health": {
+    "ui.js::openPanel": {
+      "classification": "unobservable",
+      "why": "Open state is re-read and compared (observed/refused); unobservable() only when the panel container could not be read back after the click."
+    },
+    "ui.js::scroll": {
+      "classification": "unobservable",
+      "why": "The wheel event is dispatched; the resulting scroll position is not read, and the chart may have consumed it as a zoom."
+    },
+    "ui.js::typeText": {
+      "classification": "unobservable",
+      "why": "Text is inserted into whatever holds focus; this call does not know what that was or whether it accepted the text."
+    },
+    "ui.js::uiEvaluate": {
       "classification": "read",
-      "why": "Reports a classification of the replay session's state; the reading it classified is returned whole as `state`, and the optional step probe is returned as `probe`, so the verdict can be checked against its own evidence. Success means the health check ran - a wedged session is reported as wedged:true with success:true, because failing to return would withhold the one answer this call exists to give."
+      "why": "Returns the evaluated expression's result, awaiting promises so a rejection throws rather than serialising as {}."
+    },
+    "update.js::update": {
+      "classification": "verified",
+      "why": "Returns git rev-parse output taken after the fast-forward; the before/after commit hashes are the evidence."
+    },
+    "watchlist.js::get": {
+      "classification": "read",
+      "why": "Returns the watchlist rows as read from the right-hand panel; it adds and removes nothing."
     }
   }
 }

@@ -9,6 +9,7 @@
  *      payload is trimmed, the trim is reported — an unmarked truncation is a
  *      wrong answer, not a large one.
  */
+import { adopt, answered, failed } from '../internals/verdict.js';
 
 /**
  * Maximum serialised response size, in characters.
@@ -135,19 +136,19 @@ export function classifyError(err) {
  * The error half of the envelope.
  *
  * `success: false` is kept alongside `ok: false` because every existing caller
- * of this bridge reads it. It is a mirror, not a second source of truth.
+ * of this bridge reads it. It is a mirror, not a second source of truth; both
+ * are written by failed(), which also sets a top-level `reason` equal to the
+ * code. A reader failure's own reason stays nested at `error.reason`.
  */
 export function errorEnvelope(code, message, extra = {}) {
-  return {
-    ok: false,
-    success: false,
+  return failed(code, {
     error: {
       code,
       message: String(message ?? ''),
       retry: RETRY[code] || 'now',
       ...extra,
     },
-  };
+  });
 }
 
 /** Build the envelope for a thrown Error, classifying it. */
@@ -169,10 +170,10 @@ export function fromReaderFailure(r, extra = {}) {
     : r?.reason === 'report_not_computed' || r?.reason === 'no_strategy'
       ? ERROR_CODES.NOT_FOUND
       : ERROR_CODES.NOT_SETTLED;
+  // Readers now return issued verdicts, so every verdict key is stripped here —
+  // `success` and `observed` included — or they would ride into `error` below.
   const rest = { ...(r || {}) };
-  delete rest.ok;
-  delete rest.reason;
-  delete rest.error;
+  for (const k of ['ok', 'success', 'observed', 'observation', 'evidence', 'reason', 'error']) delete rest[k];
   return errorEnvelope(code, r?.error, { reason: r?.reason, ...rest, ...extra });
 }
 
@@ -289,6 +290,18 @@ export function applyBudget(payload, maxChars = MAX_RESPONSE_CHARS) {
 }
 
 /**
+ * True for a result object that carries its own verdict: a boolean `ok` or
+ * `success`. Arrays and finished MCP results (a `content` array) are not.
+ */
+function carriesVerdict(obj) {
+  return !!obj
+    && typeof obj === 'object'
+    && !Array.isArray(obj)
+    && !Array.isArray(obj.content)
+    && (typeof obj.ok === 'boolean' || typeof obj.success === 'boolean');
+}
+
+/**
  * Format a payload as an MCP tool result, applying the response budget.
  *
  * `isError` is inferred from the envelope when not passed, so a handler
@@ -296,12 +309,22 @@ export function applyBudget(payload, maxChars = MAX_RESPONSE_CHARS) {
  */
 export function jsonResult(obj, isError) {
   // Every tool answers with `ok`. The core layer has always returned
-  // `success`, and mirroring it here means one contract rather than eighty
-  // hand-edited call sites, each of which is a chance to forget.
-  const normalised =
-    obj && typeof obj === 'object' && !Array.isArray(obj) && obj.ok === undefined && typeof obj.success === 'boolean'
-      ? { ok: obj.success, ...obj }
-      : obj;
+  // `success`; adopt() mirrors one into the other, so there is one contract
+  // rather than eighty hand-edited call sites, each a chance to forget.
+  //
+  // A result carrying ok and success that DISAGREE is refused by adopt(). That
+  // is answered here as an internal error rather than thrown, because a throw
+  // out of an MCP handler loses the payload and the reason with it.
+  let normalised = obj;
+  if (carriesVerdict(obj)) {
+    try {
+      normalised = adopt(obj);
+    } catch (err) {
+      return jsonResult(errorEnvelope(ERROR_CODES.INTERNAL, err.message, {
+        result_keys: Object.keys(obj),
+      }), true);
+    }
+  }
   const flagged = isError !== undefined ? isError : normalised?.ok === false;
   const { payload, report } = applyBudget(normalised);
   const body = report ? { ...payload, response_budget: report } : payload;
@@ -324,8 +347,15 @@ export function handler(fn, extra = {}) {
       const out = await fn(...args);
       // A handler may return a finished MCP result, or a bare payload.
       if (out && Array.isArray(out.content)) return out;
-      if (out && out.ok === false) return jsonResult(out);
-      return jsonResult({ ok: true, ...out });
+      // DEFECT FIXED 2026-09-13: this read only `ok`, and a spread defaulting
+      // ok to true then answered ok:true for a result carrying success:false —
+      // which is exactly what refused() returns. Measured: handler(refused(...))
+      // gave ok:true, success:false, no isError. The verdict is now taken by
+      // adopt(), which reads either key and refuses a result that disagrees
+      // with itself (the throw lands in the catch below as an internal error).
+      if (carriesVerdict(out)) return jsonResult(adopt(out));
+      // A bare payload with no verdict of its own is a read that returned.
+      return jsonResult(answered(out));
     } catch (err) {
       return jsonResult(fromThrown(err, extra));
     }

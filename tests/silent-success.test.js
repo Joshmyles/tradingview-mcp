@@ -10,9 +10,15 @@
  * returning success on a null broker model, `pine_inputs_assert` letting a spread
  * overwrite its own verdict, and `replay_step` reporting success at a cursor that
  * never moved. Three incidental finds implies more, so this test makes the
- * inventory a thing that has to be maintained: every `success: true` in
- * src/core/*.js must have an entry in tests/fixtures/silent-success-audit.json
- * saying which category it falls in and WHY that is defensible.
+ * inventory a thing that has to be maintained: every place in src/core/*.js
+ * that can report success WITHOUT evidence must have an entry in
+ * tests/fixtures/silent-success-audit.json saying which category it falls in
+ * and WHY that is defensible.
+ *
+ * Since Phase 0.7 no result is hand-built (tests/verdict-only-path.test.js), so
+ * the sites are calls to the helpers that can answer success with no read-back:
+ * answered(), unobservable() and adopt(). observed() is not audited — it cannot
+ * be constructed without evidence.
  *
  * The point is friction in the right direction. Adding a read-back is less work
  * than writing a justification, so the cheap path is the correct one.
@@ -29,12 +35,18 @@ const AUDIT = JSON.parse(readFileSync(join(ROOT, 'tests', 'fixtures', 'silent-su
 
 const VALID_CLASSIFICATIONS = Object.keys(AUDIT._classifications);
 
+/** Helpers that can return success with no evidence behind it. */
+const UNEVIDENCED = /\b(answered|unobservable|adopt)\(/g;
+/** Helpers whose success is read-shaped: a mutation must never use them. */
+const READ_SHAPED = new Set(['answered', 'adopt']);
+
 /**
- * Every `success: true` site in src/core, keyed "file::enclosingFunction".
+ * Every un-evidenced success site in src/core, keyed "file::enclosingFunction",
+ * with the helpers used there.
  *
  * Comment lines are skipped: several of the fixed defects left a note behind
- * saying "this used to return success: true", and a scanner that counted those
- * would report the fix as the defect.
+ * describing the old shape, and a scanner that counted those would report the
+ * fix as the defect.
  */
 function scanSites() {
   const sites = new Map();
@@ -46,10 +58,12 @@ function scanSites() {
       const m = /^export (?:async )?function (\w+)/.exec(raw);
       if (m) fn = m[1];
       if (line.startsWith('//') || line.startsWith('*') || line.startsWith('/*')) return;
-      if (!/\bsuccess:\s*true\b/.test(line)) return;
+      const hits = line.match(UNEVIDENCED);
+      if (!hits) return;
       const key = `${file}::${fn}`;
-      if (!sites.has(key)) sites.set(key, []);
-      sites.get(key).push(i + 1);
+      if (!sites.has(key)) sites.set(key, { lines: [], helpers: new Set() });
+      sites.get(key).lines.push(i + 1);
+      hits.forEach((h) => sites.get(key).helpers.add(h.slice(0, -1)));
     });
   }
   return sites;
@@ -70,10 +84,10 @@ describe('silent-success audit', () => {
     assert.deepEqual(
       undocumented,
       [],
-      'These return success:true with no entry in tests/fixtures/silent-success-audit.json.\n'
-      + 'Either read back the change you claim to have caused (preferred), or add an\n'
-      + 'entry saying why success is defensible without one:\n  '
-      + undocumented.map((u) => `${u} (lines ${sites.get(u).join(', ')})`).join('\n  '),
+      'These can return success without evidence and have no entry in\n'
+      + 'tests/fixtures/silent-success-audit.json. Either read back the change and use\n'
+      + 'observed() (preferred), or add an entry saying why success is defensible without one:\n  '
+      + undocumented.map((u) => `${u} (lines ${sites.get(u).lines.join(', ')})`).join('\n  '),
     );
   });
 
@@ -97,10 +111,11 @@ describe('silent-success audit', () => {
     assert.deepEqual(stale, [], `these audit entries no longer match any code site: ${stale.join(', ')}`);
   });
 
-  it('the mutations fixed in Phase 0.6 do not reappear as bare successes', () => {
+  it('the mutations fixed in Phase 0.6 do not reappear as read-shaped successes', () => {
     // Named explicitly, because these are the ones that were measured wrong.
-    // If any of them returns a bare success:true again, it is a regression, and
-    // adding an audit entry for it should not be enough to make this pass.
+    // A mutation may answer observed(), refused() or unobservable(why). If any
+    // of them answers answered()/adopt() — a read's success — that is the bare
+    // success regressing under a new name, and an audit entry cannot excuse it.
     const mustNotBeBare = [
       'chart.js::setType',
       'chart.js::manageIndicator',
@@ -129,12 +144,12 @@ describe('silent-success audit', () => {
       'ui.js::mouseClick',
       'watchlist.js::remove',
     ];
-    const regressed = mustNotBeBare.filter((k) => sites.has(k));
+    const regressed = mustNotBeBare.filter((k) => [...(sites.get(k)?.helpers ?? [])].some((h) => READ_SHAPED.has(h)));
     assert.deepEqual(
       regressed,
       [],
       'These were fixed in Phase 0.6 to report an observation (or to declare the\n'
-      + 'effect unobservable) and are constructing a bare success:true again:\n  '
+      + 'effect unobservable) and are answering with a read-shaped success again:\n  '
       + regressed.join('\n  '),
     );
   });

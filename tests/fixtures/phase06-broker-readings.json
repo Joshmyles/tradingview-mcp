@@ -1,0 +1,27 @@
+{
+  "_": "Readings recorded on the one live fill of 2026-09-12 (recon/i08.json; allExecutions from recon/replay-selectors.json _phase0_6_executions). Copied verbatim so the refutation tests do not depend on recon/ staying put. Do not edit values: they are measurements.",
+  "symbol": "ICMARKETS:XAUUSD",
+  "place_order_resolved": { "orderId": "order_2481ed79-1dc0-4828-9e3d-dc5bb0ec82c8", "result": 0 },
+  "place_order_returned_synchronously": false,
+  "after_fill": {
+    "positions": [{ "avgPrice": 4452.39, "id": "ICMARKETS:XAUUSD-68d0dd75-15dd-4ec1-815a-42f9bdad86ca", "qty": 1, "side": 1, "symbol": "ICMARKETS:XAUUSD", "unrealizedPl": 0 }],
+    "executions_symbol_filtered": [],
+    "all_executions": [
+      { "id": "order_2481ed79-...", "symbol": "ICMARKETS:XAUUSD", "qty": 1, "side": 1, "price": 4452.39, "time": 1788220785000 },
+      { "id": "order_dbd927ac-...", "symbol": "ICMARKETS:XAUUSD", "qty": 1, "side": -1, "price": 4451.39, "time": 1788220875000 }
+    ],
+    "_all_executions_note": "read after the close, so it carries both legs; the filtered call was [] at every read, including after_fill and final_state"
+  },
+  "equity_samples": [
+    { "label": "before_order", "equity": 100000, "unrealized_pl": null },
+    { "label": "after_fill", "price": 4452.39, "equity": 99999.89, "unrealized_pl": 0 },
+    { "label": "after_step_1", "price": 4449.88, "equity": 99999.89, "unrealized_pl": -2.5100000000002183 },
+    { "label": "after_step_2", "price": 4448.8, "equity": 99999.89, "unrealized_pl": -3.5900000000001455 },
+    { "label": "after_step_3", "price": 4451.39, "equity": 99999.89, "unrealized_pl": -1 },
+    { "label": "after_close", "equity": 99998.78, "unrealized_pl": 0 }
+  ],
+  "after_close": {
+    "positions": [{ "avgPrice": null, "id": "ICMARKETS:XAUUSD-68d0dd75-15dd-4ec1-815a-42f9bdad86ca", "qty": 0, "side": -1, "symbol": "ICMARKETS:XAUUSD", "unrealizedPl": 0 }],
+    "executions_symbol_filtered": []
+  }
+}

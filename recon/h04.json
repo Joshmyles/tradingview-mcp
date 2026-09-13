@@ -1,0 +1,21 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1044
+    ],
+    "outer": [
+      199,
+      34
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": "{\"probes\":[{\"targetSec\":1782907200,\"arrived\":true,\"stable\":3,\"reads\":8,\"bars\":300,\"first\":1782893730,\"last\":1782907185,\"cursor\":1782907199,\"ms\":4966},{\"targetSec\":1777636800,\"arrived\":true,\"stable\":3,\"reads\":8,\"bars\":300,\"first\":1777623330,\"last\":1777636785,\"cursor\":1777636799,\"ms\":4957},{\"targetSec\":1768478400,\"arrived\":true,\"stable\":3,\"reads\":8,\"bars\":300,\"first\":1768464930,\"last\":1768478385,\"cursor\":1768478399,\"ms\":5030},{\"targetSec\":1748865600,\"arrived\":true,\"stable\":3,\"reads\":8,\"bars\":300,\"first\":1748852130,\"last\":1748865585,\"cursor\":1748865599,\"ms\":4963},{\"targetSec\":1717416000,\"arrived\":true,\"stable\":3,\"reads\":8,\"bars\":300,\"first\":1717402530,\"last\":1717415985,\"cursor\":1717415999,\"ms\":4941},{\"targetSec\":1702971716,\"arrived\":false,\"stable\":61,\"reads\":64,\"bars\":0,\"first\":null,\"last\":null,\"cursor\":1702971716,\"ms\":45246}]}"
+}

@@ -1,0 +1,21 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1044
+    ],
+    "outer": [
+      199,
+      34
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": "{\"boundary\":{\"targetSec\":1702987200,\"arrived\":true,\"bars\":300,\"first\":1702971750,\"last\":1702987185,\"cursor\":1702987199,\"ms\":3082},\"restore\":{\"targetSec\":1788739274,\"arrived\":true,\"bars\":591,\"first\":1788536010,\"last\":1788739230,\"cursor\":1788739273,\"ms\":5220},\"steps\":[{\"from\":1788739273,\"timedOut\":true,\"ms\":30001}],\"finalCursor\":1788739273,\"finalBars\":{\"n\":300,\"first\":1788549105,\"last\":1788739230}}"
+}

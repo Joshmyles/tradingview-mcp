@@ -1,0 +1,21 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1044
+    ],
+    "outer": [
+      199,
+      34
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": "{\"models\":[{\"ctor\":\"A_\",\"id\":\"74612c5f-d5ba-404a-bf69-43f105969306\",\"symbol\":null,\"resolution\":null,\"keys\":[\"_createLineCommands\",\"_scalePriceInfo\",\"_currentSourceMoveCommand\",\"_currentLineChangeCommand\",\"_currentCustomMoveCommand\",\"_zoomStack\",\"_initialPriceScrollState\",\"_initialPriceScrollPos\",\"_chartWidget\",\"_tradingPreferencesService\",\"m_model\",\"_undoHistory\",\"_lineToolsGroupController\"]},{\"ctor\":\"fs\",\"id\":\"74612c5f-d5ba-404a-bf69-43f105969306_additional\",\"symbol\":null,\"resolution\":null,\"keys\":[\"_symbolString\",\"_interval\",\"_intervalChanged\",\"_replayStatus\",\"_isInReplay\",\"_onInReplayStateChanged\",\"_onReplaySubscriberSeriesModified\",\"_subscriber\",\"_modelId\"]}],\"replayableModels\":[{\"ctor\":\"Hs\",\"id\":\"1\"}],\"currentChartId\":\"74612c5f-d5ba-404a-bf69-43f105969306\",\"replayModeProperty\":\"null\",\"sessionKeys\":[\"_isConnected\",\"_state\",\"_isConnectForbidden\",\"_sessionId\",\"_sessionIdChanged\",\"_chartApi\",\"_sessionPrefix\",\"_shouldReconnectAfterCriticalError\",\"_replayPointChangedDelegate\",\"_resolutionsChangedDelegate\",\"_endOfDataReachedDelegate\",\"_turnaroundPrefix\",\"_turnaroundIndex\",\"_notificationHandlers\"],\"sessionCtor\":\"V\",\"rmMethods\":[\"__defineGetter__\",\"__defineSetter__\",\"__lookupGetter__\",\"__lookupSetter__\",\"_addSeriesToReplay\",\"_generateLogMessage\",\"_handleAddRemoveSeriesError\",\"_handleAutoplayError\",\"_handleError\",\"_handleMessage\",\"_handleResetError\",\"_hasModel\",\"_isReplayResolutionAvailableForUser\",\"_logDebug\",\"_logError\",\"_logNormal\",\"_logWarn\",\"_onEndOfDataReached\",\"_onModelReplayEnabledChanged\",\"_onReplayPointChanged\",\"_onReplayResolutionsChanged\",\"_onSessionConnectionStatusChanged\",\"_onSessionIdChanged\",\"_processPointIsTooDeep\",\"_removeSeriesFromReplay\",\"_setReplayResolutions\",\"_stopReplay\",\"addModel\",\"autoplayDelay\",\"canChangeSymbolParams\",\"changeAutoplayDelay\",\"constructor\",\"destroy\",\"disconnectionSessionIfExists\",\"doReplayStep\",\"finishReplay\",\"getDepth\",\"getDepthForResolution\",\"hasOwnProperty\",\"isAutoplayStarted\",\"isPrototypeOf\",\"isReplayConnected\",\"isReplayFinished\",\"isReplayStarted\",\"models\",\"onEndOfDataReached\",\"onPointTooDeep\",\"propertyIsEnumerable\",\"removeModel\",\"replayPoint\",\"replayResolutions\",\"replaySelectedPoint\",\"replayStatusWV\",\"resetReplay\",\"serverTime\",\"setModels\",\"setReplayStatus\",\"startAutoplay\",\"startReplay\",\"stopAutoplay\",\"stopReplay\",\"toLocaleString\",\"toString\",\"valueOf\"],\"chartWidgets\":1}"
+}

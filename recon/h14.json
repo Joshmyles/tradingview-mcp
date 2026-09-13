@@ -1,0 +1,21 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1044
+    ],
+    "outer": [
+      199,
+      34
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": "{\"sessionState\":\"2\",\"sessionId\":\"rs_jPcM7PyZdRDj\",\"sessionConnected\":\"true\",\"chartApiConnected\":\"null\",\"replayStatus\":\"3\",\"replayPoint\":1788220799,\"selectedPoint\":1788220799,\"serverTime\":1789233340874,\"autoplay\":{\"before\":1788220799,\"toggled\":true,\"moved\":false,\"stillPlaying\":false,\"after\":1788220799}}"
+}

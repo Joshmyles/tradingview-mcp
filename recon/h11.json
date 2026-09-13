@@ -1,0 +1,21 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1044
+    ],
+    "outer": [
+      199,
+      34
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": "{\"phases\":[{\"tag\":\"before\",\"started\":true,\"modeEnabled\":true,\"cursor\":1788220799,\"models\":2,\"bars\":300,\"lastBar\":1788220785},{\"tag\":\"after_leave\",\"started\":true,\"modeEnabled\":true,\"cursor\":1788220799,\"models\":2,\"bars\":300,\"lastBar\":1788220785},{\"tag\":\"after_reselect\",\"started\":true,\"modeEnabled\":true,\"cursor\":1788220799,\"models\":2,\"bars\":300,\"lastBar\":1788220785},{\"tag\":\"final\",\"started\":true,\"modeEnabled\":true,\"cursor\":1788220799,\"models\":2,\"bars\":300,\"lastBar\":1788220785}],\"left\":true,\"steps\":[{\"outcome\":\"PENDING\",\"from\":1788220799,\"to\":1788220799,\"delta\":0,\"ms\":20011}]}"
+}

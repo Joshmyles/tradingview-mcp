@@ -1,0 +1,21 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1044
+    ],
+    "outer": [
+      199,
+      34
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": "{\"log\":[{\"tag\":\"start\",\"models\":[\"74612c5f-d5ba-404a-bf69-43f105969306\",\"74612c5f-d5ba-404a-bf69-43f105969306_additional\"],\"connected\":true,\"started\":true,\"finished\":false,\"cursor\":1788220799},{\"tag\":\"after_remove\",\"models\":[\"74612c5f-d5ba-404a-bf69-43f105969306\"],\"connected\":true,\"started\":true,\"finished\":false,\"cursor\":1788220799},{\"tag\":\"after_disconnect\",\"models\":[\"74612c5f-d5ba-404a-bf69-43f105969306\"],\"connected\":true,\"started\":true,\"finished\":false,\"cursor\":1788220799},{\"tag\":\"after_reselect\",\"models\":[\"74612c5f-d5ba-404a-bf69-43f105969306\",\"74612c5f-d5ba-404a-bf69-43f105969306_additional\"],\"connected\":true,\"started\":true,\"finished\":false,\"cursor\":1788220799},{\"tag\":\"final\",\"models\":[\"74612c5f-d5ba-404a-bf69-43f105969306\",\"74612c5f-d5ba-404a-bf69-43f105969306_additional\"],\"connected\":true,\"started\":true,\"finished\":false,\"cursor\":1788220799}],\"extraFound\":1,\"removed\":true,\"step1\":{\"tag\":\"after_remove\",\"outcome\":\"PENDING\",\"from\":1788220799,\"to\":1788220799,\"delta\":0,\"ms\":15001},\"disconnected\":true,\"step2\":{\"tag\":\"after_reconnect\",\"outcome\":\"PENDING\",\"from\":1788220799,\"to\":1788220799,\"delta\":0,\"ms\":15003}}"
+}

@@ -1,0 +1,21 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1044
+    ],
+    "outer": [
+      199,
+      34
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": "{\"isReplayAvailable\":true,\"isReplayStarted\":true,\"isAutoplayStarted\":false,\"isReadyToPlay\":true,\"isJumpToBarModeEnabled\":false,\"isReplayToolbarVisible\":true,\"replayMode\":\"AllCharts\",\"currentDate\":1788739273,\"replayTimingMode\":\"date\",\"autoReplayResolution\":\"45S\",\"isReplayModeEnabled\":true,\"chartReplayStatus\":\"3\",\"bars\":300,\"lastBar\":1788739230,\"toolbarText\":\"Select date | 0.5x | 45s\",\"replayTradingAria\":\"Close Replay Trading\",\"doStepSrcUC\":\"doStep(){return this._replayManager.isReplayFinished()?(Ws.logNormal(\\\"Replay is finished\\\"),this._replayManager.stopReplay(),Promise.reject(\\\"Replay is finished\\\")):this._replayManager.doReplayStep()}\"}"
+}

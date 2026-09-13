@@ -1,0 +1,21 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1044
+    ],
+    "outer": [
+      199,
+      34
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": "{\"afterSelect\":{\"arrived\":true,\"bars\":300,\"first\":1788250530,\"last\":1788263985,\"cursor\":1788263999},\"steps\":[{\"cursorFrom\":1788263999,\"cursorTo\":1788263999,\"cursorDelta\":0,\"barFrom\":1788263985,\"barDelta\":null,\"ms\":945},{\"cursorFrom\":1788263999,\"cursorTo\":1788263999,\"cursorDelta\":0,\"barTo\":1788263985,\"barDelta\":null,\"ms\":192},{\"cursorFrom\":1788263999,\"cursorTo\":1788263999,\"cursorDelta\":0,\"barFrom\":1788263985,\"barDelta\":null,\"ms\":7319},{\"cursorFrom\":1788263999,\"cursorTo\":1788263999,\"cursorDelta\":0,\"barTo\":1788263985,\"barDelta\":null,\"ms\":288},{\"cursorFrom\":1788263999,\"cursorTo\":1788263999,\"cursorDelta\":0,\"barFrom\":1788263985,\"barDelta\":null,\"ms\":989},{\"cursorFrom\":1788263999,\"cursorTo\":1788263999,\"cursorDelta\":0,\"barTo\":1788263985,\"barDelta\":null,\"ms\":2008}],\"final\":{\"cursor\":1788263999,\"bars\":{\"n\":300,\"first\":1788250530,\"last\":1788263985}}}"
+}

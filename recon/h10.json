@@ -1,0 +1,21 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1044
+    ],
+    "outer": [
+      199,
+      34
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": "{\"cursorBefore\":1788220799,\"started\":true,\"ready\":true,\"rm\":{\"ctor\":\"re\",\"isReplayStarted\":true,\"isReplayFinished\":false,\"models\":2,\"doReplayStepSrc\":\"doReplayStep(e=1){return(0,u.assert)(e>0,\\\"Length is not positive\\\"),(0,u.assert)(this._isReplayStarted.value(),\\\"Replay is not started\\\"),(0,u.assert)(0!==this._models.length,\\\"Not enough series to do replay step\\\"),new Promise(((t,s)=>{this._replaySession.doStep(e,(e=>{this._handleMessage(3,e),e.method===k.ok?t():s()})),this._logNormal(`Do replay step with length = ${e}`)}))}\",\"methods\":[\"__defineGetter__\",\"__defineSetter__\",\"__lookupGetter__\",\"__lookupSetter__\",\"_addSeriesToReplay\",\"_generateLogMessage\",\"_handleAddRemoveSeriesError\",\"_handleAutoplayError\",\"_handleError\",\"_handleMessage\",\"_handleResetError\",\"_hasModel\",\"_isReplayResolutionAvailableForUser\",\"_logDebug\",\"_logError\",\"_logNormal\",\"_logWarn\",\"_onEndOfDataReached\",\"_onModelReplayEnabledChanged\",\"_onReplayPointChanged\",\"_onReplayResolutionsChanged\",\"_onSessionConnectionStatusChanged\",\"_onSessionIdChanged\",\"_processPointIsTooDeep\",\"_removeSeriesFromReplay\",\"_setReplayResolutions\",\"_stopReplay\",\"addModel\",\"autoplayDelay\",\"canChangeSymbolParams\",\"changeAutoplayDelay\",\"constructor\",\"destroy\",\"disconnectionSessionIfExists\",\"doReplayStep\",\"finishReplay\",\"getDepth\",\"getDepthForResolution\",\"hasOwnProperty\",\"isAutoplayStarted\",\"isPrototypeOf\",\"isReplayConnected\",\"isReplayFinished\",\"isReplayStarted\",\"models\",\"onEndOfDataReached\",\"onPointTooDeep\",\"propertyIsEnumerable\",\"removeModel\",\"replayPoint\",\"replayResolutions\",\"replaySelectedPoint\",\"replayStatusWV\",\"resetReplay\",\"serverTime\",\"setModels\",\"setReplayStatus\",\"startAutoplay\",\"startReplay\",\"stopAutoplay\",\"stopReplay\",\"toLocaleString\",\"toString\",\"valueOf\"]},\"doStepResult\":{\"outcome\":\"PENDING after 20000ms\"},\"cursorAfter\":1788220799}"
+}

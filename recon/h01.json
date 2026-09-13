@@ -1,0 +1,21 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1044
+    ],
+    "outer": [
+      199,
+      34
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": "{\"resolutionDepth\":{\"45S\":1702971716,\"1T\":1773392217,\"1S\":1702971716,\"5S\":1702971716,\"15S\":1702971716},\"genericDepth\":1702971716,\"currentResolution\":null,\"replayResolutions\":[\"1T\",\"1S\",\"5S\",\"15S\",\"45S\",null],\"autoReplayResolution\":\"45S\",\"selectedDate\":1788739274,\"currentDate\":1788739274,\"isReadyToPlay\":true,\"selectFirstAvailableDateSrc\":\"async selectFirstAvailableDate(){y.replayTimingModeProperty.setValue(y.ReplayTimingMode.FirstAvailableDate),this._replayUIController.isReplayModeEnabled().value()||await this._replayUIController.enableReplayMode(!1);const e=this._replayUIController.getReplayDepth().value();if(null===e)return new Promise(((e,t)=>{this._replayUIController.getReplayDepth().subscribe((i=>{null!==i?this._replayUIController.selectDate(this._chartWidgetsCollection.activeChartWidget.value(),1e3*i).then(e):t(new Error(\\\"Error getting the available data depth\\\"))}),{once:!0})}));await this._replayUIController.selectDate(this._chartWidgetsCollection.activeChartWidget.value(),1e3*e)}\",\"onPointSelectedSrc\":\"_onPointSelected(e,t){if(!this._chartWidgetCollection.lock.crosshair.value()){const e=this._chartWidgetCollection.activeChartWidget.value();this._chartWidgetCollection.getAll().forEach((t=>{t!==e&&t.model().model().clearCurrentPosition()}))}const i=()=>{Ws.logNormal(`Bar on chart ${e.id()} was selected with time ${t}. Resetting replay...`);const i=this._replayDepth.value()??-1/0,a=this._currentReplayResolution.value()??this._autoReplayResolution.value(),o=H.Interval.isTicks(a)?1e-6:1,n=Math.max(i,t-o);t<i&&async function(){(0,v.showChartInfoNotification)(\\\"replay_time_point_corrected\\\",{title:_.t(null,void 0,s(748672)),text:_.t(null,void 0,s(232114))})}(),this._replayManager.isReplayStarted().value()&&\\\"ActiveChart\\\"===ge.replayModeProperty.value()&&this._replayManager.models()[0].id()!==this._currentChartId&&(this._replayManager.stopReplay(),this._replayManager.removeModel(this._replayManager.models()[0])),this._cancelRequestSelectPointModeOnAllCharts(),this._replayManager.isReplayStarted().value()&&this._replayManager.resetReplay(n),this._updateReplayableModels(!0);const r=this._replayableModels.value();this._setReplayManagerModels(r),this._replayManager.isReplayStarted().value()||th\",\"doStepSrc\":\"doStep(){return this._replayUIController.doStep()}\"}"
+}

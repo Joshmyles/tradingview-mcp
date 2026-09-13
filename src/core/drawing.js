@@ -2,6 +2,7 @@
  * Core drawing logic.
  */
 import { evaluate as _evaluate, getChartApi as _getChartApi, safeString, requireFinite } from '../connection.js';
+import { observed, refused } from '../internals/verdict.js';
 
 function _resolve(deps) {
   return { evaluate: deps?.evaluate || _evaluate, getChartApi: deps?.getChartApi || _getChartApi };
@@ -40,8 +41,17 @@ export async function drawShape({ shape, point, point2, overrides: overridesRaw,
   await new Promise(r => setTimeout(r, 200));
   const after = await evaluate(`${apiPath}.getAllShapes().map(function(s) { return s.id; })`);
   const newId = (after || []).find(id => !(before || []).includes(id)) || null;
-  const result = { entity_id: newId };
-  return { success: true, shape, entity_id: result?.entity_id };
+  // The before/after diff was already being computed; it just was not being
+  // acted on, so a shape TradingView declined to create still read as created
+  // with entity_id: null.
+  if (!newId) {
+    return refused(
+      `no new shape appeared after createShape("${shape}") — the chart holds the same `
+      + `${(after || []).length} shape(s) as before`,
+      { shape, shapes_before: (before || []).length, shapes_after: (after || []).length },
+    );
+  }
+  return observed({ entity_id: newId }, { shape });
 }
 
 export async function listDrawings() {
@@ -103,11 +113,40 @@ export async function removeOne({ entity_id }) {
     })()
   `);
   if (result?.error) throw new Error(result.error);
-  return { success: true, entity_id: result?.entity_id, removed: result?.removed, remaining_shapes: result?.remaining_shapes };
+  // `removed` was already computed from a post-removal re-read; success just
+  // never consulted it.
+  if (!result?.removed) {
+    return refused(
+      `shape "${entity_id}" is still present after removeEntity()`,
+      { entity_id, remaining_shapes: result?.remaining_shapes },
+    );
+  }
+  return observed(
+    { removed_entity_id: entity_id, remaining_shapes: result.remaining_shapes },
+    { entity_id },
+  );
 }
 
 export async function clearAll() {
   const apiPath = await _getChartApi();
-  await _evaluate(`${apiPath}.removeAllShapes()`);
-  return { success: true, action: 'all_shapes_removed' };
+  const result = await _evaluate(`
+    (function() {
+      var api = ${apiPath};
+      var before = api.getAllShapes().length;
+      api.removeAllShapes();
+      return { before: before, after: api.getAllShapes().length };
+    })()
+  `);
+  // removeAllShapes() reports nothing. Locked or otherwise undeletable shapes
+  // survive it, and this used to call that a clear.
+  if (result?.after !== 0) {
+    return refused(
+      `${result?.after} shape(s) remain after removeAllShapes() (started with ${result?.before})`,
+      { action: 'all_shapes_removed', shapes_before: result?.before, shapes_remaining: result?.after },
+    );
+  }
+  return observed(
+    { shapes_remaining: 0 },
+    { action: 'all_shapes_removed', shapes_before: result.before },
+  );
 }

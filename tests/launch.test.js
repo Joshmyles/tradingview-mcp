@@ -106,10 +106,14 @@ describe('launch() — MSIX WindowsApps handling', { skip: !onWindows }, () => {
     assert.equal(state.copies.length, 0);
   });
 
-  it('returns cdp_ready:false warning when nothing binds', async () => {
+  it('REFUSES success when the debugging port never binds', async () => {
+    // This used to assert success:true beside cdp_ready:false. Binding the CDP
+    // port is the entire purpose of the launch, so reporting success when it
+    // did not bind told a caller the opposite of what happened. The warning
+    // string was there, but nothing that reads `.success` would ever see it.
     const { deps } = msixDeps({});
     const result = await launch({ _deps: deps });
-    assert.equal(result.success, true);
+    assert.equal(result.success, false, 'a launch whose CDP port never bound is not a success');
     assert.equal(result.cdp_ready, false);
     assert.equal(result.msix_local_copy, true);
     assert.ok(result.warning);

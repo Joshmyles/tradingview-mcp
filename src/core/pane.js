@@ -3,6 +3,7 @@
  * Controls multi-chart layouts (split panes) in TradingView.
  */
 import { evaluate, evaluateAsync, getClient, safeString } from '../connection.js';
+import { observed, refused, unobservable } from '../internals/verdict.js';
 
 const CWC = 'window.TradingViewApi._chartWidgetCollection';
 
@@ -25,6 +26,22 @@ const LAYOUT_NAMES = {
   '12': '12 charts',
   '14': '14 charts',
   '16': '16 charts',
+};
+
+/**
+ * How many charts each layout code must produce.
+ *
+ * Derived from the layout names above rather than guessed: setLayout() reports
+ * nothing at all, so without an expected count there is nothing to compare the
+ * post-change reading against, and "I asked for a 2x2 grid" would keep passing
+ * for a collection that stayed on one chart.
+ */
+const EXPECTED_CHART_COUNT = {
+  's': 1,
+  '2h': 2, '2v': 2,
+  '2-1': 3, '1-2': 3, '3h': 3, '3v': 3, '3s': 3,
+  '4': 4, '4h': 4, '4v': 4, '4s': 4,
+  '6': 6, '8': 8, '10': 10, '12': 12, '14': 14, '16': 16,
 };
 
 /**
@@ -100,13 +117,19 @@ export async function setLayout({ layout }) {
   await new Promise(r => setTimeout(r, 500));
 
   const state = await list();
-  return {
-    success: true,
-    layout: resolved,
-    layout_name: LAYOUT_NAMES[resolved],
-    chart_count: state.chart_count,
-    panes: state.panes,
-  };
+  // setLayout() is silent about a layout the collection declines, so the
+  // re-read below was being reported without ever being compared.
+  const expected = EXPECTED_CHART_COUNT[resolved];
+  if (expected !== undefined && state.chart_count !== expected) {
+    return refused(
+      `layout "${resolved}" (${LAYOUT_NAMES[resolved]}) should hold ${expected} chart(s) but the collection reports ${state.chart_count}`,
+      { layout: resolved, layout_name: LAYOUT_NAMES[resolved], chart_count: state.chart_count, panes: state.panes },
+    );
+  }
+  return observed(
+    { chart_count: state.chart_count },
+    { layout: resolved, layout_name: LAYOUT_NAMES[resolved], panes: state.panes },
+  );
 }
 
 /**
@@ -127,7 +150,30 @@ export async function focus({ index }) {
   `);
 
   if (result?.error) throw new Error(result.error);
-  return { success: true, focused_index: result.focused, total_panes: result.total };
+  // Clicking _mainDiv is a request to focus, not a focus. Read which chart the
+  // collection now considers active.
+  const activeIdx = await evaluate(`
+    (function() {
+      var cwc = ${CWC};
+      var all = cwc.getAll();
+      var active = cwc.activeChartWidget ? cwc.activeChartWidget.value() : null;
+      for (var i = 0; i < all.length; i++) { if (all[i] === active) return i; }
+      return null;
+    })()
+  `);
+  if (activeIdx === null || activeIdx === undefined) {
+    return unobservable(
+      'this build exposes no readable active-pane index, so focus was requested but not confirmed',
+      { focused_index: result.focused, total_panes: result.total },
+    );
+  }
+  if (Number(activeIdx) !== idx) {
+    return refused(
+      `pane ${activeIdx} is active after clicking pane ${idx}`,
+      { requested_index: idx, active_index: Number(activeIdx), total_panes: result.total },
+    );
+  }
+  return observed({ active_index: Number(activeIdx) }, { focused_index: idx, total_panes: result.total });
 }
 
 /**
@@ -152,5 +198,31 @@ export async function setSymbol({ index, symbol }) {
     })()
   `);
 
-  return { success: true, index: idx, symbol };
+  // The symbol the pane ACTUALLY carries, not the one that was asked for.
+  const actual = await evaluate(`
+    (function() {
+      try {
+        var cwc = ${CWC};
+        var all = cwc.getAll();
+        var c = all[${idx}];
+        return String(c.model().mainSeries().symbol());
+      } catch (e) { return null; }
+    })()
+  `);
+  if (actual === null) {
+    return unobservable(
+      `the symbol on pane ${idx} could not be read back, so the change was requested but not confirmed`,
+      { index: idx, symbol },
+    );
+  }
+  // TradingView normalises symbols (XAUUSD -> ICMARKETS:XAUUSD), so compare on
+  // the bare ticker rather than demanding an exact string match.
+  const bare = (x) => String(x).split(':').pop().toUpperCase();
+  if (bare(actual) !== bare(symbol)) {
+    return refused(
+      `pane ${idx} carries "${actual}" after setSymbol("${symbol}")`,
+      { index: idx, requested: symbol, actual },
+    );
+  }
+  return observed({ symbol_now: actual }, { index: idx, symbol });
 }

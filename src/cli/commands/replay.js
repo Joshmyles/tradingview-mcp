@@ -30,12 +30,5 @@ register('replay', {
       },
       handler: (opts) => core.autoplay({ speed: opts.speed ? Number(opts.speed) : undefined }),
     }],
-    ['trade', {
-      description: 'Execute a trade in replay mode (buy, sell, close)',
-      handler: (opts, positionals) => {
-        if (!positionals[0]) throw new Error('Action required. Usage: tv replay trade buy');
-        return core.trade({ action: positionals[0] });
-      },
-    }],
   ]),
 });

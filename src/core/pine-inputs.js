@@ -245,6 +245,15 @@ export async function pineInputsAssert({
     scriptDrift.push({ field: 'pine_version', expected: expectPineVersion, actual: raw.pine_version });
   }
 
+  // DEFECT FIXED 2026-09-12: `...cmp` was spread AFTER `ok`, and compareManifest
+  // returns its own `ok`. So whenever the inputs matched but the SCRIPT had
+  // drifted, cmp.ok (true) overwrote the computed verdict and this returned
+  // `ok: true` alongside `reason: 'script_drift'` and an error string saying the
+  // inputs were not comparable - a pass and a refusal in one object, and a
+  // caller reading `.ok` got the pass. Measured live: manifest pinned pine
+  // 0.46, chart carried 0.51, drift recorded, ok: true. cmp's verdict is now
+  // destructured away so only the computed one is returned.
+  const { ok: _inputsOk, ...cmpDetail } = cmp;
   const ok = cmp.ok && scriptDrift.length === 0;
   return {
     ok,
@@ -256,7 +265,8 @@ export async function pineInputsAssert({
     symbol: raw.symbol,
     resolution: raw.resolution,
     manifest_hash: manifestHash(toManifest(raw.inputs)),
-    ...cmp,
+    inputs_ok: cmp.ok,
+    ...cmpDetail,
     ...(scriptDrift.length && { script_drift: scriptDrift }),
     ...(ok
       ? {}

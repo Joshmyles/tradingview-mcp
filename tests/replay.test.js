@@ -1,11 +1,13 @@
 /**
  * Tests for all replay functions in src/core/replay.js.
- * Covers: start, step, autoplay, stop, trade, status + DI mocks.
+ * Covers: start, step, autoplay, stop, status + DI mocks.
+ * trade() was DELETED 2026-09-12 (Phase 0.5 task 1) — it was an order path in
+ * the default profile. tests/no-order-path.test.js keeps it deleted.
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { start, step, autoplay, stop, trade, status, VALID_AUTOPLAY_DELAYS } from '../src/core/replay.js';
+import { start, step, autoplay, stop, status, VALID_AUTOPLAY_DELAYS } from '../src/core/replay.js';
 
 // ── Mock helpers ─────────────────────────────────────────────────────────
 
@@ -163,16 +165,18 @@ describe('step() — doStep and polling', () => {
     assert.equal(result.action, 'step');
   });
 
-  it('returns stale date if poll times out (date never changes)', async () => {
-    const evaluate = async (expr) => {
-      if (expr.includes('isReplayStarted')) return true;
-      if (expr.includes('currentDate')) return 5000; // never changes
-      if (expr.includes('doStep')) return undefined;
-      return undefined;
-    };
-    evaluate.calls = [];
-    const result = await step({ _deps: { evaluate, getReplayApi: mockGetReplayApi() } });
-    assert.equal(result.current_date, 5000);
+  it('REFUSES when the cursor never moves, instead of reporting a stale success', async () => {
+    // Was: "returns stale date if poll times out". That pinned a defect. A
+    // wedged replay session (doStep()'s promise never settling server-side)
+    // left the cursor where it was and this reported success anyway, once per
+    // call, indefinitely. Measured live 2026-09-12 on a session that had
+    // stopped answering: four consecutive "successful" steps, same cursor.
+    // The timeout is failure detection; standing still IS the failure.
+    const { _deps } = mockDeps({ 'isReplayStarted': true, 'currentDate': 5000, 'doStep': undefined });
+    await assert.rejects(
+      () => step({ timeoutMs: 300, _deps }),
+      (err) => /did not advance/.test(err.message) && /5000/.test(err.message),
+    );
   });
 
   it('throws when replay not started', async () => {
@@ -280,42 +284,6 @@ describe('stop()', () => {
   it('does not call hideReplayToolbar', () => {
     const source = readFileSync(new URL('../src/core/replay.js', import.meta.url), 'utf8');
     assert.ok(!source.includes('hideReplayToolbar'), 'hideReplayToolbar must not appear anywhere');
-  });
-});
-
-// ── trade() ──────────────────────────────────────────────────────────────
-
-describe('trade()', () => {
-  for (const action of ['buy', 'sell', 'close']) {
-    it(`executes ${action} action`, async () => {
-      const { _deps, evaluate } = mockDeps({
-        'isReplayStarted': true,
-        [action === 'close' ? 'closePosition' : action]: undefined,
-        'position': 1,
-        'realizedPL': 50.5,
-      });
-      const result = await trade({ action, _deps });
-      assert.equal(result.success, true);
-      assert.equal(result.action, action);
-      assert.equal(result.position, 1);
-      assert.equal(result.realized_pnl, 50.5);
-    });
-  }
-
-  it('throws on invalid action', async () => {
-    const { _deps } = mockDeps({ 'isReplayStarted': true });
-    await assert.rejects(
-      () => trade({ action: 'hold', _deps }),
-      (err) => err.message.includes('Invalid action'),
-    );
-  });
-
-  it('throws when replay not started', async () => {
-    const { _deps } = mockDeps({ 'isReplayStarted': false });
-    await assert.rejects(
-      () => trade({ action: 'buy', _deps }),
-      (err) => err.message.includes('not started'),
-    );
   });
 });
 

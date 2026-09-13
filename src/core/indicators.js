@@ -2,6 +2,7 @@
  * Core indicator settings logic.
  */
 import { evaluate, safeString } from '../connection.js';
+import { observed, refused, unobservable } from '../internals/verdict.js';
 
 const CHART_API = 'window.TradingViewApi._activeChartWidgetWV.value()';
 const DIALOG = '[data-name="indicators-dialog"]';
@@ -188,12 +189,45 @@ export async function setInputs({ entity_id, inputs: inputsRaw }) {
         }
       }
       if (changed.length > 0) study.setInputValues(changed);
-      return { updated_inputs: updatedKeys };
+      // READ BACK. Returning updatedKeys here - the values that were REQUESTED
+      // — is what this function used to do, and it made the tool incapable of
+      // reporting a write that did not take. TradingView silently ignores a
+      // value outside an input's declared range, and study inputs are the one
+      // surface where believing a write that never landed means running a
+      // strategy on a configuration that exists only in the caller's head.
+      var after = study.getInputValues();
+      var actual = {}, missing = [];
+      for (var j = 0; j < after.length; j++) {
+        if (updatedKeys.hasOwnProperty(after[j].id)) actual[after[j].id] = after[j].value;
+      }
+      var rejected = {};
+      for (var id in updatedKeys) {
+        if (!actual.hasOwnProperty(id)) { missing.push(id); continue; }
+        if (JSON.stringify(actual[id]) !== JSON.stringify(updatedKeys[id])) {
+          rejected[id] = { requested: updatedKeys[id], actual: actual[id] };
+        }
+      }
+      return { requested: updatedKeys, applied: actual, rejected: rejected, missing: missing };
     })()
   `);
 
   if (result && result.error) throw new Error(result.error);
-  return { success: true, entity_id, updated_inputs: result.updated_inputs };
+
+  const rejected = result?.rejected || {};
+  const missing = result?.missing || [];
+  const names = [...Object.keys(rejected), ...missing];
+  if (names.length) {
+    return refused(
+      `${names.length} input(s) did not take the requested value: ${names.join(', ')}. `
+      + 'TradingView ignores a value outside the declared range of an input without erroring, '
+      + 'so this is reported rather than retried — a coerced value is not the value you asked for.',
+      { entity_id, requested: result.requested, applied: result.applied, rejected, missing },
+    );
+  }
+  return observed(
+    { applied_inputs: result.applied },
+    { entity_id, updated_inputs: result.applied, requested: result.requested },
+  );
 }
 
 export async function toggleVisibility({ entity_id, visible }) {
@@ -212,5 +246,12 @@ export async function toggleVisibility({ entity_id, visible }) {
   `);
 
   if (result && result.error) throw new Error(result.error);
-  return { success: true, entity_id, visible: result.visible };
+  // isVisible() is read back above; the only thing missing was acting on it.
+  if (result.visible !== visible) {
+    return refused(
+      `study ${entity_id} still reports visible=${result.visible} after setVisible(${visible})`,
+      { entity_id, requested: visible, actual: result.visible },
+    );
+  }
+  return observed({ visible: result.visible }, { entity_id });
 }

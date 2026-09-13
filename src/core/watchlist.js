@@ -6,6 +6,7 @@
  * search UI so bare tickers resolve the same way they do for a human.
  */
 import { evaluate, evaluateAsync, getClient } from '../connection.js';
+import { observed, refused, unobservable } from '../internals/verdict.js';
 
 // TV renamed the right-rail button: current builds use data-name="base" with
 // aria-label "Watchlist, details, and news"; older builds used
@@ -230,9 +231,16 @@ export async function remove({ symbols }) {
     if (stillPresent.length === 0) break;
   }
 
-  return {
-    success: true, removed: toRemove, skipped,
-    verified: stillPresent.length === 0,
-    list_id: listInfo.id, list_name: listInfo.name, api: 'rest',
-  };
+  // `verified` was already computed and then ignored: rows that were still
+  // present after the deadline still reported success.
+  if (stillPresent.length > 0) {
+    return refused(
+      `${stillPresent.length} symbol(s) are still in the watchlist after removal: ${stillPresent.join(', ')}`,
+      { removed: [], still_present: stillPresent, skipped, list_id: listInfo.id, list_name: listInfo.name, api: 'rest' },
+    );
+  }
+  return observed(
+    { still_present: [] },
+    { removed: toRemove, skipped, list_id: listInfo.id, list_name: listInfo.name, api: 'rest' },
+  );
 }

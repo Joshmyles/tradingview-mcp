@@ -1246,17 +1246,10 @@ val = array.get(a, 5)`;
       }
     });
 
-    it('replay_trade — buy action', async () => {
-      const started = await evaluate(wv(`${REPLAY_API}.isReplayStarted()`));
-      if (!started) return;
-
-      await evaluate(`${REPLAY_API}.buy()`);
-      const position = await evaluate(wv(`${REPLAY_API}.position()`));
-      assert.ok(position !== undefined, 'Position returned after buy');
-
-      // Close position
-      try { await evaluate(`${REPLAY_API}.closePosition()`); } catch {}
-    });
+    // REMOVED 2026-09-12 (Phase 0.5 task 1): the `replay_trade — buy action`
+    // case. It called `replayApi.buy()` on the live chart, i.e. it placed an
+    // order from the e2e suite and relied on this build's null `activeModel()`
+    // to make that harmless. The tool it covered is deleted.
 
     it('replay_status — get replay state', async () => {
       const status = await evaluate(`

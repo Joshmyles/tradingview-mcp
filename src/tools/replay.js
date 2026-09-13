@@ -27,17 +27,28 @@ export function registerReplayTools(server) {
     catch (err) { return jsonResult(fromThrown(err)); }
   });
 
-  server.tool('replay_trade', 'Execute a trade action in replay mode (buy, sell, or close position)', {
-    action: z.string().describe('Trade action: buy, sell, or close'),
-  }, async ({ action }) => {
-    try { return jsonResult(await core.trade({ action })); }
-    catch (err) { return jsonResult(fromThrown(err)); }
-  });
-
   server.tool('replay_status', 'Get current replay mode status', {}, async () => {
     try { return jsonResult(await core.status()); }
     catch (err) { return jsonResult(fromThrown(err)); }
   });
+
+  server.tool(
+    'replay_health',
+    'Tell an ARMED-AND-IDLE replay session apart from a WEDGED one. '
+    + 'A wedged session reports itself connected, started and unfinished while doStep() never settles '
+    + 'and the cursor does not move, so no single status flag distinguishes the two. '
+    + 'With probe:true this attempts one step (which ADVANCES the cursor by one bar) because whether '
+    + 'the cursor can be moved is the only reliable discriminator found. '
+    + 'A wedged session is not recoverable by stop/start or selectDate - it needs a chart reload.',
+    {
+      probe: z.coerce.boolean().optional().describe('Attempt one step to prove the session can advance. This MOVES the replay cursor by one bar. Default false.'),
+      timeout_ms: z.coerce.number().optional().describe('How long to wait for the probe step before calling the session wedged. Default 12000.'),
+    },
+    async ({ probe, timeout_ms }) => {
+      try { return jsonResult(await core.health({ probe, ...(timeout_ms && { timeoutMs: timeout_ms }) })); }
+      catch (err) { return jsonResult(fromThrown(err)); }
+    },
+  );
 
   server.tool(
     'replay_step_until',

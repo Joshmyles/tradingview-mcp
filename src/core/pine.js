@@ -4,6 +4,7 @@
  * They throw on error (callers catch and format).
  */
 import { evaluate, evaluateAsync, getClient } from '../connection.js';
+import { observed, refused, unobservable } from '../internals/verdict.js';
 
 // ── Monaco finder (injected into TV page) ──
 const FIND_MONACO = `
@@ -278,7 +279,23 @@ export async function setSource({ source }) {
   `);
 
   if (!set) throw new Error('Monaco found but setValue() failed.');
-  return { success: true, lines_set: source.split('\n').length };
+  // Read the buffer back: setValue() reports nothing, and an editor that
+  // silently kept its old contents used to read as a successful write.
+  const expectedLines = source.split(String.fromCharCode(10)).length;
+  const actualLines = await evaluate(
+    '(function() { var m = ' + FIND_MONACO + '; if (!m) return null; '
+    + 'return m.editor.getValue().split(String.fromCharCode(10)).length; })()',
+  );
+  if (actualLines === null) {
+    return unobservable('the editor buffer could not be read back after setValue()', { lines_set: expectedLines });
+  }
+  if (actualLines !== expectedLines) {
+    return refused(
+      'the editor holds ' + actualLines + ' line(s) after setting ' + expectedLines,
+      { lines_requested: expectedLines, lines_in_editor: actualLines },
+    );
+  }
+  return observed({ lines_in_editor: actualLines }, { lines_set: expectedLines });
 }
 
 export async function compile() {
@@ -316,7 +333,13 @@ export async function compile() {
   }
 
   await new Promise(r => setTimeout(r, 2000));
-  return { success: true, button_clicked: clicked || 'keyboard_shortcut', source: 'dom_fallback' };
+  return unobservable(
+    clicked
+      ? 'the compile button was found and clicked; the compilation result is not read back here — use pine_get_errors.'
+      : 'no compile button was found, so a Ctrl+Enter keystroke was dispatched blind; '
+        + 'whether it reached the editor is not known — use pine_get_errors.',
+    { button_clicked: clicked || 'keyboard_shortcut', source: 'dom_fallback' },
+  );
 }
 
 export async function getErrors() {
@@ -373,7 +396,12 @@ export async function save() {
 
   if (dialogHandled) await new Promise(r => setTimeout(r, 500));
 
-  return { success: true, action: dialogHandled ? 'saved_with_dialog' : 'Ctrl+S_dispatched' };
+  return unobservable(
+    'Ctrl+S was dispatched to the editor (and any name dialog dismissed); this call '
+    + 'does not read back whether TradingView accepted the save. Confirm with '
+    + 'pine_list_scripts or pine_get_errors.',
+    { action: dialogHandled ? 'saved_with_dialog' : 'Ctrl+S_dispatched' },
+  );
 }
 
 export async function getConsole() {
@@ -496,13 +524,25 @@ export async function smartCompile() {
 
   const studyAdded = (studiesBefore !== null && studiesAfter !== null) ? studiesAfter > studiesBefore : null;
 
-  return {
-    success: true,
-    button_clicked: buttonClicked || 'keyboard_shortcut',
-    has_errors: errors?.length > 0,
-    errors: errors || [],
-    study_added: studyAdded,
-  };
+  // The study-count delta IS the observation, and it was already being computed.
+  // A compile that reports errors is still an observed outcome — the caller
+  // wants those errors — so errors do not make this a refusal; a compile that
+  // neither errored nor changed the chart is what cannot be claimed.
+  if (studyAdded === null) {
+    return unobservable(
+      'the chart study count could not be read, so whether the compile reached the chart is unknown',
+      { button_clicked: buttonClicked || 'keyboard_shortcut', has_errors: errors?.length > 0, errors: errors || [] },
+    );
+  }
+  return observed(
+    { study_added: studyAdded, error_count: errors?.length || 0 },
+    {
+      button_clicked: buttonClicked || 'keyboard_shortcut',
+      has_errors: errors?.length > 0,
+      errors: errors || [],
+      study_added: studyAdded,
+    },
+  );
 }
 
 export async function newScript({ type }) {
@@ -531,7 +571,23 @@ export async function newScript({ type }) {
 
   if (!set) throw new Error('Monaco editor not found. Ensure Pine Editor is open.');
 
-  return { success: true, type, action: 'new_script_created', template: typeMap[type] };
+  // Read the buffer back rather than trusting setValue()'s return.
+  const inEditor = await evaluate(
+    '(function() { var m = ' + FIND_MONACO + '; if (!m) return null; return m.editor.getValue(); })()',
+  );
+  if (inEditor === null) {
+    return unobservable('the editor buffer could not be read back after setValue()', { type, template: typeMap[type] });
+  }
+  if (inEditor !== template) {
+    return refused(
+      'the editor does not hold the new template after setValue()',
+      { type, template: typeMap[type], chars_expected: template.length, chars_in_editor: inEditor.length },
+    );
+  }
+  return observed(
+    { chars_in_editor: inEditor.length },
+    { type, action: 'new_script_created', template: typeMap[type] },
+  );
 }
 
 export async function openScript({ name }) {

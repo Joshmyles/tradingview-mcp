@@ -4,6 +4,13 @@
 import { evaluate as _evaluate, getReplayApi as _getReplayApi } from '../connection.js';
 import { resolveEntity } from './pine-inputs.js';
 import {
+  HEALTH_JS,
+  ReplayWedgeError,
+  classifyHealth,
+  currentOperation,
+  withTransportLock,
+} from '../internals/replay-transport.js';
+import {
   CLEAR_REPLAY_SESSION_JS,
   OPS,
   REPORT_FIELDS,
@@ -27,6 +34,13 @@ function _resolve(deps) {
 }
 
 export async function start({ date, _deps } = {}) {
+  // Task 4: the whole arming sequence is one transport operation. selectDate()
+  // initialises a server-side session, and issuing another while that is in
+  // flight is the pattern that preceded the 2026-09-12 wedge.
+  return withTransportLock('select_date', () => _start({ date, _deps }), { timeoutMs: 60000 });
+}
+
+async function _start({ date, _deps } = {}) {
   const { evaluate, getReplayApi } = _resolve(_deps);
   const rp = await getReplayApi();
   const available = await evaluate(wv(`${rp}.isReplayAvailable()`));
@@ -67,22 +81,45 @@ export async function start({ date, _deps } = {}) {
   return { success: true, replay_started: true, date: date || '(first available)', current_date: currentDate };
 }
 
-export async function step({ _deps } = {}) {
+export async function step({ timeoutMs = 10000, _deps } = {}) {
+  // The lock budget is deliberately larger than the polling budget: the poll
+  // below decides "did not advance", and the lock decides "never settled at
+  // all". Collapsing them would report a slow-but-working step as a wedge.
+  return withTransportLock('step', () => _step({ timeoutMs, _deps }), { timeoutMs: timeoutMs + 10000 });
+}
+
+async function _step({ timeoutMs = 10000, _deps } = {}) {
   const { evaluate, getReplayApi } = _resolve(_deps);
   const rp = await getReplayApi();
   const started = await evaluate(wv(`${rp}.isReplayStarted()`));
   if (!started) throw new Error('Replay is not started. Use replay_start first.');
   const before = await evaluate(wv(`${rp}.currentDate()`));
+  const t0 = Date.now();
   await evaluate(`${rp}.doStep()`);
-  // doStep() is async internally — currentDate takes ~500ms to update.
-  // Poll until it changes or timeout after 3s.
+  // doStep() resolves only when the SERVER-side replay session answers, and the
+  // cursor moves with that answer — measured 283-7711ms across ten consecutive
+  // steps, so no fixed sleep is safe in either direction. Poll the edge.
   let currentDate = before;
-  for (let i = 0; i < 12; i++) {
+  while (Date.now() - t0 < timeoutMs) {
     await new Promise(r => setTimeout(r, 250));
     currentDate = await evaluate(wv(`${rp}.currentDate()`));
     if (currentDate !== before) break;
   }
-  return { success: true, action: 'step', current_date: currentDate };
+  // DEFECT FIXED 2026-09-12: this used to `return { success: true }` whatever
+  // the cursor did, so a replay session that had stopped answering reported a
+  // successful step, over and over, while standing still. Measured live: a
+  // wedged session (doStep()'s promise never settling) returned four
+  // consecutive "successful" steps at an unchanged cursor. The timeout is
+  // FAILURE DETECTION, not synchronisation: not moving is the failure.
+  if (currentDate === before) {
+    throw new Error(
+      `Replay did not advance: the cursor is still ${currentDate} after ${Date.now() - t0}ms. `
+      + "doStep() waits for the server-side replay session to answer, and it did not. "
+      + 'A session in this state does not recover from stopReplay/selectDate/leaveReplay '
+      + '(all three measured); reload the chart to re-establish it.',
+    );
+  }
+  return { success: true, action: 'step', current_date: currentDate, advanced_ms: Date.now() - t0 };
 }
 
 export async function autoplay({ speed, _deps } = {}) {
@@ -90,6 +127,10 @@ export async function autoplay({ speed, _deps } = {}) {
   if (speed > 0 && !VALID_AUTOPLAY_DELAYS.includes(speed))
     throw new Error(`Invalid autoplay delay ${speed}ms. Valid values: ${VALID_AUTOPLAY_DELAYS.join(', ')}`);
 
+  return withTransportLock(speed > 0 ? 'play' : 'pause', () => _autoplay({ speed, _deps }), { timeoutMs: 30000 });
+}
+
+async function _autoplay({ speed, _deps } = {}) {
   const { evaluate, getReplayApi } = _resolve(_deps);
   const rp = await getReplayApi();
   const started = await evaluate(wv(`${rp}.isReplayStarted()`));
@@ -104,6 +145,10 @@ export async function autoplay({ speed, _deps } = {}) {
 }
 
 export async function stop({ _deps } = {}) {
+  return withTransportLock('stop', () => _stop({ _deps }), { timeoutMs: 30000 });
+}
+
+async function _stop({ _deps } = {}) {
   const { evaluate, getReplayApi } = _resolve(_deps);
   const rp = await getReplayApi();
   const started = await evaluate(wv(`${rp}.isReplayStarted()`));
@@ -127,21 +172,32 @@ export async function stop({ _deps } = {}) {
   };
 }
 
-export async function trade({ action, _deps }) {
-  const { evaluate, getReplayApi } = _resolve(_deps);
-  const rp = await getReplayApi();
-  const started = await evaluate(wv(`${rp}.isReplayStarted()`));
-  if (!started) throw new Error('Replay is not started. Use replay_start first.');
-
-  if (action === 'buy') await evaluate(`${rp}.buy()`);
-  else if (action === 'sell') await evaluate(`${rp}.sell()`);
-  else if (action === 'close') await evaluate(`${rp}.closePosition()`);
-  else throw new Error('Invalid action. Use: buy, sell, or close');
-
-  const position = await evaluate(wv(`${rp}.position()`));
-  const pnl = await evaluate(wv(`${rp}.realizedPL()`));
-  return { success: true, action, position, realized_pnl: pnl };
-}
+/*
+ * REMOVED 2026-09-12 (Phase 0.5, task 1): `trade({ action })`, and with it the
+ * `replay_trade` tool and the `tv replay trade` CLI subcommand.
+ *
+ * It drove the replay API's buy / sell / close-position methods. That is an
+ * ORDER PATH. On this build it happened to be inert: the buy method resolves
+ * through `_replayUIController.tradingUIController()` to an optional-chained
+ * model method, `updateModels()` took the `_initReplayBroker()` branch, the
+ * `_tradingModelMap` stayed empty, the model resolved to null, and the optional
+ * chain swallowed the whole call — so the tool answered `{ success: true }`
+ * having submitted nothing. That is a property of THIS build, not of this code:
+ * a build taking the legacy `_initTradingModels()` branch populates the map and
+ * the identical call reaches the broker, from the DEFAULT (workflow) profile.
+ *
+ * Reporting success for an order that was never submitted is worse than either
+ * submitting it or refusing outright, so the function is deleted rather than
+ * guarded. `status()` below still READS `position()` and `realizedPL()`; reads
+ * were never the hazard. Order emission belongs to the replay profile being
+ * built under recon/PHASE0-FINDINGS.md, behind the broker interlock, and
+ * nowhere else.
+ *
+ * tests/no-order-path.test.js keeps this surface clean, by name and by walking
+ * the import graph of both profiles. It scans raw text, strings included (the
+ * in-page calls ARE strings here), so this note deliberately avoids spelling
+ * any of the banned call sites literally.
+ */
 
 export async function status({ _deps } = {}) {
   const { evaluate, getReplayApi } = _resolve(_deps);
@@ -274,5 +330,95 @@ export async function stepUntil({
           : out.stopped_on === 'already_true'
             ? 'The predicate held before any step was taken. Nothing was advanced.'
             : 'Replay is left AT the stopping bar deliberately — that bar is the result. Use replay_stop to return to realtime.',
+  };
+}
+
+/**
+ * Distinguish "armed and idle" from "wedged".
+ *
+ * The wedged session on 2026-09-12 reported sessionState 2, connected true,
+ * isReplayStarted true, isReplayFinished false — i.e. every flag a caller would
+ * naturally check said the session was fine, while doStep() never settled and
+ * the cursor sat at 1788220799. No single field distinguishes the two states,
+ * so this reads them together and, when asked, ATTEMPTS A STEP: the only
+ * reliable discriminator found is whether the cursor can actually be moved.
+ *
+ * `probe` defaults to false because the probe advances the replay cursor by one
+ * bar, which is a state change and must be asked for rather than assumed.
+ */
+export async function health({ probe = false, timeoutMs = 12000, _deps } = {}) {
+  const { evaluate } = _resolve(_deps);
+  const raw = await evaluate(HEALTH_JS);
+  const state = typeof raw === 'string' ? JSON.parse(raw) : raw;
+
+  let probeResult;
+  if (probe && state?.is_replay_started === true) {
+    probeResult = await withTransportLock(
+      'step',
+      () => _probeStep({ timeoutMs, _deps }),
+      { timeoutMs: timeoutMs + 10000 },
+    ).catch((err) => {
+      // A lock timeout IS the wedge signal, not an error to propagate: the whole
+      // point of this call is to report that state rather than throw it.
+      if (err instanceof ReplayWedgeError) {
+        return { advanced: false, settled: false, waited_ms: err.elapsed_ms ?? timeoutMs, error: err.message };
+      }
+      throw err;
+    });
+  }
+
+  const verdict = classifyHealth(state, probeResult);
+  // `state` is the RAW reading and `verdict.state` is the classification, and
+  // spreading the verdict first let the reading overwrite it — caught live on
+  // 2026-09-12 when this returned the reading object where 'healthy' belonged.
+  // That is the same shape as the pine_inputs_assert defect this phase fixed,
+  // written by the same hand that fixed it an hour earlier, which is the whole
+  // argument for internals/verdict.js: the shape has to be impossible, because
+  // knowing about it is demonstrably not enough. The reading is now `reading`.
+  return {
+    success: true,
+    ...verdict,
+    probe: probeResult ?? null,
+    transport_in_flight: currentOperation(),
+    reading: state,
+  };
+}
+
+/**
+ * One step attempt that reports what happened instead of throwing.
+ *
+ * Deliberately not `step()`: step() throws on a cursor that does not move,
+ * which is correct for a caller trying to advance replay and wrong for a health
+ * check, whose entire job is to return that fact as data.
+ */
+async function _probeStep({ timeoutMs, _deps }) {
+  const { evaluate, getReplayApi } = _resolve(_deps);
+  const rp = await getReplayApi();
+  const before = await evaluate(wv(`${rp}.currentDate()`));
+  const t0 = Date.now();
+  let settled = false;
+  // Fire doStep and watch whether its promise ever resolves, separately from
+  // whether the cursor moves — they are different failures and the message
+  // the caller gets should say which one happened.
+  const settledFlag = evaluate(
+    `(function(){ var rp = ${rp}; var p = rp.doStep(); `
+    + 'return (p && typeof p.then === "function") ? p.then(function(){ return true; }, function(){ return true; }) : true; })()',
+    { awaitPromise: true },
+  ).then(() => { settled = true; }).catch(() => { settled = true; });
+
+  let current = before;
+  while (Date.now() - t0 < timeoutMs) {
+    await new Promise((r) => setTimeout(r, 250));
+    current = await evaluate(wv(`${rp}.currentDate()`));
+    if (current !== before) break;
+  }
+  // Give the promise a final moment so "settled late" is not misread as "never".
+  await Promise.race([settledFlag, new Promise((r) => setTimeout(r, 250))]);
+  return {
+    advanced: current !== before,
+    settled,
+    waited_ms: Date.now() - t0,
+    before_date: before,
+    after_date: current,
   };
 }

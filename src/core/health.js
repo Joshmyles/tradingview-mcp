@@ -501,8 +501,11 @@ export async function launch({ port, kill_existing, _deps } = {}) {
     };
   }
 
+  // cdp_ready:false means the debugging port never bound, i.e. the one thing
+  // this tool exists to deliver did not happen. It used to report success:true
+  // beside that flag, so a caller reading `.success` was told the launch worked.
   return {
-    success: true,
+    success: false,
     platform,
     binary: tvPath,
     pid: child.pid,

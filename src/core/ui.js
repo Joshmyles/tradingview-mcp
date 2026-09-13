@@ -2,6 +2,7 @@
  * Core UI automation logic.
  */
 import { evaluate, evaluateAsync, getClient } from '../connection.js';
+import { observed, refused, unobservable } from '../internals/verdict.js';
 
 export async function click({ by, value }) {
   const escaped = JSON.stringify(value);
@@ -25,7 +26,11 @@ export async function click({ by, value }) {
     })()
   `);
   if (!result || !result.found) throw new Error('No matching element found for ' + by + '="' + value + '"');
-  return { success: true, clicked: result };
+  // The element was located, which IS observed; its reaction is not.
+  return unobservable(
+    'the element was found and clicked; the effect of the click is not read back.',
+    { clicked: result },
+  );
 }
 
 export async function openPanel({ panel, action }) {
@@ -60,7 +65,17 @@ export async function openPanel({ panel, action }) {
       })()
     `);
     if (result && result.error) throw new Error(result.error);
-    return { success: true, panel, action, was_open: result?.was_open ?? false, performed: result?.performed ?? 'unknown' };
+    // `performed` is what the code DECIDED to do, not what happened. Re-read.
+    await new Promise((r) => setTimeout(r, 300));
+    const nowOpen = await evaluate(`
+      (function() {
+        try {
+          var bwb = window.TradingView.bottomWidgetBar;
+          return !!(bwb && typeof bwb.isVisible === 'function' ? bwb.isVisible() : null);
+        } catch (e) { return null; }
+      })()
+    `);
+    return panelVerdict({ panel, action, wasOpen: result?.was_open ?? false, performed: result?.performed ?? 'unknown', nowOpen });
   } else {
     // Newer TV builds renamed the right-rail buttons (watchlist is now
     // data-name="base", aria "Watchlist, details, and news"; alerts is
@@ -97,8 +112,33 @@ export async function openPanel({ panel, action }) {
       })()
     `);
     if (result && result.error) throw new Error(result.error);
-    return { success: true, panel, action, was_open: result?.was_open ?? false, performed: result?.performed ?? 'unknown' };
+    await new Promise((r) => setTimeout(r, 300));
+    const nowOpen = await evaluate(`
+      (function() {
+        try {
+          var rightArea = document.querySelector('[class*="layout__area--right"]');
+          return !!(rightArea && rightArea.offsetWidth > 50);
+        } catch (e) { return null; }
+      })()
+    `);
+    return panelVerdict({ panel, action, wasOpen: result?.was_open ?? false, performed: result?.performed ?? 'unknown', nowOpen });
   }
+}
+
+/**
+ * Turn an observed open/closed reading into a verdict.
+ *
+ * 'toggle' has no single correct end state, so it is reported as observed
+ * whatever it reads; 'open' and 'close' name the state they must reach.
+ */
+function panelVerdict({ panel, action, wasOpen, performed, nowOpen }) {
+  const detail = { panel, action, was_open: wasOpen, performed };
+  if (nowOpen === null || nowOpen === undefined) {
+    return unobservable('the panel container could not be read back after the click', detail);
+  }
+  if (action === 'open' && !nowOpen) return refused(`panel "${panel}" is still closed after action "open"`, { ...detail, is_open: nowOpen });
+  if (action === 'close' && nowOpen) return refused(`panel "${panel}" is still open after action "close"`, { ...detail, is_open: nowOpen });
+  return observed({ is_open: nowOpen }, detail);
 }
 
 export async function fullscreen() {
@@ -111,7 +151,11 @@ export async function fullscreen() {
     })()
   `);
   if (!result || !result.found) throw new Error('Fullscreen button not found');
-  return { success: true, action: 'fullscreen_toggled' };
+  return unobservable(
+    'the fullscreen button was found and clicked; the resulting window state is '
+    + 'not read back.',
+    { action: 'fullscreen_toggled' },
+  );
 }
 
 export async function layoutList() {
@@ -170,7 +214,36 @@ export async function layoutSwitch({ name }) {
   `);
 
   if (dismissed) await new Promise(r => setTimeout(r, 1000));
-  return { success: true, layout: result.name || name, layout_id: result.id, source: result.source, action: 'switched', unsaved_dialog_dismissed: dismissed };
+
+  // loadChartFromServer() returns immediately; the load happens afterwards. The
+  // old code reported action:'switched' at this point regardless, so a failed or
+  // still-pending load read as a completed switch. Poll for the id to land.
+  let actualId = null;
+  const deadline = Date.now() + 15000;
+  while (Date.now() < deadline) {
+    actualId = await evaluate(`
+      (function() {
+        try {
+          var svc = window.TradingViewApi._saveChartService;
+          var v = svc && svc.layoutId();
+          return (v && typeof v.value === 'function') ? v.value() : (v || null);
+        } catch (e) { return null; }
+      })()
+    `);
+    if (actualId && String(actualId) === String(result.id)) break;
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  const detail = { layout: result.name || name, layout_id: result.id, source: result.source, unsaved_dialog_dismissed: dismissed };
+  if (!actualId) {
+    return unobservable('the active layout id could not be read back after the switch', detail);
+  }
+  if (String(actualId) !== String(result.id)) {
+    return refused(
+      `the active layout is "${actualId}" after switching to "${result.id}" — the load did not complete within 15s`,
+      { ...detail, active_layout_id: String(actualId) },
+    );
+  }
+  return observed({ active_layout_id: String(actualId) }, { ...detail, action: 'switched' });
 }
 
 export async function keyboard({ key, modifiers }) {
@@ -194,13 +267,21 @@ export async function keyboard({ key, modifiers }) {
   const mapped = keyMap[key] || { code: 'Key' + key.toUpperCase(), vk: key.toUpperCase().charCodeAt(0) };
   await c.Input.dispatchKeyEvent({ type: 'keyDown', modifiers: mod, key, code: mapped.code, windowsVirtualKeyCode: mapped.vk });
   await c.Input.dispatchKeyEvent({ type: 'keyUp', key, code: mapped.code });
-  return { success: true, key, modifiers: modifiers || [] };
+  return unobservable(
+    'the key event was dispatched to the page; what the page did with it is not '
+    + 'visible from here. Confirm the intended effect with a read.',
+    { key, modifiers: modifiers || [] },
+  );
 }
 
 export async function typeText({ text }) {
   const c = await getClient();
   await c.Input.insertText({ text });
-  return { success: true, typed: text.substring(0, 100), length: text.length };
+  return unobservable(
+    'the text was inserted into whatever holds focus; this call does not know '
+    + 'what that was or whether it accepted the text.',
+    { typed: text.substring(0, 100), length: text.length },
+  );
 }
 
 export async function hover({ by, value }) {
@@ -226,7 +307,11 @@ export async function hover({ by, value }) {
   if (!coords) throw new Error('Element not found for ' + by + '="' + value + '"');
   const c = await getClient();
   await c.Input.dispatchMouseEvent({ type: 'mouseMoved', x: coords.x, y: coords.y });
-  return { success: true, hovered: { by, value, tag: coords.tag, x: coords.x, y: coords.y } };
+  return unobservable(
+    'the element was located and the pointer moved onto it; whether a hover state '
+    + 'or tooltip resulted is not readable from here.',
+    { hovered: { by, value, tag: coords.tag, x: coords.x, y: coords.y } },
+  );
 }
 
 export async function scroll({ direction, amount }) {
@@ -244,7 +329,11 @@ export async function scroll({ direction, amount }) {
   if (direction === 'up') deltaY = -px; else if (direction === 'down') deltaY = px;
   else if (direction === 'left') deltaX = -px; else if (direction === 'right') deltaX = px;
   await c.Input.dispatchMouseEvent({ type: 'mouseWheel', x: center.x, y: center.y, deltaX, deltaY });
-  return { success: true, direction, amount: px };
+  return unobservable(
+    'the wheel event was dispatched; this call does not read the resulting scroll '
+    + 'position, and the chart may have consumed it as a zoom instead.',
+    { direction, amount: px },
+  );
 }
 
 export async function mouseClick({ x, y, button, double_click }) {
@@ -259,7 +348,11 @@ export async function mouseClick({ x, y, button, double_click }) {
     await c.Input.dispatchMouseEvent({ type: 'mousePressed', x, y, button: btn, buttons: btnNum, clickCount: 2 });
     await c.Input.dispatchMouseEvent({ type: 'mouseReleased', x, y, button: btn });
   }
-  return { success: true, x, y, button: btn, double_click: !!double_click };
+  return unobservable(
+    'the click was dispatched at these coordinates; what sits there and how it '
+    + 'responded is not visible from here.',
+    { x, y, button: btn, double_click: !!double_click },
+  );
 }
 
 export async function findElement({ query, strategy }) {

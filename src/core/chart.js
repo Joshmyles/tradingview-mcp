@@ -3,6 +3,7 @@
  */
 import { evaluate as _evaluate, evaluateAsync as _evaluateAsync, safeString, requireFinite } from '../connection.js';
 import { captureFence as _captureFence } from '../settle.js';
+import { observed, refused, unobservable } from '../internals/verdict.js';
 
 const CHART_API = 'window.TradingViewApi._activeChartWidgetWV.value()';
 
@@ -101,13 +102,31 @@ export async function setType({ chart_type, _deps }) {
   if (isNaN(typeNum) || typeNum < 0 || typeNum > 9 || !Number.isInteger(typeNum)) {
     throw new Error(`Unknown chart type: ${chart_type}. Use a name (Candles, Line, etc.) or number (0-9).`);
   }
-  await evaluate(`
+  const actual = await evaluate(`
     (function() {
       var chart = ${CHART_API};
       chart.setChartType(${typeNum});
+      try { return chart.chartType(); } catch (e) {
+        try { return chart._chartWidget.model().mainSeries().properties().style.value(); } catch (e2) { return null; }
+      }
     })()
   `);
-  return { success: true, chart_type, type_num: typeNum };
+  // setChartType() returns nothing and throws nothing for a type the chart
+  // declines, so without this read the tool reported the type it was ASKED for.
+  if (actual === null || actual === undefined) {
+    return unobservable(
+      'the chart exposes no readable chart-type accessor in this build, so the '
+      + 'change was requested but not confirmed',
+      { chart_type, type_num: typeNum },
+    );
+  }
+  if (Number(actual) !== typeNum) {
+    return refused(
+      `chart type is ${actual} after setChartType(${typeNum}) for "${chart_type}"`,
+      { chart_type, type_num: typeNum, actual_type_num: Number(actual) },
+    );
+  }
+  return observed({ chart_type_now: Number(actual) }, { chart_type, type_num: typeNum });
 }
 
 export async function manageIndicator({ action, indicator, entity_id, inputs: inputsRaw, _deps }) {
@@ -168,13 +187,34 @@ export async function manageIndicator({ action, indicator, entity_id, inputs: in
     };
   } else if (action === 'remove') {
     if (!entity_id) throw new Error('entity_id required for remove action. Use chart_get_state to find study IDs.');
-    await evaluate(`
+    const removal = await evaluate(`
       (function() {
         var chart = ${CHART_API};
+        var idsBefore = chart.getAllStudies().map(function(s) { return s.id; });
+        var existed = idsBefore.indexOf(${safeString(entity_id)}) !== -1;
         chart.removeEntity(${safeString(entity_id)});
+        var idsAfter = chart.getAllStudies().map(function(s) { return s.id; });
+        return { existed: existed, still_present: idsAfter.indexOf(${safeString(entity_id)}) !== -1, remaining: idsAfter.length };
       })()
     `);
-    return { success: true, action: 'remove', entity_id };
+    // removeEntity() is silent about an id that does not exist and about one it
+    // declines to remove, so both used to read as a successful removal.
+    if (!removal?.existed) {
+      return refused(
+        `no study with entity_id "${entity_id}" was on the chart, so nothing was removed`,
+        { action: 'remove', entity_id, remaining_studies: removal?.remaining ?? null },
+      );
+    }
+    if (removal.still_present) {
+      return refused(
+        `study "${entity_id}" is still on the chart after removeEntity()`,
+        { action: 'remove', entity_id, remaining_studies: removal.remaining },
+      );
+    }
+    return observed(
+      { removed_entity_id: entity_id, remaining_studies: removal.remaining },
+      { action: 'remove', entity_id },
+    );
   } else {
     throw new Error('action must be "add" or "remove"');
   }
@@ -237,7 +277,15 @@ export async function setVisibleRange({ from, to, _deps }) {
       catch(e) { return { from: 0, to: 0, error: e.message }; }
     })()
   `);
-  return { success: true, requested: { from, to }, actual: actual || { from: 0, to: 0 } };
+  // zoomToBarsRange clamps to loaded history; `actual` was already read and
+  // then reported beside an unconditional success.
+  if (!actual || (actual.from === 0 && actual.to === 0)) {
+    return refused(
+      'the visible range could not be read back after zooming, so the window on screen is unknown',
+      { requested: { from, to }, actual: actual || { from: 0, to: 0 } },
+    );
+  }
+  return observed({ actual_window: actual }, { requested: { from, to }, actual });
 }
 
 /**
@@ -304,7 +352,32 @@ export async function scrollToDate({ date, _deps } = {}) {
     })()
   `);
   await new Promise(r => setTimeout(r, 500));
-  return { success: true, date, centered_on: timestamp, resolution, window: { from, to } };
+  // zoomToBarsRange() silently clamps to whatever history is loaded, so the
+  // requested window and the window on screen routinely differ. Report BOTH.
+  const actual = await evaluate(`
+    (function() {
+      try { var r = ${CHART_API}.getVisibleRange(); return { from: r.from || 0, to: r.to || 0 }; }
+      catch (e) { return null; }
+    })()
+  `);
+  if (!actual) {
+    return unobservable(
+      'the visible range could not be read back, so the scroll was requested but not confirmed',
+      { date, centered_on: timestamp, resolution, window: { from, to } },
+    );
+  }
+  const covers = actual.from <= timestamp && actual.to >= timestamp;
+  if (!covers) {
+    return refused(
+      `the visible window after scrolling is ${actual.from}..${actual.to}, which does not contain ${timestamp} `
+      + `(${date}) — the chart clamped to the history it has loaded`,
+      { date, centered_on: timestamp, resolution, requested_window: { from, to }, actual_window: actual },
+    );
+  }
+  return observed(
+    { actual_window: actual, contains_target: true },
+    { date, centered_on: timestamp, resolution, requested_window: { from, to } },
+  );
 }
 
 export async function symbolInfo({ _deps } = {}) {

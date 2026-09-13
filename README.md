@@ -212,7 +212,7 @@ Claude reads [`CLAUDE.md`](CLAUDE.md) automatically when working in this project
 | "Give me a full analysis" | `quote_get` → `data_get_study_values` → `data_get_pine_lines` → `data_get_pine_labels` → `data_get_pine_tables` → `data_get_ohlcv` (summary) → `capture_screenshot` |
 | "Switch to AAPL daily" | `chart_set_symbol` → `chart_set_timeframe` |
 | "Write a Pine Script for..." | `pine_set_source` → `pine_smart_compile` → `pine_get_errors` |
-| "Start replay at March 1st" | `replay_start` → `replay_step` → `replay_trade` |
+| "Start replay at March 1st" | `replay_start` → `replay_step` → `replay_status` |
 | "Set up a 4-chart grid" | `pane_set_layout` → `pane_set_symbol` for each pane |
 | "Draw a level at 24500" | `draw_shape` (horizontal_line) |
 | "Take a screenshot" | `capture_screenshot` |
@@ -293,7 +293,6 @@ Read `line.new()`, `label.new()`, `table.new()`, `box.new()` output from any vis
 | `replay_start` | Enter replay at a date |
 | `replay_step` | Advance one bar |
 | `replay_autoplay` | Auto-advance (set speed in ms) |
-| `replay_trade` | Buy/sell/close positions |
 | `replay_status` | Check position, P&L, date |
 | `replay_stop` | Return to realtime |
 

@@ -1,0 +1,133 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1046
+    ],
+    "outer": [
+      1920,
+      1080
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": {
+    "replay": {
+      "isReplayAvailable": true,
+      "isReplayStarted": true,
+      "isReplayToolbarVisible": true,
+      "isAutoplayStarted": false,
+      "replayMode": "AllCharts",
+      "replayTimingMode": "manual",
+      "isJumpToBarModeEnabled": false,
+      "currentDate": 1788744359,
+      "autoplayDelay": 2000,
+      "getReplaySelectedDate": 1788735359,
+      "currency": null,
+      "isReadyToPlay": true,
+      "currentReplayResolution": null,
+      "autoReplayResolution": "45S",
+      "autoReplayResolutionTitle": "Auto select interval",
+      "replayResolutions": [
+        "1T",
+        "1S",
+        "5S",
+        "15S",
+        "45S",
+        null
+      ],
+      "getReplayDepth_type": "object",
+      "getReplayDepth_sync": 1702971716,
+      "symbolInfo": {
+        "isNonTradable": false,
+        "symbol": "ICMARKETS:XAUUSD"
+      },
+      "position": null,
+      "realizedPL": null
+    },
+    "facade": {
+      "type": "object",
+      "keys": {
+        "own": [
+          "_onReportUpdated",
+          "_study",
+          "_createStudyCancellationToken",
+          "_createStudyPromise",
+          "_symbolForCreatedStudy",
+          "_onIsInReplay",
+          "_model",
+          "_mainSeriesSymbolInfo",
+          "_mainSeriesHasPlots"
+        ],
+        "proto": [
+          "constructor",
+          "mainSeriesHasPlots",
+          "barsIndexes",
+          "destroy",
+          "createStrategy",
+          "notifyStudy",
+          "onReportUpdated",
+          "reportData",
+          "clearRecoveryStateAndReport",
+          "recoveryState",
+          "restoreRecoveryState",
+          "_getStudyStrategy"
+        ]
+      }
+    },
+    "facadeMap": {
+      "type": "object",
+      "ctor": "Map",
+      "keys": {
+        "own": [],
+        "proto": [
+          "constructor",
+          "get",
+          "set",
+          "has",
+          "delete",
+          "clear",
+          "entries",
+          "forEach",
+          "keys",
+          "size",
+          "values",
+          "getOrInsert",
+          "getOrInsertComputed"
+        ]
+      },
+      "mapKeys": [
+        "74612c5f-d5ba-404a-bf69-43f105969306"
+      ]
+    },
+    "tradingUIControllerReplayFactory": {
+      "type": "object"
+    },
+    "featureFlags": {
+      "own": [],
+      "proto": [
+        "constructor",
+        "isDOMAvailable",
+        "isMobileTradingAvailable",
+        "isMobileTradingAvailableInApp",
+        "isNewReplaySupportingPlatform"
+      ]
+    },
+    "study": {
+      "title": "Base 2.0.36",
+      "metaTitle": "Base 2.0.36",
+      "shortDesc": "Base 2.0.36",
+      "scriptIdPart": "USER;e003abfb1017423c8f9137fd2c9ffd95",
+      "isStrategyProp": true,
+      "hasReport": true,
+      "reportTrades": null,
+      "inputKeys": 30
+    }
+  }
+}

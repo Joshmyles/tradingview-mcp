@@ -1,0 +1,38 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1046
+    ],
+    "outer": [
+      1920,
+      1080
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": {
+    "chunkPresent": true,
+    "gotRequire": true,
+    "moduleCount": 11497,
+    "cacheCount": 9267,
+    "hits": [
+      {
+        "id": "754318",
+        "key": "InternalBrokerId",
+        "type": "object"
+      },
+      {
+        "id": "822530",
+        "key": "tradingService",
+        "type": "function"
+      }
+    ]
+  }
+}

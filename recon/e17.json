@@ -1,0 +1,95 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1046
+    ],
+    "outer": [
+      1920,
+      1080
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": {
+    "enums": {
+      "OrderStatus": {
+        "module": "601629",
+        "value": {
+          "1": "Canceled",
+          "2": "Filled",
+          "3": "Inactive",
+          "4": "Placing",
+          "5": "Rejected",
+          "6": "Working",
+          "Canceled": 1,
+          "Filled": 2,
+          "Inactive": 3,
+          "Placing": 4,
+          "Rejected": 5,
+          "Working": 6
+        }
+      },
+      "OrderType": {
+        "module": "601629",
+        "value": {
+          "1": "Limit",
+          "2": "Market",
+          "3": "Stop",
+          "4": "StopLimit",
+          "Limit": 1,
+          "Market": 2,
+          "Stop": 3,
+          "StopLimit": 4
+        }
+      },
+      "ParentType": {
+        "module": "601629",
+        "value": {
+          "1": "Order",
+          "2": "Position",
+          "3": "IndividualPosition",
+          "Order": 1,
+          "Position": 2,
+          "IndividualPosition": 3
+        }
+      },
+      "Side": {
+        "module": "601629",
+        "value": {
+          "1": "Buy",
+          "Buy": 1,
+          "Sell": -1,
+          "-1": "Sell"
+        }
+      }
+    },
+    "preOrder": {
+      "symbol": "ICMARKETS:XAUUSD",
+      "side": 1,
+      "type": 2
+    },
+    "validationRules": {},
+    "symbolSpecific": {
+      "supportOrderBrackets": true,
+      "supportPositionBrackets": true,
+      "supportIndividualPositionBrackets": false,
+      "supportReversePosition": true,
+      "supportModifyBrackets": true,
+      "supportAddBracketsToExistingOrder": true,
+      "supportModifyPositionBrackets": true,
+      "supportModifyOrderBrackets": true,
+      "supportStopLoss": true,
+      "supportTrailingStop": false,
+      "supportGuaranteedStop": false,
+      "supportBracketsInPips": true,
+      "supportRiskControlsAndInfo": true
+    }
+  }
+}

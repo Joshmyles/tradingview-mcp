@@ -1,0 +1,41 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1046
+    ],
+    "outer": [
+      1920,
+      1080
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": {
+    "isReplayAvailable": true,
+    "isReplayStarted": true,
+    "isReplayToolbarVisible": true,
+    "isAutoplayStarted": false,
+    "replayMode": "AllCharts",
+    "replayTimingMode": "manual",
+    "currentDate": 1788744359,
+    "isReadyToPlay": true,
+    "isReplayModeEnabled": true,
+    "tuc_isReplayModeEnabled": true,
+    "tuc_isConnectedToBroker": true,
+    "tuc_replayStatus": 3,
+    "activeBrokerId": "REPLAYBROKER",
+    "isInReplay": true,
+    "iso_currentDate": "2026-09-07T01:25:59.000Z",
+    "iso_depth": "2023-12-19T07:41:56.000Z",
+    "iso_barsFirst": "2026-09-04T15:25:15.000Z",
+    "iso_barsLast": "2026-09-07T01:25:15.000Z",
+    "iso_1T_depth": "2026-03-13T08:56:57.000Z"
+  }
+}

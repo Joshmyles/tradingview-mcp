@@ -1,0 +1,75 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1046
+    ],
+    "outer": [
+      1920,
+      1080
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": {
+    "brokerPresent": true,
+    "metainfo": {
+      "id": "REPLAYBROKER",
+      "title": "Replay Broker",
+      "configFlags": [
+        "supportModifyOrderPrice",
+        "supportEditAmount",
+        "supportModifyBrackets",
+        "supportMarketBrackets",
+        "supportMarketOrders",
+        "supportStopOrders",
+        "supportLimitOrders",
+        "supportLeverageButton",
+        "supportStopLimitOrders",
+        "supportPositions",
+        "supportDOM",
+        "supportModifyTrailingStop",
+        "supportAddBracketsToExistingOrder",
+        "supportReversePosition",
+        "showNotificationsLog",
+        "showSymbolInClosePositionDialog",
+        "supportPLUpdate",
+        "supportCurrencyInOrderPreview",
+        "supportRiskControlsAndInfo",
+        "matchOrderModificationById",
+        "supportOrdersHistory",
+        "supportOrderBrackets",
+        "supportPositionBrackets",
+        "supportClosePosition",
+        "supportPartialClosePosition",
+        "supportNativeReversePosition",
+        "supportSymbolSpecificCryptoOrderTicket",
+        "supportExecutions",
+        "supportStopLoss",
+        "supportModifyPositionBrackets",
+        "supportModifyOrderBrackets",
+        "disableIsTradableCaching",
+        "supportEditContexts",
+        "supportProjectMarketOrder",
+        "authorizationType",
+        "supportContinuousTrading"
+      ]
+    },
+    "currentBroker": "REPLAYBROKER",
+    "isConnected": true,
+    "connectionStatus": 1,
+    "currentAccount": "primary",
+    "currentAccountType": "demo",
+    "accountsMetainfo": {},
+    "sessionId": "32a350be-307b-4bf1-a822-e4e0e937f012",
+    "isInReplay": true,
+    "connectStatus": 1,
+    "brokersListType": "array[137]"
+  }
+}

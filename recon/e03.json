@@ -1,0 +1,59 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1046
+    ],
+    "outer": [
+      1920,
+      1080
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": {
+    "getStudyById": true,
+    "inputCount": 30,
+    "inputIdsSample": [
+      "text",
+      "pineId",
+      "pineVersion",
+      "pineFeatures",
+      "in_0"
+    ],
+    "inputIdsTail": [
+      "in_21",
+      "in_22",
+      "in_23",
+      "in_24",
+      "__profile"
+    ],
+    "has_in_273_280": [],
+    "meta": {
+      "id": "StrategyScript$USER;e003abfb1017423c8f9137fd2c9ffd95@tv-scripting",
+      "description": "Base 2.0.36",
+      "shortId": "StrategyScript$USER;e003abfb1017423c8f9137fd2c9ffd95",
+      "pine": {
+        "version": "0.49"
+      },
+      "scriptIdPart": "USER;e003abfb1017423c8f9137fd2c9ffd95",
+      "inputsCount": 30
+    },
+    "facadeStudy": null,
+    "facadeReport": null,
+    "facadeRecovery": null,
+    "createStrategyArity": 0,
+    "createStrategySrc": "async createStrategy(){await this._getStudyStrategy()}",
+    "notifyStudySrc": "async notifyStudy(e){return(await this._getStudyStrategy()).notifyStudy(e)}",
+    "buySrc": "buy(e){this._replayUIController.tradingUIController()?.activeModel()?.addOrder({side:C.Side.Buy,type:C.OrderType.Market,qty:e})}",
+    "sellSrc": "sell(e){this._replayUIController.tradingUIController()?.activeModel()?.addOrder({side:C.Side.Sell,type:C.OrderType.Market,qty:e})}",
+    "closeSrc": "closePosition(){this._replayUIController.tradingUIController()?.activeModel()?.closePosition()}",
+    "depthSrc": "getReplayDepth(e){return this._replayUIController.getReplayDepth(e)}"
+  }
+}

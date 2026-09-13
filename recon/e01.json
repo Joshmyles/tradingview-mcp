@@ -1,0 +1,376 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1046
+    ],
+    "outer": [
+      1920,
+      1080
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": {
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S",
+    "studies": [
+      {
+        "id": "P5U7Ib",
+        "title": "Crosshair",
+        "isStrategy": null
+      },
+      {
+        "id": "_seriesId",
+        "title": "XAUUSD · IC Markets, 45s",
+        "isStrategy": null
+      },
+      {
+        "id": "PublishedChartsTimeline",
+        "title": "Ideas on chart",
+        "isStrategy": null
+      },
+      {
+        "id": "kmlMEk",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "HmYhvL",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "pFmrzz",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "Vl2NlL",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "BVwGJq",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "HAEY4e",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "hSTAG8",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "JGJ8ei",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "fXXu3s",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "IkpTip",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "Pd3hWo",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "03z9d8",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "rNGNeX",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "HTGJQj",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "iWdrnp",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "l3IEVU",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "DZZQgZ",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "6m2adM",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "MflMh4",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "krYKdD",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "AGqLDL",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "XwC5rD",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "TVJZ2f",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "gmLC21",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "xmAEAu",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "e5KWh1",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "JFIMiB",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "8L7kwi",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "gJjUIW",
+        "title": "XAUUSD",
+        "isStrategy": null
+      },
+      {
+        "id": "8uE6BI",
+        "title": "Adaptive Trend Finder",
+        "isStrategy": null
+      },
+      {
+        "id": "3qODoG",
+        "title": "Consolidation Zones - Live",
+        "isStrategy": null
+      },
+      {
+        "id": "fLgsEX",
+        "title": "LuxAlgo - Liquidity Sweeps",
+        "isStrategy": null
+      },
+      {
+        "id": "m19xew",
+        "title": "LuxAlgo - Fair Value Gap",
+        "isStrategy": null
+      },
+      {
+        "id": "Tbo1Da",
+        "title": "LuxAlgo - Support Resistance Classification (VR)",
+        "isStrategy": null
+      },
+      {
+        "id": "Aou1T7",
+        "title": "Delta Volume Bubbles",
+        "isStrategy": null
+      },
+      {
+        "id": "yOAmH5",
+        "title": "LuxAlgo - Fair Value Gap",
+        "isStrategy": null
+      },
+      {
+        "id": "SVIL5Q",
+        "title": "Delta Volume Bubbles",
+        "isStrategy": null
+      },
+      {
+        "id": "OMDJUm",
+        "title": "LuxAlgo - Institutional Order Flow Strength Classifier",
+        "isStrategy": null
+      },
+      {
+        "id": "3qBoRm",
+        "title": "Multi-Session ORB",
+        "isStrategy": null
+      },
+      {
+        "id": "ESD$TV_DIVIDENDS",
+        "title": "Dividends",
+        "isStrategy": null
+      },
+      {
+        "id": "ESD$TV_SPLITS",
+        "title": "Splits",
+        "isStrategy": null
+      },
+      {
+        "id": "ESD$TV_EARNINGS",
+        "title": "Earnings",
+        "isStrategy": null
+      },
+      {
+        "id": "ESD$TV_ROLLDATES",
+        "title": "RollDatesCalculator",
+        "isStrategy": null
+      },
+      {
+        "id": "futures_contract_expiration",
+        "title": "FuturesContractExpiration",
+        "isStrategy": null
+      },
+      {
+        "id": "latestUpdates",
+        "title": "LatestUpdatesSource",
+        "isStrategy": null
+      },
+      {
+        "id": "ChartEventsSource",
+        "title": "Chart Events",
+        "isStrategy": null
+      },
+      {
+        "id": "2lqWVk",
+        "title": "short position",
+        "isStrategy": null
+      },
+      {
+        "id": "T8RhFl",
+        "title": "trendline",
+        "isStrategy": null
+      },
+      {
+        "id": "dGqwx8",
+        "title": "long position",
+        "isStrategy": null
+      },
+      {
+        "id": "IrSM1W",
+        "title": "callout",
+        "isStrategy": null
+      },
+      {
+        "id": "aGPTR4",
+        "title": "callout",
+        "isStrategy": null
+      },
+      {
+        "id": "xVbiv5",
+        "title": "Base 2.0.36",
+        "isStrategy": null
+      },
+      {
+        "id": "hj5b3t",
+        "title": "ADX and DI for v4",
+        "isStrategy": null
+      }
+    ],
+    "replayApiPresent": true,
+    "replayOwnKeys": [
+      "_replayUIController",
+      "_chartWidgetsCollection",
+      "_position",
+      "_realizedPL",
+      "_currency",
+      "_replayAvailability",
+      "_symbolInfo"
+    ],
+    "replayProtoKeys": [
+      "constructor",
+      "destroy",
+      "isReplayToolbarVisible",
+      "showReplayToolbar",
+      "hideReplayToolbar",
+      "isReplayAvailable",
+      "isReadyToPlay",
+      "autoplayDelayList",
+      "autoplayDelaySpeeds",
+      "autoplayDelay",
+      "autoplayDelayWV",
+      "changeAutoplayDelay",
+      "isReplayStarted",
+      "isAutoplayStarted",
+      "toggleAutoplay",
+      "replayMode",
+      "replayTimingMode",
+      "isJumpToBarModeEnabled",
+      "toggleJumpToBarMode",
+      "getReplayDepth",
+      "getReplaySelectedDate",
+      "selectDate",
+      "selectRandomDate",
+      "selectFirstAvailableDate",
+      "doStep",
+      "goToRealtime",
+      "stopReplay",
+      "buy",
+      "sell",
+      "position",
+      "realizedPL",
+      "currency",
+      "symbolInfo",
+      "closePosition",
+      "replayStrategyFacade",
+      "replayStrategyFacadesPerChartModelId",
+      "replayResolutions",
+      "currentReplayResolution",
+      "autoReplayResolution",
+      "autoReplayResolutionTitle",
+      "changeReplayResolution",
+      "currentDate",
+      "trackBarReplaySnowplowEvent",
+      "leaveReplay"
+    ],
+    "apiKeys": [
+      "_replayApi",
+      "_tradingFeatureFlagsService",
+      "_tradingUIControllerReplayFactory"
+    ],
+    "windowKeys": [
+      "MediaRecorder",
+      "TradingView",
+      "TRADING_SERVER_LOGGER_URL",
+      "TRADING_REST_SERVER_URL",
+      "webpackChunktradingview",
+      "TradingViewApi"
+    ]
+  }
+}

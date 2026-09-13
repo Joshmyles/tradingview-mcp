@@ -1,0 +1,504 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1046
+    ],
+    "outer": [
+      1920,
+      1080
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": {
+    "dataNameHits": [
+      {
+        "tag": "div",
+        "data-name": "replay-bottom-toolbar",
+        "class": "replayWrapper-CvWEQ6Ei",
+        "text": "Select bar0.5x45s",
+        "rect": [
+          56,
+          747,
+          1287,
+          49
+        ]
+      },
+      {
+        "tag": "div",
+        "data-name": "buy-sell-buttons",
+        "class": "buttonsWrapper-OH8c8Nc3 notAvailableOnMobile-OH8c8Nc3",
+        "text": "4,394.57Sell0.0014,394.57Buy",
+        "rect": [
+          60,
+          70,
+          195,
+          42
+        ]
+      },
+      {
+        "tag": "div",
+        "data-name": "sell-order-button",
+        "class": "apply-common-tooltip button-OH8c8Nc3 sellButton-OH8c8Nc3",
+        "text": "4,394.57Sell",
+        "rect": [
+          65,
+          74,
+          73,
+          34
+        ]
+      },
+      {
+        "tag": "div",
+        "data-name": "qtyEl",
+        "class": "apply-common-tooltip button-OH8c8Nc3 qty-OH8c8Nc3",
+        "text": "1",
+        "rect": [
+          146,
+          86,
+          23,
+          22
+        ]
+      },
+      {
+        "tag": "div",
+        "data-name": "buy-order-button",
+        "class": "apply-common-tooltip button-OH8c8Nc3 buyButton-OH8c8Nc3",
+        "text": "4,394.57Buy",
+        "rect": [
+          177,
+          74,
+          73,
+          34
+        ]
+      },
+      {
+        "tag": "button",
+        "data-name": "toast-group-expand-button-orders",
+        "class": "roundButton-LEXhwY2Z roundButtonColor-bRjlnCjX gray-bRjlnCjX quiet-primary-bRjlnCjX xsmall-LEXhwY2Z withEndSlot-LEXhwY2Z",
+        "text": "Show more",
+        "rect": [
+          64,
+          1046,
+          109,
+          28
+        ]
+      },
+      {
+        "tag": "button",
+        "data-name": "toast-group-close-button-orders",
+        "title": "Close all",
+        "class": "roundButton-LEXhwY2Z roundButtonColor-bRjlnCjX gray-bRjlnCjX quiet-primary-bRjlnCjX xsmall-LEXhwY2Z iconOnly-LEXhwY2Z withEndSlot-LEXhwY2Z a",
+        "rect": [
+          181,
+          1046,
+          28,
+          28
+        ]
+      },
+      {
+        "tag": "button",
+        "data-name": "toast-group-expand-button-trading-notifications",
+        "class": "roundButton-LEXhwY2Z roundButtonColor-bRjlnCjX gray-bRjlnCjX quiet-primary-bRjlnCjX xsmall-LEXhwY2Z withEndSlot-LEXhwY2Z",
+        "text": "Show more",
+        "rect": [
+          64,
+          1046,
+          109,
+          28
+        ]
+      },
+      {
+        "tag": "button",
+        "data-name": "toast-group-close-button-trading-notifications",
+        "title": "Close all",
+        "class": "roundButton-LEXhwY2Z roundButtonColor-bRjlnCjX gray-bRjlnCjX quiet-primary-bRjlnCjX xsmall-LEXhwY2Z iconOnly-LEXhwY2Z withEndSlot-LEXhwY2Z a",
+        "rect": [
+          181,
+          1046,
+          28,
+          28
+        ]
+      },
+      {
+        "tag": "button",
+        "data-name": "toast-group-expand-button-account-deletion-initiated",
+        "class": "roundButton-LEXhwY2Z roundButtonColor-bRjlnCjX gray-bRjlnCjX quiet-primary-bRjlnCjX xsmall-LEXhwY2Z withEndSlot-LEXhwY2Z",
+        "text": "Show more",
+        "rect": [
+          64,
+          1046,
+          109,
+          28
+        ]
+      },
+      {
+        "tag": "button",
+        "data-name": "toast-group-close-button-account-deletion-initiated",
+        "title": "Close all",
+        "class": "roundButton-LEXhwY2Z roundButtonColor-bRjlnCjX gray-bRjlnCjX quiet-primary-bRjlnCjX xsmall-LEXhwY2Z iconOnly-LEXhwY2Z withEndSlot-LEXhwY2Z a",
+        "rect": [
+          181,
+          1046,
+          28,
+          28
+        ]
+      },
+      {
+        "tag": "button",
+        "data-name": "toast-group-expand-button-account-deletion-cancelled",
+        "class": "roundButton-LEXhwY2Z roundButtonColor-bRjlnCjX gray-bRjlnCjX quiet-primary-bRjlnCjX xsmall-LEXhwY2Z withEndSlot-LEXhwY2Z",
+        "text": "Show more",
+        "rect": [
+          64,
+          1046,
+          109,
+          28
+        ]
+      },
+      {
+        "tag": "button",
+        "data-name": "toast-group-close-button-account-deletion-cancelled",
+        "title": "Close all",
+        "class": "roundButton-LEXhwY2Z roundButtonColor-bRjlnCjX gray-bRjlnCjX quiet-primary-bRjlnCjX xsmall-LEXhwY2Z iconOnly-LEXhwY2Z withEndSlot-LEXhwY2Z a",
+        "rect": [
+          181,
+          1046,
+          28,
+          28
+        ]
+      }
+    ],
+    "replayToolbar": {
+      "tag": "div",
+      "class": "replayToolbar-CvWEQ6Ei noTrading-CvWEQ6Ei",
+      "text": "Select bar0.5x45s",
+      "rect": [
+        56,
+        748,
+        1287,
+        48
+      ],
+      "children": [
+        {
+          "tag": "div",
+          "class": "controlsPanel-CvWEQ6Ei",
+          "text": "Select bar0.5x45s",
+          "rect": [
+            126,
+            753,
+            1147,
+            38
+          ],
+          "children": [
+            {
+              "tag": "div",
+              "class": "wrapOverflow-qYm4x2uu",
+              "text": "Select bar0.5x45s",
+              "rect": [
+                126,
+                753,
+                1147,
+                38
+              ],
+              "children": [
+                {
+                  "tag": "div",
+                  "class": "wrap-qYm4x2uu",
+                  "text": "Select bar0.5x45s",
+                  "rect": [
+                    126,
+                    753,
+                    1147,
+                    38
+                  ],
+                  "children": [
+                    {
+                      "tag": "div",
+                      "class": "scrollWrap-qYm4x2uu horizontalScrollWrapper-CvWEQ6Ei horizontalScrollWrapperWithoutMargin-CvWEQ6Ei noScrollBar-qYm4x2uu",
+                      "text": "Select bar0.5x45s",
+                      "rect": [
+                        126,
+                        753,
+                        1147,
+                        38
+                      ],
+                      "children": [
+                        {
+                          "tag": "div",
+                          "class": "controls-x6NoHjDT",
+                          "text": "Select bar0.5x45s",
+                          "rect": [
+                            521,
+                            753,
+                            356,
+                            38
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "class": "fadeLeft-qYm4x2uu",
+                      "rect": [
+                        75,
+                        753,
+                        50,
+                        38
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "class": "fadeRight-qYm4x2uu",
+                      "rect": [
+                        1274,
+                        753,
+                        50,
+                        38
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "class": "closeControl-CvWEQ6Ei",
+          "rect": [
+            1289,
+            753,
+            38,
+            38
+          ],
+          "children": [
+            {
+              "tag": "div",
+              "data-role": "button",
+              "class": "control-CvWEQ6Ei button-_yKxzjvM apply-common-tooltip isInteractive-_yKxzjvM",
+              "rect": [
+                1289,
+                753,
+                38,
+                38
+              ],
+              "children": [
+                {
+                  "tag": "span",
+                  "role": "img",
+                  "class": "icon-_yKxzjvM",
+                  "rect": [
+                    1300,
+                    764,
+                    17,
+                    17
+                  ],
+                  "children": [
+                    {
+                      "tag": "svg",
+                      "rect": [
+                        1300,
+                        764,
+                        17,
+                        17
+                      ],
+                      "children": [
+                        {
+                          "tag": "path",
+                          "rect": [
+                            1300,
+                            764,
+                            16,
+                            16
+                          ]
+                        },
+                        {
+                          "tag": "path",
+                          "rect": [
+                            1300,
+                            764,
+                            16,
+                            16
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "replayToolbarFound": true,
+    "buttons": [
+      {
+        "tag": "button",
+        "aria-label": "Bar replay",
+        "type": "button",
+        "class": "button-P4LQzYFS button-vxmgjera withText-vxmgjera button-_yKxzjvM apply-common-tooltip isInteractive-_yKxzjvM accessible-_yKxzjvM",
+        "text": "Replay",
+        "rect": [
+          786,
+          0,
+          88,
+          38
+        ]
+      },
+      {
+        "tag": "button",
+        "aria-label": "Share your idea with the trade community",
+        "type": "button",
+        "class": "menuWrap-Ii3Sgsld accessible-Ii3Sgsld button-waoVoTI0 apply-common-tooltip accessible-waoVoTI0",
+        "text": "Publish",
+        "rect": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "tag": "button",
+        "aria-label": "Bar replay",
+        "type": "button",
+        "class": "button-P4LQzYFS button-vxmgjera withoutText-vxmgjera button-_yKxzjvM apply-common-tooltip isInteractive-_yKxzjvM accessible-_yKxzjvM",
+        "rect": [
+          675,
+          0,
+          38,
+          38
+        ]
+      },
+      {
+        "tag": "button",
+        "aria-label": "Share your idea with the trade community",
+        "type": "button",
+        "class": "menuWrap-Ii3Sgsld accessible-Ii3Sgsld button-waoVoTI0 apply-common-tooltip accessible-waoVoTI0",
+        "text": "Publish",
+        "rect": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "tag": "button",
+        "aria-label": "Bar replay",
+        "id": "header-toolbar-replay",
+        "type": "button",
+        "class": "button-P4LQzYFS button-vxmgjera withoutText-vxmgjera button-_yKxzjvM apply-common-tooltip isActive-_yKxzjvM isInteractive-_yKxzjvM pressed-_",
+        "rect": [
+          727,
+          0,
+          38,
+          38
+        ]
+      },
+      {
+        "tag": "button",
+        "aria-label": "Share your idea with the trade community",
+        "type": "button",
+        "class": "menuWrap-Ii3Sgsld accessible-Ii3Sgsld button-waoVoTI0 apply-common-tooltip accessible-waoVoTI0",
+        "text": "Publish",
+        "rect": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "tag": "button",
+        "data-qa-id": "trade-button",
+        "class": "activeArea-xzAtFmlE noStretch-xzAtFmlE hasClickListener-xzAtFmlE",
+        "text": "Trade",
+        "rect": [
+          1210,
+          5,
+          72,
+          28
+        ]
+      },
+      {
+        "tag": "button",
+        "aria-label": "Share your idea with the trade community",
+        "type": "button",
+        "class": "menuWrap-Ii3Sgsld accessible-Ii3Sgsld button-waoVoTI0 apply-common-tooltip accessible-waoVoTI0",
+        "text": "Publish",
+        "rect": [
+          1318,
+          0,
+          74,
+          38
+        ]
+      },
+      {
+        "tag": "button",
+        "aria-label": "Long position",
+        "type": "button",
+        "class": "button-Pa6R9wGK button-_yKxzjvM apply-common-tooltip common-tooltip-vertical isInteractive-_yKxzjvM accessible-_yKxzjvM",
+        "rect": [
+          0,
+          200,
+          52,
+          38
+        ]
+      },
+      {
+        "tag": "button",
+        "data-role": "statuses-pill",
+        "title": "Replay mode",
+        "data-qa-id": "legend-source-item-status",
+        "class": "apply-common-tooltip common-tooltip-wide small-poFlIIKj small-poFlIIKj",
+        "rect": [
+          381,
+          49,
+          18,
+          18
+        ]
+      },
+      {
+        "tag": "button",
+        "aria-label": "Open Replay Trading",
+        "type": "button",
+        "data-qa-id": "replay_trading",
+        "class": "container-hvcu2Y0t button-_yKxzjvM apply-common-tooltip isInteractive-_yKxzjvM accessible-_yKxzjvM",
+        "text": "Replay Trading",
+        "rect": [
+          207,
+          839,
+          169,
+          38
+        ]
+      },
+      {
+        "tag": "button",
+        "aria-label": "Open Replay Trading",
+        "type": "button",
+        "class": "container-hvcu2Y0t button-_yKxzjvM apply-common-tooltip isInteractive-_yKxzjvM accessible-_yKxzjvM",
+        "text": "Replay Trading",
+        "rect": [
+          207,
+          839,
+          169,
+          38
+        ]
+      }
+    ],
+    "counts": {
+      "dataName": 153,
+      "buttons": 299
+    }
+  }
+}

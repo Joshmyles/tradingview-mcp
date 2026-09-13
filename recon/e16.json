@@ -1,0 +1,544 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1046
+    ],
+    "outer": [
+      1920,
+      1080
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": {
+    "found": true,
+    "tree": {
+      "tag": "div",
+      "class": "controls-x6NoHjDT",
+      "rect": [
+        521,
+        753,
+        356,
+        38
+      ],
+      "children": [
+        {
+          "tag": "div",
+          "class": "controls__control-x6NoHjDT controls__control_type_selectBar-x6NoHjDT",
+          "rect": [
+            521,
+            753,
+            132,
+            38
+          ],
+          "children": [
+            {
+              "tag": "div",
+              "class": "selectDateBar-Q3_c93rj",
+              "rect": [
+                521,
+                753,
+                132,
+                38
+              ],
+              "children": [
+                {
+                  "tag": "div",
+                  "data-role": "button",
+                  "class": "selectDateBar__button-Q3_c93rj button-_yKxzjvM apply-common-tooltip isInteractive-_yKxzjvM",
+                  "rect": [
+                    521,
+                    753,
+                    108,
+                    38
+                  ],
+                  "children": [
+                    {
+                      "tag": "span",
+                      "class": "icon-_yKxzjvM",
+                      "rect": [
+                        526,
+                        758,
+                        28,
+                        28
+                      ],
+                      "children": [
+                        {
+                          "tag": "svg",
+                          "rect": [
+                            526,
+                            758,
+                            28,
+                            28
+                          ],
+                          "children": [
+                            {
+                              "tag": "path",
+                              "rect": [
+                                533,
+                                763,
+                                16,
+                                18
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "tag": "div",
+                      "class": "js-button-text text-_yKxzjvM selectDateBar__button_withText-Q3_c93rj",
+                      "ownText": "Select bar",
+                      "rect": [
+                        558,
+                        764,
+                        66,
+                        16
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "tag": "div",
+                  "data-role": "button",
+                  "data-qa-id": "select-date-bar-mode-menu",
+                  "class": "button-waoVoTI0 apply-common-tooltip",
+                  "rect": [
+                    630,
+                    753,
+                    24,
+                    38
+                  ],
+                  "children": [
+                    {
+                      "tag": "div",
+                      "class": "arrow-waoVoTI0",
+                      "rect": [
+                        630,
+                        753,
+                        24,
+                        38
+                      ],
+                      "children": [
+                        {
+                          "tag": "div",
+                          "class": "arrowWrap-waoVoTI0",
+                          "rect": [
+                            638,
+                            770,
+                            8,
+                            4
+                          ],
+                          "children": [
+                            {
+                              "tag": "span",
+                              "class": "icon-I_BMSoWN",
+                              "rect": [
+                                638,
+                                770,
+                                8,
+                                4
+                              ],
+                              "children": [
+                                {
+                                  "tag": "svg",
+                                  "rect": [
+                                    638,
+                                    770,
+                                    8,
+                                    4
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "class": "controls__separator-x6NoHjDT",
+          "rect": [
+            658,
+            753,
+            9,
+            38
+          ],
+          "children": [
+            {
+              "tag": "span",
+              "class": "separator-EiKgQ1rO",
+              "rect": [
+                662,
+                761,
+                1,
+                22
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "class": "controls__control-x6NoHjDT",
+          "rect": [
+            671,
+            753,
+            38,
+            38
+          ],
+          "children": [
+            {
+              "tag": "div",
+              "data-role": "button",
+              "class": "controls__button-x6NoHjDT button-_yKxzjvM apply-common-tooltip isInteractive-_yKxzjvM",
+              "rect": [
+                671,
+                753,
+                38,
+                38
+              ],
+              "children": [
+                {
+                  "tag": "span",
+                  "class": "icon-_yKxzjvM",
+                  "rect": [
+                    676,
+                    758,
+                    28,
+                    28
+                  ],
+                  "children": [
+                    {
+                      "tag": "svg",
+                      "rect": [
+                        676,
+                        758,
+                        28,
+                        28
+                      ],
+                      "children": [
+                        {
+                          "tag": "path",
+                          "rect": [
+                            685,
+                            764,
+                            11,
+                            17
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "class": "controls__control-x6NoHjDT controls__control_type_forward-x6NoHjDT",
+          "rect": [
+            709,
+            753,
+            38,
+            38
+          ],
+          "children": [
+            {
+              "tag": "div",
+              "data-role": "button",
+              "class": "controls__button-x6NoHjDT button-_yKxzjvM apply-common-tooltip isInteractive-_yKxzjvM",
+              "rect": [
+                709,
+                753,
+                38,
+                38
+              ],
+              "children": [
+                {
+                  "tag": "span",
+                  "class": "icon-_yKxzjvM",
+                  "rect": [
+                    714,
+                    758,
+                    28,
+                    28
+                  ],
+                  "children": [
+                    {
+                      "tag": "svg",
+                      "rect": [
+                        714,
+                        758,
+                        28,
+                        28
+                      ],
+                      "children": [
+                        {
+                          "tag": "path",
+                          "rect": [
+                            722,
+                            764,
+                            13,
+                            16
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "class": "controls__control-x6NoHjDT",
+          "rect": [
+            747,
+            753,
+            76,
+            38
+          ],
+          "children": [
+            {
+              "tag": "div",
+              "data-role": "button",
+              "class": "button-waoVoTI0 apply-common-tooltip",
+              "rect": [
+                747,
+                753,
+                38,
+                38
+              ],
+              "children": [
+                {
+                  "tag": "div",
+                  "data-role": "button",
+                  "class": "controls__button-x6NoHjDT button-_yKxzjvM apply-common-tooltip",
+                  "rect": [
+                    747,
+                    753,
+                    38,
+                    38
+                  ],
+                  "children": [
+                    {
+                      "tag": "div",
+                      "class": "js-button-text text-_yKxzjvM",
+                      "ownText": "0.5x",
+                      "rect": [
+                        752,
+                        764,
+                        27,
+                        16
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "data-role": "button",
+              "class": "button-waoVoTI0 apply-common-tooltip",
+              "rect": [
+                785,
+                753,
+                38,
+                38
+              ],
+              "children": [
+                {
+                  "tag": "div",
+                  "data-role": "button",
+                  "class": "controls__button-x6NoHjDT button-_yKxzjvM apply-common-tooltip",
+                  "rect": [
+                    785,
+                    753,
+                    38,
+                    38
+                  ],
+                  "children": [
+                    {
+                      "tag": "div",
+                      "class": "js-button-text text-_yKxzjvM",
+                      "ownText": "45s",
+                      "rect": [
+                        794,
+                        764,
+                        20,
+                        16
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "class": "controls__separator-x6NoHjDT",
+          "rect": [
+            827,
+            753,
+            9,
+            38
+          ],
+          "children": [
+            {
+              "tag": "span",
+              "class": "separator-EiKgQ1rO",
+              "rect": [
+                831,
+                761,
+                1,
+                22
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "class": "controls__control-x6NoHjDT",
+          "rect": [
+            840,
+            753,
+            38,
+            38
+          ],
+          "children": [
+            {
+              "tag": "div",
+              "data-role": "button",
+              "class": "controls__button-x6NoHjDT button-_yKxzjvM apply-common-tooltip isInteractive-_yKxzjvM",
+              "rect": [
+                840,
+                753,
+                38,
+                38
+              ],
+              "children": [
+                {
+                  "tag": "span",
+                  "class": "icon-_yKxzjvM",
+                  "rect": [
+                    845,
+                    758,
+                    28,
+                    28
+                  ],
+                  "children": [
+                    {
+                      "tag": "svg",
+                      "rect": [
+                        845,
+                        758,
+                        28,
+                        28
+                      ],
+                      "children": [
+                        {
+                          "tag": "path",
+                          "rect": [
+                            852,
+                            764,
+                            15,
+                            16
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "tag": "div",
+          "class": "controls__control-x6NoHjDT controls__control_type_close-x6NoHjDT controls__control_type_cl",
+          "rect": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "children": [
+            {
+              "tag": "div",
+              "data-role": "button",
+              "title": "Exit Bar Replay",
+              "class": "controls__button-x6NoHjDT button-_yKxzjvM apply-common-tooltip isInteractive-_yKxzjvM",
+              "rect": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "children": [
+                {
+                  "tag": "span",
+                  "class": "icon-_yKxzjvM",
+                  "rect": [
+                    0,
+                    0,
+                    0,
+                    0
+                  ],
+                  "children": [
+                    {
+                      "tag": "svg",
+                      "rect": [
+                        0,
+                        0,
+                        0,
+                        0
+                      ],
+                      "children": [
+                        {
+                          "tag": "path",
+                          "rect": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ]
+                        },
+                        {
+                          "tag": "path",
+                          "rect": [
+                            0,
+                            0,
+                            0,
+                            0
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "innerHTMLLen": 5218,
+    "childCount": 8
+  }
+}

@@ -60,9 +60,35 @@ Use `study_filter` parameter to target a specific indicator by name substring (e
 1. `replay_start` with `date: "2025-03-01"` → enter replay mode
 2. `replay_step` → advance one bar
 3. `replay_autoplay` → auto-advance (set speed with `speed` param in ms)
-4. `replay_trade` with `action: "buy"/"sell"/"close"` → execute trades
-5. `replay_status` → check position, P&L, current date
-6. `replay_stop` → return to realtime
+4. `replay_status` → read position, P&L, current date
+5. `replay_stop` → return to realtime
+
+There is no trade tool here. This profile can READ a replay position and its
+P&L; it cannot open, change or close one.
+
+## Order capability — what is true, and what this file used to claim
+
+**True as of 2026-09-12.** No tool in either shipped profile submits, modifies
+or cancels an order, and that is now a test rather than a promise:
+`tests/no-order-path.test.js` walks the import graph from each profile's entry
+points and fails on any reachable call site that could emit one. Reading a
+position or realised P&L is not the same capability and is still allowed.
+
+**THE PREVIOUS CLAIM WAS FALSE, and is recorded here rather than quietly
+replaced.** The server's own instructions said "No tool in this bridge can
+place an order or touch broker state; that path was removed, not disabled."
+`replay_trade` was registered in the workflow profile — the default — and
+drove the replay API's buy / sell / close-position methods. It never submitted
+anything on this build, because TradingView's `updateModels()` took the
+`_initReplayBroker()` branch and left the model map empty, so the optional
+chain inside the call swallowed it and the tool returned `success: true`
+having done nothing. A build taking the legacy branch arms the same code. The
+tool, its CLI subcommand and the core function are deleted (Phase 0.5 task 1,
+2026-09-12); the tombstone in `src/core/replay.js` carries the detail.
+
+Order emission for the replay harness will live in a separate `replay`
+profile, gated on `TVMCP_REPLAY_EXEC=1` and on the broker interlock recorded in
+`recon/PHASE0-FINDINGS.md` §5. It does not exist yet.
 
 ### "Screen multiple symbols"
 - `batch_run` with `symbols: ["ES1!", "NQ1!", "YM1!"]` and `action: "screenshot"` or `"get_ohlcv"`

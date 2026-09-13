@@ -1,0 +1,84 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1046
+    ],
+    "outer": [
+      1920,
+      1080
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": {
+    "isConnectedToBroker": true,
+    "replayStatus": 3,
+    "isReplayModeEnabled": true,
+    "isChangingMode": false,
+    "replayStartPointTimestamp": 1788735359,
+    "hasExecutions": false,
+    "tradingModelMap": {
+      "ctor": "Map",
+      "size": 0,
+      "keys": []
+    },
+    "sourcesManagerMap": {
+      "size": 0,
+      "keys": []
+    },
+    "facadesPerChartModelId": {
+      "size": 1,
+      "keys": [
+        "74612c5f-d5ba-404a-bf69-43f105969306"
+      ]
+    },
+    "replayTradingWidget": {
+      "ctor": "G",
+      "own": [
+        "_tradingModel",
+        "_realizedPlStateWV",
+        "_isPlShownWV",
+        "_isPositionPresentWV",
+        "_isNonTradableWV",
+        "_isDisabledWV",
+        "_isBlockedWVSpawn",
+        "_isNonTradableWVSpawn",
+        "_handleSell",
+        "_handleBuy",
+        "_handleClear",
+        "_updateDefaultQty",
+        "_qtyValueGetter",
+        "_symbolGetter",
+        "_qtySuggester",
+        "_trackReplayEvent",
+        "_replayTradingSettingsStorage"
+      ],
+      "proto": [
+        "constructor",
+        "isPlShownWV",
+        "renderElement",
+        "setModel",
+        "_subscribeToTradingModel",
+        "_unSubscribeFromTradingModel",
+        "_checkIfPositionPresent",
+        "_getDefaultQty"
+      ]
+    },
+    "src_activeModel": "activeModel(){const e=this._chartWidgetCollection.activeChartWidget.value().model().model().id();return this._tradingModelMap.get(e)??null}",
+    "src_isReadyForChart": "isReadyForChart(e){return this._tradingModelMap.has(e)}",
+    "src_updateModels": "updateModels(){it?(this._isChangingMode=!1,null===this._reconnectBrokerAwaiter?this._initReplayBroker():this._reconnectBrokerAwaiter.promise.then((()=>this._initReplayBroker()))):this._initTradingModels()}",
+    "src__initReplayBroker": "_initReplayBroker(){if(this._isReplayModeEnabled.value()){const e=this._chartWidgetCollection.getAll();for(const t of e)t.withModel(null,(()=>{const e=t.model().id();if(!this._facadesPerChartModelId.has(e)){const i=new p(t.model().model());this._facadesPerChartModelId.set(e,i)}}));this._connectToReplayBroker(),this._isConnectedToBroker=!0,this._replayStartPointTimestampWV.subscribe(this._onStartPointSelected),this._chartWidgetCollection.activeChartWidget.subscribe(this._onActiveChartChanged)}}",
+    "src__initTradingModels": "_initTradingModels(){const e=this._chartWidgetCollection.getAll();for(const t of this._tradingModelMap.keys())if(!e.find((e=>e.hasModel()&&e.model().id()===t))){const e=this._tradingModelMap.get(t),i=this._tradingSourcesManagerMap.get(t);i?.destroy(),e?.destroy(),this._tradingModelMap.delete(t),this._tradingSourcesManagerMap.delete(t)}for(const t of e)t.withModel(null,(()=>{const e=t.model().id();if(!this._tradingModelMap.has(e)){const i=(0,n.createWVFromGetterAndSubscriptions)((()=>t.model().mainSeries().symbolInfo()),[t.model().mainSeries().dataEvents().symbolError(),t.model().mainSeries().dataEvents().symbolResolved()]),o=()=>t.symbolWV().value(),s=e=>t.model().timeScale().indexToTimePoint(e),a=()=>t.model().mainSeries().formatter(!0),l=()=>Array.from(this._tradingModelMap.values()).filter((e=>null!==e.realizedPL().value())).length>=1?\"multi\":\"single\";this._facadesPerChartModelId.set(e,new p(t.model().model()));const c=new Je((0,r.ensureDefined)(this._facadesPerChartModelId.get(e)),i.ownership(),o,s,this._createTradingBlockedWV(e).ownership(),this._replayStatusWV.ownership(),a,l,this._trackReplayEvent);this._tradingModelMap.set(e,c);const d=new qe(t,c,this._trackReplayEvent);thi",
+    "src__connectToReplayBroker": "async()=>{const e=(0,o.tradingService)();e?.tradingPanel.close(!1),await(e?.selectBroker(_.InternalBrokerId.ReplayBroker,{keepSessionAlive:!0}))}",
+    "src__disconnectFromReplayBroker": "async()=>{await((0,o.tradingService)()?.pickDefaultBroker())}",
+    "src_setReplayStatus": "e=>{this._replayStatusWV.setValue(e)}",
+    "src_setInReplay": "e=>{this._isReplayModeEnabled.setValue(e)}"
+  }
+}

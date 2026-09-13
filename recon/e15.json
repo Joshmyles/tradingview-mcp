@@ -1,0 +1,358 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1046
+    ],
+    "outer": [
+      1920,
+      1080
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": {
+    "toolbar": {
+      "tag": "div",
+      "data-name": "replay-bottom-toolbar",
+      "class": "replayWrapper-CvWEQ6Ei",
+      "rect": [
+        56,
+        747,
+        1287,
+        49
+      ],
+      "children": [
+        {
+          "tag": "div",
+          "class": "replayToolbar-CvWEQ6Ei noTrading-CvWEQ6Ei",
+          "rect": [
+            56,
+            748,
+            1287,
+            48
+          ],
+          "children": [
+            {
+              "tag": "div",
+              "class": "controlsPanel-CvWEQ6Ei",
+              "rect": [
+                126,
+                753,
+                1147,
+                38
+              ],
+              "children": [
+                {
+                  "tag": "div",
+                  "class": "wrapOverflow-qYm4x2uu",
+                  "rect": [
+                    126,
+                    753,
+                    1147,
+                    38
+                  ],
+                  "children": [
+                    {
+                      "tag": "div",
+                      "class": "wrap-qYm4x2uu",
+                      "rect": [
+                        126,
+                        753,
+                        1147,
+                        38
+                      ],
+                      "children": [
+                        {
+                          "tag": "div",
+                          "class": "scrollWrap-qYm4x2uu horizontalScrollWrapper-CvWEQ6Ei horizontalScrollWrapperWithoutMargin-CvWEQ6Ei noScrollBar",
+                          "rect": [
+                            126,
+                            753,
+                            1147,
+                            38
+                          ],
+                          "children": [
+                            {
+                              "tag": "div",
+                              "class": "controls-x6NoHjDT",
+                              "rect": [
+                                521,
+                                753,
+                                356,
+                                38
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "class": "fadeLeft-qYm4x2uu",
+                          "rect": [
+                            75,
+                            753,
+                            50,
+                            38
+                          ]
+                        },
+                        {
+                          "tag": "div",
+                          "class": "fadeRight-qYm4x2uu",
+                          "rect": [
+                            1274,
+                            753,
+                            50,
+                            38
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "tag": "div",
+              "class": "closeControl-CvWEQ6Ei",
+              "rect": [
+                1289,
+                753,
+                38,
+                38
+              ],
+              "children": [
+                {
+                  "tag": "div",
+                  "data-role": "button",
+                  "class": "control-CvWEQ6Ei button-_yKxzjvM apply-common-tooltip isInteractive-_yKxzjvM",
+                  "rect": [
+                    1289,
+                    753,
+                    38,
+                    38
+                  ],
+                  "children": [
+                    {
+                      "tag": "span",
+                      "role": "img",
+                      "class": "icon-_yKxzjvM",
+                      "rect": [
+                        1300,
+                        764,
+                        17,
+                        17
+                      ],
+                      "children": [
+                        {
+                          "tag": "svg",
+                          "rect": [
+                            1300,
+                            764,
+                            17,
+                            17
+                          ],
+                          "children": [
+                            {
+                              "tag": "path",
+                              "rect": [
+                                1300,
+                                764,
+                                16,
+                                16
+                              ]
+                            },
+                            {
+                              "tag": "path",
+                              "rect": [
+                                1300,
+                                764,
+                                16,
+                                16
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "bottomAreaTags": [
+      {
+        "tag": "div",
+        "data-qa-id": "backtesting-report-toolbar",
+        "class": "toolbar-yZikWPYl",
+        "rect": [
+          56,
+          886,
+          1287,
+          34
+        ]
+      },
+      {
+        "tag": "div",
+        "data-name": "light-tabs-buttons",
+        "data-qa-id": "backtesting-report-toolbar-tabs",
+        "class": "toolbarTabs-yZikWPYl",
+        "rect": [
+          76,
+          886,
+          65,
+          34
+        ]
+      },
+      {
+        "tag": "button",
+        "data-name": "light-tab-0",
+        "role": "tab",
+        "id": "Strategy report",
+        "class": "lightTabButton-KgJpIsVE xsmall-KgJpIsVE selected-KgJpIsVE",
+        "rect": [
+          79,
+          889,
+          28,
+          28
+        ]
+      },
+      {
+        "tag": "button",
+        "data-name": "light-tab-1",
+        "role": "tab",
+        "id": "List of Trades",
+        "class": "lightTabButton-KgJpIsVE xsmall-KgJpIsVE",
+        "rect": [
+          110,
+          889,
+          28,
+          28
+        ]
+      },
+      {
+        "tag": "button",
+        "aria-label": "Aug 21, 2026 — Sep 7, 2026",
+        "data-qa-id": "date-range-menu",
+        "class": "activeArea-xzAtFmlE noStretch-xzAtFmlE hasClickListener-xzAtFmlE",
+        "rect": [
+          149,
+          886,
+          242,
+          34
+        ]
+      },
+      {
+        "tag": "button",
+        "aria-label": "1 M",
+        "data-qa-id": "initial-capital",
+        "class": "activeArea-xzAtFmlE noStretch-xzAtFmlE hasClickListener-xzAtFmlE",
+        "rect": [
+          399,
+          886,
+          113,
+          34
+        ]
+      },
+      {
+        "tag": "button",
+        "aria-label": "High detalization",
+        "data-qa-id": "bar-detalization",
+        "class": "activeArea-xzAtFmlE noStretch-xzAtFmlE hasClickListener-xzAtFmlE",
+        "rect": [
+          520,
+          886,
+          177,
+          34
+        ]
+      },
+      {
+        "tag": "button",
+        "aria-label": "Script execution",
+        "data-qa-id": "ui-lib-pill-active-area-button ui-lib-single-area-pill-active-area",
+        "class": "activeArea-xzAtFmlE noStretch-xzAtFmlE hasClickListener-xzAtFmlE",
+        "rect": [
+          705,
+          886,
+          192,
+          34
+        ]
+      },
+      {
+        "tag": "div",
+        "data-qa-id": "backtesting-strategy-settings-button",
+        "class": "wrapper-eTfGDaEr small-eTfGDaEr square-eTfGDaEr",
+        "rect": [
+          915,
+          886,
+          34,
+          34
+        ]
+      },
+      {
+        "tag": "button",
+        "aria-label": "Settings",
+        "data-qa-id": "ui-lib-pill-active-area-button",
+        "class": "activeArea-xzAtFmlE noStretch-xzAtFmlE hasClickListener-xzAtFmlE",
+        "rect": [
+          915,
+          886,
+          34,
+          34
+        ]
+      },
+      {
+        "tag": "div",
+        "data-qa-id": "backtesting-add-alert-button",
+        "class": "wrapper-eTfGDaEr small-eTfGDaEr square-eTfGDaEr",
+        "rect": [
+          957,
+          886,
+          34,
+          34
+        ]
+      },
+      {
+        "tag": "button",
+        "aria-label": "Add alert",
+        "data-qa-id": "ui-lib-pill-active-area-button",
+        "class": "activeArea-xzAtFmlE noStretch-xzAtFmlE hasClickListener-xzAtFmlE",
+        "rect": [
+          957,
+          886,
+          34,
+          34
+        ]
+      },
+      {
+        "tag": "div",
+        "data-qa-id": "backtesting-report-toolbar-end",
+        "rect": [
+          1323,
+          903,
+          0,
+          0
+        ]
+      },
+      {
+        "tag": "div",
+        "data-name": "chart-warning-hint",
+        "class": "hint-PhM1KazR",
+        "rect": [
+          410,
+          983,
+          579,
+          44
+        ]
+      }
+    ]
+  }
+}

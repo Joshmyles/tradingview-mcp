@@ -1,0 +1,155 @@
+{
+  "target": "4E51661AF478385AB3365D3E21473E59",
+  "identity": {
+    "href": "https://www.tradingview.com/chart/R7HDoRZ2/",
+    "focused": false,
+    "viewport": [
+      1920,
+      1046
+    ],
+    "outer": [
+      1920,
+      1080
+    ],
+    "has_api": true,
+    "layout": "Trial Ground",
+    "symbol": "ICMARKETS:XAUUSD",
+    "resolution": "45S"
+  },
+  "error": null,
+  "value": {
+    "configTrue": [
+      "supportModifyOrderPrice",
+      "supportEditAmount",
+      "supportModifyBrackets",
+      "supportMarketBrackets",
+      "supportMarketOrders",
+      "supportStopOrders",
+      "supportLimitOrders",
+      "supportLeverageButton",
+      "supportStopLimitOrders",
+      "supportPositions",
+      "supportDOM",
+      "supportModifyTrailingStop",
+      "supportAddBracketsToExistingOrder",
+      "supportReversePosition",
+      "showNotificationsLog",
+      "showSymbolInClosePositionDialog",
+      "supportPLUpdate",
+      "supportCurrencyInOrderPreview",
+      "supportRiskControlsAndInfo",
+      "matchOrderModificationById",
+      "supportOrdersHistory",
+      "supportOrderBrackets",
+      "supportPositionBrackets",
+      "supportClosePosition",
+      "supportPartialClosePosition",
+      "supportNativeReversePosition",
+      "supportSymbolSpecificCryptoOrderTicket",
+      "supportExecutions",
+      "supportStopLoss",
+      "supportModifyPositionBrackets",
+      "supportModifyOrderBrackets",
+      "disableIsTradableCaching",
+      "supportEditContexts",
+      "supportProjectMarketOrder",
+      "supportContinuousTrading"
+    ],
+    "configFalse": [
+      "isSuspended",
+      "supportDemoLiveSwitcher",
+      "supportVerifyLiveAccount",
+      "supportTwoFactorAuthorization",
+      "supportDisplayBrokerNameInSymbolSearch",
+      "supportCreateAccount",
+      "supportDeleteAccount",
+      "checkBracketsAfterOrderModification",
+      "hideMarginIfNoLeverage",
+      "supportStrictCheckingLimitOrderPrice",
+      "supportMultiposition",
+      "supportTrailingStop",
+      "supportStopOrdersInBothDirections",
+      "supportStopLimitOrdersInBothDirections",
+      "supportModifyDuration",
+      "supportCryptoExchangeOrderTicket",
+      "supportPlaceOrderPreview",
+      "supportModifyOrderPreview",
+      "showQuantityInsteadOfAmount",
+      "supportBalances",
+      "supportLeverage",
+      "supportLevel2Data",
+      "supportTrackLatency",
+      "supportPositionNetting",
+      "supportIndividualPositionBrackets",
+      "supportPartialCloseIndividualPosition",
+      "supportGuaranteedStop",
+      "supportCryptoBrackets",
+      "supportCloseIndividualPosition",
+      "supportSymbolSearch",
+      "supportMargin",
+      "calculatePLUsingLast",
+      "closePositionCancelsOrders",
+      "supportOnlyPairPositionBrackets",
+      "supportOnlyPairOrderBrackets",
+      "supportConfirmations",
+      "supportMarginControl",
+      "supportRestoreConfirmations",
+      "positionPLInInstrumentCurrency",
+      "showRiskInInstrumentCurrency",
+      "supportCancellingBothBracketsOnly",
+      "supportUnformattedAvgFillPrice",
+      "supportLeverageDecimalPrecision",
+      "supportHyperlinksInOrderDialog",
+      "supportHyperlinksInOrderPreview",
+      "supportOAuthCodeFlowMultiplexing",
+      "supportCustomOrderInfo",
+      "supportPreviewClosePosition",
+      "supportValidationAgainstMarket",
+      "supportMultipleExitLevels",
+      "supportUnpairedExitLevels",
+      "supportExitLevelsTotalQtyGreaterThanParent",
+      "supportPartialClosePositionWithAmountLessThanMinQty"
+    ],
+    "configOther": {
+      "authorizationType": "skip"
+    },
+    "settingsStorage": {
+      "ctor": "Q",
+      "own": [
+        "_transientStorage",
+        "_persistentStorageKey"
+      ],
+      "proto": [
+        "constructor",
+        "setSymbolQty",
+        "symbolQty",
+        "_getOrCreateSetting",
+        "_syncStorage"
+      ]
+    },
+    "defaultQty": 1,
+    "getDefaultQtySrc": "_getDefaultQty(){const e=this._symbolGetter();if(null!==e)return this._replayTradingSettingsStorage.symbolQty(e)}",
+    "updateDefaultQtySrc": "e=>{const t=this._symbolGetter();null!==t&&this._replayTradingSettingsStorage.setSymbolQty(t,e)}",
+    "isPositionPresent": false,
+    "realizedPlState": null,
+    "isNonTradable": false,
+    "isDisabled": true,
+    "tradingSettingsStorage": {
+      "own": [
+        "_transientStorage",
+        "_persistentStorageKey",
+        "_orderType"
+      ],
+      "proto": [
+        "constructor",
+        "setDuration",
+        "duration",
+        "setCustomFields",
+        "customFields"
+      ]
+    },
+    "lsKeys": [
+      "trading.ICMARKETS.rememberCredentials"
+    ]
+  }
+}
